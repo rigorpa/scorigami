@@ -1,0 +1,47 @@
+package com.scorigami.app.viewmodel
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.scorigami.shared.db.dao.CourseDao
+import com.scorigami.shared.db.dao.CourseWithHoles
+import com.scorigami.shared.db.entity.CourseEntity
+import com.scorigami.shared.db.entity.HoleEntity
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class CourseViewModel @Inject constructor(
+    private val courseDao: CourseDao,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
+
+    val courses: StateFlow<List<CourseWithHoles>> = courseDao.getAllCoursesWithHoles()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    private val editingCourseId: Long = savedStateHandle.get<Long>("courseId") ?: -1L
+
+    val editingCourse: StateFlow<CourseWithHoles?> = flow {
+        emit(if (editingCourseId == -1L) null else courseDao.getCourseWithHoles(editingCourseId))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    fun saveCourse(name: String, parValues: List<Int>) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val courseId = if (editingCourseId == -1L) {
+                courseDao.insertCourse(CourseEntity(name = name.trim(), holeCount = parValues.size))
+            } else {
+                courseDao.insertCourse(CourseEntity(id = editingCourseId, name = name.trim(), holeCount = parValues.size))
+            }
+            courseDao.insertHoles(parValues.mapIndexed { i, par ->
+                HoleEntity(courseId = courseId, number = i + 1, par = par)
+            })
+        }
+    }
+
+    fun deleteCourse(course: CourseEntity) {
+        viewModelScope.launch(Dispatchers.IO) { courseDao.deleteCourse(course) }
+    }
+}

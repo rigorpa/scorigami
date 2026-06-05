@@ -1,0 +1,2 @@
+-keep class com.ithrow.** { *; }
+-keepattributes *Annotation*

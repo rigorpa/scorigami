@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Scorigami logo — 108 × 108 dp
+    Dark blue background, yellow flying disc tilted -15°,
+    three speed lines, and a curved flight-arc.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- ── Background ── -->
+    <path
+        android:fillColor="#FF1A3652"
+        android:pathData="M0,0 H108 V108 H0 Z"/>
+
+    <!-- ── Flight arc (subtle parabola, bottom-left → upper-right) ── -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#60FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M 18,84 Q 48,16 90,32"/>
+
+    <!-- ── Speed / motion lines (three, fading toward disc) ── -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#CCFFFFFF"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M 20,44 L 40,44"/>
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#99FFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M 16,53 L 38,53"/>
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#66FFFFFF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:pathData="M 20,62 L 38,62"/>
+
+    <!-- ── Disc — rotated -15° around its center (70, 52) ── -->
+    <group
+        android:pivotX="70"
+        android:pivotY="52"
+        android:rotation="-15">
+
+        <!-- Outer disc body (yellow) -->
+        <path
+            android:fillColor="#FFD60A"
+            android:pathData="M 48,52 A 22,8 0 0 1 92,52 A 22,8 0 0 1 48,52 Z"/>
+
+        <!-- Lower-edge rim shadow (thin dark crescent) -->
+        <path
+            android:fillColor="#40000000"
+            android:pathData="M 48,52 A 22,8 0 0 1 92,52 A 22,3.5 0 0 0 48,52 Z"/>
+
+        <!-- Center dome (dark blue tint) -->
+        <path
+            android:fillColor="#881A3652"
+            android:pathData="M 59,52 A 11,4 0 0 1 81,52 A 11,4 0 0 1 59,52 Z"/>
+
+        <!-- Top-face highlight streak -->
+        <path
+            android:fillColor="#00000000"
+            android:strokeColor="#AAFFFFFF"
+            android:strokeWidth="2"
+            android:strokeLineCap="round"
+            android:pathData="M 58,49 Q 70,47 83,50"/>
+
+    </group>
+
+</vector>
