@@ -123,22 +123,22 @@ private fun WearPlayerRow(
             modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 5.dp, bottom = 5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 3-letter abbreviation — width sized for 3 uppercase chars at 24sp
+            // 2-letter abbreviation
             Text(
-                text = player.name.take(3).uppercase(),
+                text = player.name.take(2).uppercase(),
                 fontSize = 24.sp,
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Normal,
                 color = Color.White,
-                modifier = Modifier.width(56.dp),
+                modifier = Modifier.width(40.dp),
                 maxLines = 1
             )
 
             Spacer(Modifier.weight(1f))
 
-            // − score + (transparent background, no circle)
+            // − score +
             Row(verticalAlignment = Alignment.CenterVertically) {
                 CompactButton(
-                    modifier = Modifier.size(44.dp),
+                    modifier = Modifier.size(36.dp),
                     onClick = onDecrement,
                     enabled = currentThrows > 0,
                     colors = ButtonDefaults.buttonColors(
@@ -148,18 +148,18 @@ private fun WearPlayerRow(
                         disabledContentColor = Color.White.copy(alpha = 0.3f)
                     )
                 ) {
-                    Text("−", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                    Text("−", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
                 Text(
                     text = currentThrows.toString(),
-                    fontSize = 22.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White,
-                    modifier = Modifier.widthIn(min = 28.dp),
+                    modifier = Modifier.widthIn(min = 24.dp),
                     textAlign = TextAlign.Center
                 )
                 CompactButton(
-                    modifier = Modifier.size(44.dp),
+                    modifier = Modifier.size(36.dp),
                     onClick = onIncrement,
                     enabled = currentThrows < 20,
                     colors = ButtonDefaults.buttonColors(
@@ -169,7 +169,7 @@ private fun WearPlayerRow(
                         disabledContentColor = Color.White.copy(alpha = 0.3f)
                     )
                 ) {
-                    Text("+", fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                    Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }

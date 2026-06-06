@@ -8,8 +8,6 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -339,25 +337,20 @@ private fun HoleJumpDropdown(
         }
         DropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.heightIn(max = 480.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .heightIn(max = 480.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                holes.forEach { hole ->
-                    DropdownMenuItem(
-                        text = { Text("Hole ${hole.number}") },
-                        leadingIcon = if (hole.number == currentHole) {
-                            { Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp)) }
-                        } else null,
-                        onClick = {
-                            onHoleSelected(hole.number)
-                            expanded = false
-                        }
-                    )
-                }
+            holes.forEach { hole ->
+                DropdownMenuItem(
+                    text = { Text("Hole ${hole.number}") },
+                    leadingIcon = if (hole.number == currentHole) {
+                        { Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp)) }
+                    } else null,
+                    onClick = {
+                        onHoleSelected(hole.number)
+                        expanded = false
+                    }
+                )
             }
         }
     }
