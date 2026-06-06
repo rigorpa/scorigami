@@ -8,6 +8,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,6 +22,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.GolfCourse
+import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -67,6 +70,7 @@ fun ScorecardScreen(
     var showCancelDialog by remember { mutableStateOf(false) }
     var showPlayersSheet by remember { mutableStateOf(false) }
     var showMissingScoresDialog by remember { mutableStateOf(false) }
+    var showScorecardSheet by remember { mutableStateOf(false) }
 
     if (showMissingScoresDialog) {
         AlertDialog(
@@ -107,6 +111,16 @@ fun ScorecardScreen(
         )
     }
 
+    if (showScorecardSheet) {
+        ModalBottomSheet(onDismissRequest = { showScorecardSheet = false }) {
+            FullScorecardSheet(
+                players = state.players,
+                holes = state.holes,
+                scores = state.scores
+            )
+        }
+    }
+
     if (showPlayersSheet) {
         ModalBottomSheet(onDismissRequest = { showPlayersSheet = false }) {
             AddRemovePlayersSheet(
@@ -129,6 +143,9 @@ fun ScorecardScreen(
                     )
                 },
                 actions = {
+                    IconButton(onClick = { showScorecardSheet = true }) {
+                        Icon(Icons.Default.TableChart, contentDescription = "View scorecard")
+                    }
                     TextButton(onClick = {
                         if (hasMissingScores) showMissingScoresDialog = true else onEndRound()
                     }) {
@@ -324,17 +341,23 @@ private fun HoleJumpDropdown(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            holes.forEach { hole ->
-                DropdownMenuItem(
-                    text = { Text("Hole ${hole.number}") },
-                    leadingIcon = if (hole.number == currentHole) {
-                        { Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp)) }
-                    } else null,
-                    onClick = {
-                        onHoleSelected(hole.number)
-                        expanded = false
-                    }
-                )
+            Column(
+                modifier = Modifier
+                    .heightIn(max = 480.dp)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                holes.forEach { hole ->
+                    DropdownMenuItem(
+                        text = { Text("Hole ${hole.number}") },
+                        leadingIcon = if (hole.number == currentHole) {
+                            { Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp)) }
+                        } else null,
+                        onClick = {
+                            onHoleSelected(hole.number)
+                            expanded = false
+                        }
+                    )
+                }
             }
         }
     }
@@ -499,7 +522,7 @@ private fun PlayerScoreCard(
                     )
                 }
                 Text(
-                    text = if (throwsThisHole == 0) "—" else "$throwsThisHole",
+                    text = "$throwsThisHole",
                     fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White,
@@ -507,7 +530,11 @@ private fun PlayerScoreCard(
                     textAlign = TextAlign.Center
                 )
                 IconButton(
-                    onClick = { onScoreChange(throwsThisHole + 1) }
+                    onClick = {
+                        val par = holes.find { it.number == currentHole }?.par ?: 3
+                        val next = if (throwsThisHole == 0) maxOf(1, par - 1) else throwsThisHole + 1
+                        onScoreChange(next)
+                    }
                 ) {
                     Text(
                         "+",
@@ -532,4 +559,71 @@ private fun vsParColor(vsPar: Int) = when {
     vsPar < 0 -> MaterialTheme.colorScheme.primary
     vsPar == 0 -> MaterialTheme.colorScheme.onSurface
     else -> MaterialTheme.colorScheme.error
+}
+
+@Composable
+private fun FullScorecardSheet(
+    players: List<PlayerEntity>,
+    holes: List<HoleEntity>,
+    scores: Map<Pair<Long, Int>, Int>
+) {
+    LazyColumn(
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.padding(bottom = 32.dp)
+    ) {
+        items(players, key = { it.id }) { player ->
+            val playerScores = scores.entries.filter { it.key.first == player.id }
+            val totalThrows = playerScores.sumOf { it.value }
+            val parSoFar = holes.filter { scores[Pair(player.id, it.number)] != null }.sumOf { it.par }
+            val totalVsPar = totalThrows - parSoFar
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(player.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            text = formatVsPar(totalVsPar),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = vsParColor(totalVsPar)
+                        )
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    HorizontalDivider()
+                    Spacer(Modifier.height(8.dp))
+                    holes.chunked(9).forEach { group ->
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            group.forEach { hole ->
+                                val throws = scores[Pair(player.id, hole.number)]
+                                val vsPar = throws?.minus(hole.par)
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "${hole.number}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = vsPar?.let { formatVsPar(it) } ?: "—",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = vsPar?.let { vsParColor(it) } ?: MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(4.dp))
+                    }
+                }
+            }
+        }
+    }
 }

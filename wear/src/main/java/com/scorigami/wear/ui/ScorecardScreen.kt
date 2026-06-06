@@ -85,6 +85,7 @@ fun WearScorecardScreen(
 
             items(roundState.players) { player ->
                 val throwsThisHole = player.holeScores[currentHole] ?: 0
+                val holePar = roundState.holePars[currentHole] ?: 3
                 WearPlayerRow(
                     player = player,
                     currentThrows = throwsThisHole,
@@ -92,7 +93,8 @@ fun WearScorecardScreen(
                         if (throwsThisHole > 0) onScoreChange(player.playerId, throwsThisHole - 1)
                     },
                     onIncrement = {
-                        onScoreChange(player.playerId, throwsThisHole + 1)
+                        val next = if (throwsThisHole == 0) maxOf(1, holePar - 1) else throwsThisHole + 1
+                        onScoreChange(player.playerId, next)
                     }
                 )
             }
@@ -118,7 +120,7 @@ private fun WearPlayerRow(
 ) {
     Card(onClick = {}, modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.padding(start = 10.dp, end = 2.dp, top = 8.dp, bottom = 8.dp),
+            modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 5.dp, bottom = 5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // 3-letter abbreviation — width sized for 3 uppercase chars at 24sp
@@ -136,19 +138,20 @@ private fun WearPlayerRow(
             // − score + (transparent background, no circle)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 CompactButton(
+                    modifier = Modifier.size(44.dp),
                     onClick = onDecrement,
                     enabled = currentThrows > 0,
                     colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Color.Transparent,
+                        backgroundColor = MaterialTheme.colors.primary,
                         contentColor = Color.White,
-                        disabledBackgroundColor = Color.Transparent,
+                        disabledBackgroundColor = MaterialTheme.colors.primary.copy(alpha = 0.3f),
                         disabledContentColor = Color.White.copy(alpha = 0.3f)
                     )
                 ) {
-                    Text("−", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text("−", fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 }
                 Text(
-                    text = if (currentThrows == 0) "—" else currentThrows.toString(),
+                    text = currentThrows.toString(),
                     fontSize = 22.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White,
@@ -156,16 +159,17 @@ private fun WearPlayerRow(
                     textAlign = TextAlign.Center
                 )
                 CompactButton(
+                    modifier = Modifier.size(44.dp),
                     onClick = onIncrement,
                     enabled = currentThrows < 20,
                     colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Color.Transparent,
+                        backgroundColor = MaterialTheme.colors.primary,
                         contentColor = Color.White,
-                        disabledBackgroundColor = Color.Transparent,
+                        disabledBackgroundColor = MaterialTheme.colors.primary.copy(alpha = 0.3f),
                         disabledContentColor = Color.White.copy(alpha = 0.3f)
                     )
                 ) {
-                    Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text("+", fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }

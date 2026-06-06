@@ -67,7 +67,7 @@ scores      roundId, playerId, holeNumber, throws        (composite PK, upsert o
 - Migration 2→3: renames `distanceMeters` → `distanceFeet` (values were always stored in feet)
 
 **Sync types** (`shared/sync/`):
-- `RoundState` — full snapshot pushed phone→watch (roundId, courseName, currentHole, totalHoles, players[])
+- `RoundState` — full snapshot pushed phone→watch (roundId, courseName, currentHole, totalHoles, players[], **holePars: Map<Int,Int>**). `holePars` maps every hole number to its par value so the watch can apply the first-press scoring logic for any hole it navigates to independently.
 - `PlayerState` — per-player data inside RoundState (playerId, name, **holeScores: Map<Int,Int>**, totalThrows, totalVsPar). `holeScores` maps every hole number the player has scored to their throw count, allowing the watch to display the correct score for whichever hole it is viewing independently of the phone.
 - `ScoreUpdateMessage` — watch→phone message (roundId, playerId, holeNumber, throws, viewingHole)
 
@@ -102,11 +102,12 @@ Both courses include per-hole `distanceFeet` values. Displayed on the scorecard 
 Navigation is in `app/navigation/AppNavigation.kt`.
 
 ### ScorecardScreen layout
-- **Top bar:** course name in `FontFamily.Cursive`, "End Round" button, ⋮ overflow menu
+- **Top bar:** course name in `FontFamily.Cursive`; `TableChart` icon button (opens full scorecard sheet); "End Round" button; ⋮ overflow menu
+- **Full scorecard sheet:** `ModalBottomSheet` opened via the `TableChart` icon — same per-player 18-hole breakdown shown in `RoundReviewScreen` (hole number + vs-par grid, totals)
 - **Hole card:** large hole number (yellow), par, distance; ◀/▶ arrow buttons
-- **Player cards:** 3-letter uppercase abbreviation (40sp, bold, white) on the left; total throws + round vs-par centered; −/+ score controls on the right with the current throw count displayed between them (0 shown as "—")
+- **Player cards:** 3-letter uppercase abbreviation (40sp, bold, white) on the left; round vs-par centered; −/+ score controls on the right with the current throw count displayed between them (0 shown as `"0"`)
 - **Hole transitions:** `AnimatedContent` slides player cards left/right matching navigation direction (250 ms)
-- **Hole jump:** `GolfCourse` icon + `DropdownMenu` button at bottom-right, lists all holes with a checkmark on the current one
+- **Hole jump:** `GolfCourse` icon + `DropdownMenu` button at bottom-right, lists all holes with a checkmark on the current one; max height 480 dp (~10 visible items), scrollable
 
 ---
 
@@ -123,12 +124,14 @@ Navigation is in `wear/navigation/WearNavigation.kt`. State comes from `RoundSta
 ### WearScorecardScreen layout
 - Course name in `FontFamily.Cursive` at the top
 - Hole number and ◀/▶ navigation buttons
-- Player cards: 3-letter abbreviation (24sp, bold, white) on left; −/+ score controls (transparent background, no circle) with throw count on right
+- Player cards: 3-letter abbreviation (24sp, bold, white) on left; −/+ score controls on right — `CompactButton` at 44 dp with solid primary-color background (filled circles), 22sp bold text; throw count displayed between buttons (0 shown as `"0"`)
 - Score for the displayed hole is read from `player.holeScores[currentHole]`; the watch navigates holes independently from the phone without needing a re-push
 
 ---
 
 ## How Scoring Works
+
+**First-press scoring:** When a hole score is 0 (not yet entered) and the user taps `+`, the score jumps to `maxOf(1, par − 1)` rather than 1. For a Par 3 hole the first tap enters 2 (birdie); a second tap enters 3 (par). This applies on both phone and watch. The par is looked up from `holes` (phone) or `roundState.holePars[currentHole]` (watch).
 
 1. User taps −/+ on a player row (phone or watch)
 2. Score is written to Room (`ScoreEntity` upsert)
@@ -144,10 +147,9 @@ When update originates from watch: step 2 happens in `PhoneWearableListenerServi
 ## Round Finalization Flow
 
 1. "End Round" on **phone** → navigates to `RoundReviewScreen`
-   - Full scrollable scorecard per player (per-hole throws, +/− vs par, totals)
-   - Final standings card (sorted by score)
-   - "Confirm & Finish" → `AlertDialog` → `roundDao.completeRound()` → `wearSyncManager.clearRoundState()` → navigate to History
-   - "Go Back & Edit Scores" → pop back to ScorecardScreen
+   - Full scrollable scorecard per player (per-hole vs-par grid, totals)
+   - Final standings card (sorted by score, medal emojis for top 3)
+   - Bottom bar: side-by-side row — **"Edit Scores"** (left) pops back to ScorecardScreen; **"Confirm & Finish"** (right, red) → `AlertDialog` → `roundDao.completeRound()` → `wearSyncManager.clearRoundState()` → navigate to History
 2. "End Round" on **watch** → navigates to `EndRoundPromptScreen`
    - Tells user to open phone; no finalize action available
 
