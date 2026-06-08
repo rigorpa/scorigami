@@ -63,9 +63,11 @@ fun WearScorecardScreen(
     val holePar = roundState.holePars[currentHole] ?: 3
     val isLastPlayer = currentPlayerIndex == players.lastIndex
 
-    // Key on player ID (not index) so pendingScore resets correctly if the list reorders
-    var pendingScore by remember(currentPlayer.playerId, currentHole) {
-        mutableIntStateOf(currentPlayer.holeScores[currentHole] ?: 0)
+    // Key on player ID (not index) so pendingScore resets correctly if the list reorders.
+    // Also key on knownScore so an externally pushed score (from phone) is reflected immediately.
+    val knownScore = currentPlayer.holeScores[currentHole] ?: 0
+    var pendingScore by remember(currentPlayer.playerId, currentHole, knownScore) {
+        mutableIntStateOf(knownScore)
     }
 
     fun commitAndAdvance() {
