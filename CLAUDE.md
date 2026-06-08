@@ -106,8 +106,8 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 - **Full scorecard sheet:** `ModalBottomSheet` opened via the `TableChart` icon — same per-player 18-hole breakdown shown in `RoundReviewScreen` (hole number + vs-par grid, totals)
 - **Hole card:** large hole number (yellow), par, distance; ◀/▶ arrow buttons
 - **Player cards:** 3-letter uppercase abbreviation (40sp, bold, white) on the left; round vs-par centered; −/+ score controls on the right with the current throw count displayed between them (0 shown as `"0"`)
-- **Hole transitions:** `AnimatedContent` slides player cards left/right matching navigation direction (250 ms)
-- **Hole jump:** `GolfCourse` icon + `DropdownMenu` button at bottom-right, lists all holes with a checkmark on the current one; max height 480 dp (~10 visible items), scrollable
+- **Hole transitions:** `AnimatedContent` slides player cards left/right matching navigation direction (250 ms); hole number springs from 82 % → 100 % with `Spring.DampingRatioMediumBouncy` on each navigation (`Animatable` + `LaunchedEffect`)
+- **Hole jump:** `GolfCourse` icon + `DropdownMenu` at bottom-right; max height 480 dp (~10 visible items); scrollable via inner `Column` + `verticalScroll`; `ExpandLess`/`ExpandMore` overlay arrows appear via `derivedStateOf` when content exists above/below the visible window
 
 ---
 
@@ -122,16 +122,21 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 Navigation is in `wear/navigation/WearNavigation.kt`. State comes from `RoundStateHolder.state` (a singleton `StateFlow` updated by `WearListenerService`).
 
 ### WearScorecardScreen layout
-- Course name in `FontFamily.Cursive` at the top
-- Hole number and ◀/▶ navigation buttons
-- Player cards: 3-letter abbreviation (24sp, bold, white) on left; −/+ score controls on right — `CompactButton` at 44 dp with solid primary-color background (filled circles), 22sp bold text; throw count displayed between buttons (0 shown as `"0"`)
+- Hole number ("Hole X / 18") in yellow `title1` at the top — no course name
+- **Hole navigation:** swipe left → next hole, swipe right → previous hole (`detectHorizontalDragGestures`, 40 dp threshold); no ◀/▶ buttons
+- Player cards: 2-letter abbreviation (24sp, normal weight, white) on left; −/+ score controls on right — `CompactButton` at 36 dp with solid primary-color background, 18sp bold text; throw count (0 shown as `"0"`) between buttons; card internal padding 2 dp top/bottom; 3 dp between cards
+- "End Round" chip is present in code but commented out — uncomment the `item { }` block in `WearScorecardScreen` to re-enable
 - Score for the displayed hole is read from `player.holeScores[currentHole]`; the watch navigates holes independently from the phone without needing a re-push
 
 ---
 
 ## How Scoring Works
 
-**First-press scoring:** When a hole score is 0 (not yet entered) and the user taps `+`, the score jumps to `maxOf(1, par − 1)` rather than 1. For a Par 3 hole the first tap enters 2 (birdie); a second tap enters 3 (par). This applies on both phone and watch. The par is looked up from `holes` (phone) or `roundState.holePars[currentHole]` (watch).
+**First-press scoring:** When a hole score is 0 (not yet entered), the first button press jumps to a smart default rather than incrementing from 0:
+- Tapping `−` → `maxOf(1, par − 1)` (birdie assumption — Par 3 enters 2)
+- Tapping `+` → `par` (even par assumption — Par 3 enters 3)
+
+Subsequent presses increment/decrement normally. Pressing `−` from any score > 0 decrements by 1 (reaching 0 clears the score back to "not entered"). Applies on both phone and watch. Par is looked up from `holes` (phone) or `roundState.holePars[currentHole]` (watch).
 
 1. User taps −/+ on a player row (phone or watch)
 2. Score is written to Room (`ScoreEntity` upsert)

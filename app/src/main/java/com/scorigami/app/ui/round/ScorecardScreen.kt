@@ -1,13 +1,19 @@
 package com.scorigami.app.ui.round
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -69,6 +75,16 @@ fun ScorecardScreen(
     var showPlayersSheet by remember { mutableStateOf(false) }
     var showMissingScoresDialog by remember { mutableStateOf(false) }
     var showScorecardSheet by remember { mutableStateOf(false) }
+
+    // Hole number spring-scale animation
+    val holeScale = remember { Animatable(1f) }
+    LaunchedEffect(state.currentHole) {
+        holeScale.snapTo(0.82f)
+        holeScale.animateTo(
+            1f,
+            spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessHigh)
+        )
+    }
 
     if (showMissingScoresDialog) {
         AlertDialog(
@@ -228,7 +244,8 @@ fun ScorecardScreen(
                             style = MaterialTheme.typography.headlineLarge,
                             fontSize = 44.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            color = HoleNumberColor
+                            color = HoleNumberColor,
+                            modifier = Modifier.scale(holeScale.value)
                         )
                         currentHoleEntity?.let {
                             Spacer(Modifier.height(8.dp))
@@ -337,20 +354,47 @@ private fun HoleJumpDropdown(
         }
         DropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier.heightIn(max = 480.dp)
+            onDismissRequest = { expanded = false }
         ) {
-            holes.forEach { hole ->
-                DropdownMenuItem(
-                    text = { Text("Hole ${hole.number}") },
-                    leadingIcon = if (hole.number == currentHole) {
-                        { Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp)) }
-                    } else null,
-                    onClick = {
-                        onHoleSelected(hole.number)
-                        expanded = false
+            val scrollState = rememberScrollState()
+            val canScrollUp by remember { derivedStateOf { scrollState.value > 0 } }
+            val canScrollDown by remember { derivedStateOf { scrollState.value < scrollState.maxValue } }
+
+            Box(modifier = Modifier.heightIn(max = 480.dp)) {
+                Column(modifier = Modifier.verticalScroll(scrollState)) {
+                    holes.forEach { hole ->
+                        DropdownMenuItem(
+                            text = { Text("Hole ${hole.number}") },
+                            leadingIcon = if (hole.number == currentHole) {
+                                { Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp)) }
+                            } else null,
+                            onClick = {
+                                onHoleSelected(hole.number)
+                                expanded = false
+                            }
+                        )
                     }
-                )
+                }
+                if (canScrollUp) {
+                    Icon(
+                        Icons.Default.ExpandLess,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 2.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                }
+                if (canScrollDown) {
+                    Icon(
+                        Icons.Default.ExpandMore,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 2.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                }
             }
         }
     }
@@ -503,15 +547,17 @@ private fun PlayerScoreCard(
             // − score + controls
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(
-                    onClick = { if (throwsThisHole > 0) onScoreChange(throwsThisHole - 1) },
-                    enabled = throwsThisHole > 0
+                    onClick = {
+                        val par = holes.find { it.number == currentHole }?.par ?: 3
+                        val next = if (throwsThisHole == 0) maxOf(1, par - 1) else throwsThisHole - 1
+                        onScoreChange(next)
+                    }
                 ) {
                     Text(
                         "−",
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (throwsThisHole > 0) Color.White
-                               else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                        color = Color.White
                     )
                 }
                 Text(
@@ -525,7 +571,7 @@ private fun PlayerScoreCard(
                 IconButton(
                     onClick = {
                         val par = holes.find { it.number == currentHole }?.par ?: 3
-                        val next = if (throwsThisHole == 0) maxOf(1, par - 1) else throwsThisHole + 1
+                        val next = if (throwsThisHole == 0) par else throwsThisHole + 1
                         onScoreChange(next)
                     }
                 ) {

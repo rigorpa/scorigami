@@ -1,14 +1,15 @@
 package com.scorigami.wear.ui
 
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -44,43 +45,37 @@ fun WearScorecardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .focusRequester(focusRequester)
-                .focusable(),
+                .focusable()
+                .pointerInput(currentHole, roundState.totalHoles) {
+                    var totalDrag = 0f
+                    detectHorizontalDragGestures(
+                        onDragStart = { totalDrag = 0f },
+                        onDragCancel = { totalDrag = 0f },
+                        onDragEnd = {
+                            val threshold = 40.dp.toPx()
+                            when {
+                                totalDrag < -threshold && currentHole < roundState.totalHoles -> onNextHole()
+                                totalDrag > threshold && currentHole > 1 -> onPrevHole()
+                            }
+                        },
+                        onHorizontalDrag = { change, dragAmount ->
+                            change.consume()
+                            totalDrag += dragAmount
+                        }
+                    )
+                },
             horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = PaddingValues(vertical = 24.dp, horizontal = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
+            contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp, start = 8.dp, end = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             item {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        roundState.courseName,
-                        fontFamily = FontFamily.Cursive,
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colors.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        "Hole $currentHole / ${roundState.totalHoles}",
-                        style = MaterialTheme.typography.title1,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = HoleNumberColor,
-                        textAlign = TextAlign.Center
-                    )
-                }
-            }
-
-            item {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CompactButton(onClick = onPrevHole, enabled = currentHole > 1) {
-                        Text("◀", fontSize = 12.sp)
-                    }
-                    CompactButton(onClick = onNextHole, enabled = currentHole < roundState.totalHoles) {
-                        Text("▶", fontSize = 12.sp)
-                    }
-                }
+                Text(
+                    "Hole $currentHole / ${roundState.totalHoles}",
+                    style = MaterialTheme.typography.title1,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = HoleNumberColor,
+                    textAlign = TextAlign.Center
+                )
             }
 
             items(roundState.players) { player ->
@@ -90,23 +85,25 @@ fun WearScorecardScreen(
                     player = player,
                     currentThrows = throwsThisHole,
                     onDecrement = {
-                        if (throwsThisHole > 0) onScoreChange(player.playerId, throwsThisHole - 1)
+                        val next = if (throwsThisHole == 0) maxOf(1, holePar - 1) else throwsThisHole - 1
+                        onScoreChange(player.playerId, next)
                     },
                     onIncrement = {
-                        val next = if (throwsThisHole == 0) maxOf(1, holePar - 1) else throwsThisHole + 1
+                        val next = if (throwsThisHole == 0) holePar else throwsThisHole + 1
                         onScoreChange(player.playerId, next)
                     }
                 )
             }
 
-            item {
-                Spacer(Modifier.height(4.dp))
-                Chip(
-                    onClick = onEndRound,
-                    label = { Text("End Round", fontSize = 12.sp) },
-                    colors = ChipDefaults.chipColors(backgroundColor = MaterialTheme.colors.error)
-                )
-            }
+            // End Round button — hidden for now, re-enable by uncommenting
+            // item {
+            //     Spacer(Modifier.height(4.dp))
+            //     Chip(
+            //         onClick = onEndRound,
+            //         label = { Text("End Round", fontSize = 12.sp) },
+            //         colors = ChipDefaults.chipColors(backgroundColor = MaterialTheme.colors.error)
+            //     )
+            // }
         }
     }
 }
@@ -120,7 +117,7 @@ private fun WearPlayerRow(
 ) {
     Card(onClick = {}, modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 5.dp, bottom = 5.dp),
+            modifier = Modifier.padding(start = 10.dp, end = 10.dp, top = 2.dp, bottom = 2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // 2-letter abbreviation
@@ -140,7 +137,6 @@ private fun WearPlayerRow(
                 CompactButton(
                     modifier = Modifier.size(36.dp),
                     onClick = onDecrement,
-                    enabled = currentThrows > 0,
                     colors = ButtonDefaults.buttonColors(
                         backgroundColor = MaterialTheme.colors.primary,
                         contentColor = Color.White,

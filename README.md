@@ -19,8 +19,10 @@ The app also runs on other Android devices (min Android 11 / API 30). A Pixel 4a
 - Add players before a round — previously used names are suggested automatically
 - Add or remove players mid-round via the scorecard overflow menu
 - Enter scores on the phone or the watch in real time, kept in sync via the Wearable Data Layer
-- Navigate between holes on both devices — swipe left/right on the phone, or tap the arrow buttons on either device; phone also has a hole-jump dropdown
-- Animated slide transition between holes on the phone (direction matches navigation)
+- **Smart first-press scoring:** tapping `−` from 0 enters birdie (par − 1); tapping `+` enters par — no need to tap up from zero every hole
+- Navigate between holes by swiping left/right on both the phone and the watch; phone also has a scrollable hole-jump dropdown
+- Animated slide transition and hole-number spring bounce on the phone when changing holes
+- View the full live scorecard mid-round via the table icon in the phone top bar
 - Player order on each hole reflects the honor system (lowest score on the previous hole throws first)
 - Cancel an in-progress round without saving it to history
 - Review the full scorecard before finalizing a round
@@ -102,6 +104,7 @@ The `:wear` APK is embedded in the `:app` build and installs to the paired watch
 
 | Version | Notes |
 |---|---|
+| 0.4.1 | Smart first-press scoring (− = birdie, + = par). Watch swipe navigation, compact watch layout (no course name/arrows, tighter cards). Phone: live scorecard sheet, spring-bounce hole transition, scrollable hole-jump with indicators, side-by-side finalize buttons. `holePars` added to RoundState sync. |
 | 0.3.6 | Sync reliability fix (per-hole scores in RoundState, dual delivery, watch polling fallback). Phone scorecard redesign: cursive course name, 3-letter player abbreviation, −/+ score entry, animated hole transitions, hole-jump dropdown. Watch scorecard matching redesign. |
 | 0.3.5 | Fix distances, player priority after previous score |
 | 0.3.4 | Reorder based on previous score, change player list in new round screen |
