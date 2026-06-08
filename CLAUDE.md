@@ -121,12 +121,30 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 
 Navigation is in `wear/navigation/WearNavigation.kt`. State comes from `RoundStateHolder.state` (a singleton `StateFlow` updated by `WearListenerService`).
 
-### WearScorecardScreen layout
-- Hole number ("Hole X / 18") in yellow `title1` at the top — no course name
-- **Hole navigation:** swipe left → next hole, swipe right → previous hole (`detectHorizontalDragGestures`, 40 dp threshold); no ◀/▶ buttons
-- Player cards: 2-letter abbreviation (24sp, normal weight, white) on left; −/+ score controls on right — `CompactButton` at 36 dp with solid primary-color background, 18sp bold text; throw count (0 shown as `"0"`) between buttons; card internal padding 2 dp top/bottom; 3 dp between cards
-- "End Round" chip is present in code but commented out — uncomment the `item { }` block in `WearScorecardScreen` to re-enable
-- Score for the displayed hole is read from `player.holeScores[currentHole]`; the watch navigates holes independently from the phone without needing a re-push
+### WearScorecardScreen layout — Sequential score entry (branch: `Before-Major-Wear-App-UI-Score-Entry`)
+
+The watch scorecard uses a **one-player-at-a-time** flow instead of showing all players simultaneously:
+
+1. Screen shows the current player (honor-sorted) with hole number, their name, −/+ controls, and an **Enter** button
+2. Tapping **Enter** commits the score to the phone and advances to the next player
+3. The last player's button reads **"Next Hole ▶"** — tapping it commits their score and navigates to the next hole automatically
+4. Swipe left/right still works to skip holes without entering scores
+
+**Layout per player:**
+- "Hole X / 18" in yellow `title2` (ExtraBold) at top
+- Player's full name in white `title1` (SemiBold), centered
+- −/+ `CompactButton` (36 dp, primary-color fill, 18sp) with score between them
+- Enter / Next Hole ▶ `Chip` centered below (slim 36 dp height)
+
+**Honor system on watch:** Players are sorted locally from `roundState.players` using `holeScores[currentHole - 1]` — the watch does not wait for a re-push from the phone. This ensures the correct order immediately when moving to a new hole.
+
+**`pendingScore` state:** keyed on `(currentPlayer.playerId, currentHole)` so it resets correctly per player per hole, even if the server pushes a reordered `roundState.players` mid-entry.
+
+**Navigation:** Uses standard `NavHost` (from `androidx.navigation.compose`) instead of `SwipeDismissableNavHost` to prevent the Wear OS system right-swipe dismiss gesture from conflicting with our swipe-to-previous-hole navigation. `androidx.navigation.compose` added to `wear/build.gradle.kts`.
+
+**Swipe:** `detectHorizontalDragGestures` on the full-screen `Box`, 40 dp threshold. Left → next hole, right → previous hole.
+
+**End Round chip** is present in code but commented out — uncomment the `Chip` block in `WearScorecardScreen` to re-enable.
 
 ---
 
@@ -190,7 +208,7 @@ On hole N, players are displayed sorted ascending by their score on hole N−1:
 
 - **Active round detection:** `roundDao.getActiveRound()` returns any round where `completedAt IS NULL`. Only one active round is expected at a time.
 - **Player reuse:** When starting a round, typing a name that already exists in the `players` table reuses that player (matched by name, case-sensitive). Same logic applies when adding a player mid-round.
-- **Score default:** A score of 0 means "not yet entered" — displayed as `—` in the UI. The minimum recorded score is 1.
+- **Score default:** A score of 0 means "not yet entered" — displayed as `"0"` in the UI (previously `"—"`). The minimum recorded score is 1.
 - **vs Par display:** Under par = green (primary color), even = neutral, over par = red (error color). Only the round total vs-par is shown on the phone scorecard; per-hole vs-par was intentionally removed.
 - **Hole distances:** `distanceFeet` is nullable on `HoleEntity`. Values are stored in feet; the scorecard converts to meters for display ("xxx ft / xxx m"). Courses created via the editor have no distance; the distance line is only shown when the value is non-null.
 - **holeScores in PlayerState:** The watch displays `player.holeScores[currentHole] ?: 0` for the score, not a pre-computed field. This lets the watch navigate holes independently without requesting a re-push from the phone. Both `RoundViewModel.doPushStateToWatch()` and `PhoneWearableListenerService.pushUpdatedState()` must populate this map when building `PlayerState`.
@@ -198,6 +216,21 @@ On hole N, players are displayed sorted ascending by their score on hole N−1:
 - **Watch polling fallback:** `WearViewModel.startPolling()` reads `DataClient` every 2 s while the watch is in the foreground (started in `onResume`, stopped in `onPause`). It calls `RoundStateHolder.update(null)` if no item is found, which navigates the watch to `NoRoundScreen` — this is the intended clear-state behavior.
 - **Player list reactivity:** `RoundViewModel.init` uses `combine(scoreFlow, playerFlow)` so adding/removing players updates the UI immediately without needing a score change to trigger it.
 - **No Gradle wrapper JAR** is included. Android Studio handles this automatically; for CLI use, run `gradle wrapper --gradle-version 8.9` once.
+
+---
+
+## Branch History
+
+### Branch `Before-Major-Wear-App-UI-Score-Entry` (2026-06-07)
+
+Major watch UX redesign. Created as a safety branch off `fedxps` before changes — revert here if needed.
+
+**Watch changes:**
+- Sequential score entry: one player at a time with Enter / Next Hole ▶ buttons
+- Honor system applied locally on the watch (`holeScores[currentHole - 1]` sort) — no phone re-push needed
+- Replaced `SwipeDismissableNavHost` → `NavHost` to fix right-swipe system dismiss conflict
+- Added `androidx.navigation.compose` to `wear/build.gradle.kts`
+- `pendingScore` keyed on player ID + hole (not player index) for correct reset on reorder
 
 ---
 
