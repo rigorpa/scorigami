@@ -9,8 +9,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Tomorrow Night Blue palette
-private val TnbBackground         = Color(0xFF002451)
+// Tomorrow Night Blue palette — true dark (OLED black background)
+private val TnbBackground         = Color(0xFF000000)
 private val TnbSurface            = Color(0xFF00346E)
 private val TnbSurfaceVariant     = Color(0xFF003A7A)
 private val TnbPrimary            = Color(0xFFBBDAFF)
