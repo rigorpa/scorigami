@@ -125,21 +125,20 @@ private fun HomeActionButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(56.dp),
+            .height(46.dp),
         enabled = enabled,
         colors = colors
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f)
         )
         Spacer(Modifier.width(8.dp))
         Icon(
             imageVector = icon,
             contentDescription = null,
-            modifier = Modifier.size(28.dp)
+            modifier = Modifier.size(22.dp)
         )
     }
 }
