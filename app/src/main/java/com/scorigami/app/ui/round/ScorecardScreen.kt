@@ -1,13 +1,21 @@
 package com.scorigami.app.ui.round
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.ui.draw.scale
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,6 +28,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.GolfCourse
+import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -60,13 +69,28 @@ fun ScorecardScreen(
     }
 
     val currentHoleEntity = state.holes.find { it.number == state.currentHole }
-    val hasMissingScores = state.players.any { player ->
-        state.holes.any { hole -> (state.scores[Pair(player.id, hole.number)] ?: 0) == 0 }
+    val incompleteHoles = remember(state.scores, state.players, state.holes) {
+        state.holes
+            .filter { hole -> state.players.any { player -> (state.scores[Pair(player.id, hole.number)] ?: 0) == 0 } }
+            .map { it.number }
+            .toSet()
     }
+    val hasMissingScores = incompleteHoles.isNotEmpty()
     var menuExpanded by remember { mutableStateOf(false) }
     var showCancelDialog by remember { mutableStateOf(false) }
     var showPlayersSheet by remember { mutableStateOf(false) }
     var showMissingScoresDialog by remember { mutableStateOf(false) }
+    var showScorecardSheet by remember { mutableStateOf(false) }
+
+    // Hole number spring-scale animation
+    val holeScale = remember { Animatable(1f) }
+    LaunchedEffect(state.currentHole) {
+        holeScale.snapTo(0.82f)
+        holeScale.animateTo(
+            1f,
+            spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessHigh)
+        )
+    }
 
     if (showMissingScoresDialog) {
         AlertDialog(
@@ -107,6 +131,16 @@ fun ScorecardScreen(
         )
     }
 
+    if (showScorecardSheet) {
+        ModalBottomSheet(onDismissRequest = { showScorecardSheet = false }) {
+            FullScorecardSheet(
+                players = state.players,
+                holes = state.holes,
+                scores = state.scores
+            )
+        }
+    }
+
     if (showPlayersSheet) {
         ModalBottomSheet(onDismissRequest = { showPlayersSheet = false }) {
             AddRemovePlayersSheet(
@@ -129,6 +163,9 @@ fun ScorecardScreen(
                     )
                 },
                 actions = {
+                    IconButton(onClick = { showScorecardSheet = true }) {
+                        Icon(Icons.Default.TableChart, contentDescription = "View scorecard")
+                    }
                     TextButton(onClick = {
                         if (hasMissingScores) showMissingScoresDialog = true else onEndRound()
                     }) {
@@ -213,7 +250,8 @@ fun ScorecardScreen(
                             style = MaterialTheme.typography.headlineLarge,
                             fontSize = 44.sp,
                             fontWeight = FontWeight.ExtraBold,
-                            color = HoleNumberColor
+                            color = HoleNumberColor,
+                            modifier = Modifier.scale(holeScale.value)
                         )
                         currentHoleEntity?.let {
                             Spacer(Modifier.height(8.dp))
@@ -295,6 +333,7 @@ fun ScorecardScreen(
                 HoleJumpDropdown(
                     currentHole = state.currentHole,
                     holes = state.holes,
+                    incompleteHoles = incompleteHoles,
                     onHoleSelected = { viewModel.navigateToHole(it) }
                 )
             }
@@ -306,6 +345,7 @@ fun ScorecardScreen(
 private fun HoleJumpDropdown(
     currentHole: Int,
     holes: List<HoleEntity>,
+    incompleteHoles: Set<Int>,
     onHoleSelected: (Int) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -324,17 +364,54 @@ private fun HoleJumpDropdown(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            holes.forEach { hole ->
-                DropdownMenuItem(
-                    text = { Text("Hole ${hole.number}") },
-                    leadingIcon = if (hole.number == currentHole) {
-                        { Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp)) }
-                    } else null,
-                    onClick = {
-                        onHoleSelected(hole.number)
-                        expanded = false
+            val scrollState = rememberScrollState()
+            val canScrollUp by remember { derivedStateOf { scrollState.value > 0 } }
+            val canScrollDown by remember { derivedStateOf { scrollState.value < scrollState.maxValue } }
+
+            Box(modifier = Modifier.heightIn(max = 480.dp)) {
+                Column(modifier = Modifier.verticalScroll(scrollState)) {
+                    holes.forEach { hole ->
+                        DropdownMenuItem(
+                            text = { Text("Hole ${hole.number}") },
+                            leadingIcon = if (hole.number == currentHole) {
+                                { Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp)) }
+                            } else null,
+                            trailingIcon = if (hole.number in incompleteHoles) {
+                                {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .background(Color(0xFFFFB300), CircleShape)
+                                    )
+                                }
+                            } else null,
+                            onClick = {
+                                onHoleSelected(hole.number)
+                                expanded = false
+                            }
+                        )
                     }
-                )
+                }
+                if (canScrollUp) {
+                    Icon(
+                        Icons.Default.ExpandLess,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 2.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                }
+                if (canScrollDown) {
+                    Icon(
+                        Icons.Default.ExpandMore,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 2.dp),
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                }
             }
         }
     }
@@ -443,6 +520,13 @@ private fun PlayerScoreCard(
         .filter { hole -> playerScores.any { it.key.second == hole.number } }
         .sumOf { it.par }
     val totalVsPar = totalThrows - parSoFar
+    val holePar = holes.find { it.number == currentHole }?.par ?: 3
+    val scoreColor = when {
+        throwsThisHole == 0 -> Color.White
+        throwsThisHole < holePar -> Color(0xFF81C784)
+        throwsThisHole == holePar -> Color.White
+        else -> MaterialTheme.colorScheme.error
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -487,27 +571,31 @@ private fun PlayerScoreCard(
             // − score + controls
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(
-                    onClick = { if (throwsThisHole > 0) onScoreChange(throwsThisHole - 1) },
-                    enabled = throwsThisHole > 0
+                    onClick = {
+                        val next = if (throwsThisHole == 0) maxOf(1, holePar - 1) else throwsThisHole - 1
+                        onScoreChange(next)
+                    }
                 ) {
                     Text(
                         "−",
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (throwsThisHole > 0) Color.White
-                               else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                        color = Color.White
                     )
                 }
                 Text(
                     text = if (throwsThisHole == 0) "—" else "$throwsThisHole",
                     fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color.White,
+                    color = scoreColor,
                     modifier = Modifier.widthIn(min = 40.dp),
                     textAlign = TextAlign.Center
                 )
                 IconButton(
-                    onClick = { onScoreChange(throwsThisHole + 1) }
+                    onClick = {
+                        val next = if (throwsThisHole == 0) holePar else throwsThisHole + 1
+                        onScoreChange(next)
+                    }
                 ) {
                     Text(
                         "+",
@@ -532,4 +620,71 @@ private fun vsParColor(vsPar: Int) = when {
     vsPar < 0 -> MaterialTheme.colorScheme.primary
     vsPar == 0 -> MaterialTheme.colorScheme.onSurface
     else -> MaterialTheme.colorScheme.error
+}
+
+@Composable
+private fun FullScorecardSheet(
+    players: List<PlayerEntity>,
+    holes: List<HoleEntity>,
+    scores: Map<Pair<Long, Int>, Int>
+) {
+    LazyColumn(
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.padding(bottom = 32.dp)
+    ) {
+        items(players, key = { it.id }) { player ->
+            val playerScores = scores.entries.filter { it.key.first == player.id }
+            val totalThrows = playerScores.sumOf { it.value }
+            val parSoFar = holes.filter { scores[Pair(player.id, it.number)] != null }.sumOf { it.par }
+            val totalVsPar = totalThrows - parSoFar
+
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(player.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            text = formatVsPar(totalVsPar),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = vsParColor(totalVsPar)
+                        )
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    HorizontalDivider()
+                    Spacer(Modifier.height(8.dp))
+                    holes.chunked(9).forEach { group ->
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            group.forEach { hole ->
+                                val throws = scores[Pair(player.id, hole.number)]
+                                val vsPar = throws?.minus(hole.par)
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "${hole.number}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = vsPar?.let { formatVsPar(it) } ?: "—",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = vsPar?.let { vsParColor(it) } ?: MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(4.dp))
+                    }
+                }
+            }
+        }
+    }
 }

@@ -31,16 +31,24 @@ fun RoundReviewScreen(
             TopAppBar(title = { Text("Review Scores") })
         },
         bottomBar = {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onBack, modifier = Modifier.fillMaxWidth()) {
-                    Text("Go Back & Edit Scores")
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Button(
+                    onClick = onBack,
+                    modifier = Modifier.weight(1f).height(56.dp)
+                ) {
+                    Text("Edit Scores", textAlign = TextAlign.Center)
                 }
                 Button(
                     onClick = { showConfirmDialog = true },
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.weight(1f).height(56.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
-                    Text("Confirm & Finish Round")
+                    Text("Confirm & Finish", textAlign = TextAlign.Center)
                 }
             }
         }

@@ -3,11 +3,17 @@ package com.scorigami.app.ui.home
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Adjust
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Park
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -65,41 +71,33 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(56.dp))
 
                 if (state.isActive) {
-                    Button(
+                    HomeActionButton(
+                        text = "Resume Round — ${state.courseName}",
+                        icon = Icons.Default.PlayArrow,
                         onClick = onResume,
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                    ) {
-                        Text("Resume Round — ${state.courseName}")
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
 
-                Button(
+                HomeActionButton(
+                    text = "Start New Round",
+                    icon = Icons.Default.Adjust,
                     onClick = onStartRound,
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp),
                     enabled = !state.isActive
-                ) {
-                    Text("Start New Round")
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                OutlinedButton(
-                    onClick = onCourses,
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp)
-                ) {
-                    Text("My Courses")
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                OutlinedButton(
-                    onClick = onHistory,
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 14.dp)
-                ) {
-                    Text("Round History")
-                }
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                HomeActionButton(
+                    text = "My Courses",
+                    icon = Icons.Default.Park,
+                    onClick = onCourses
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                HomeActionButton(
+                    text = "Round History",
+                    icon = Icons.Default.History,
+                    onClick = onHistory
+                )
             }
 
             Text(
@@ -111,5 +109,39 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+    }
+}
+
+@Composable
+private fun HomeActionButton(
+    text: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    colors: ButtonColors = ButtonDefaults.buttonColors()
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(62.dp),
+        shape = RoundedCornerShape(14.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp),
+        enabled = enabled,
+        colors = colors
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f)
+        )
+        Spacer(Modifier.width(8.dp))
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(28.dp)
+        )
     }
 }

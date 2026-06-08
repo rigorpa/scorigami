@@ -8,7 +8,8 @@ data class RoundState(
     val courseName: String,
     val currentHole: Int,
     val totalHoles: Int,
-    val players: List<PlayerState>
+    val players: List<PlayerState>,
+    val holePars: Map<Int, Int> = emptyMap()
 )
 
 @Serializable

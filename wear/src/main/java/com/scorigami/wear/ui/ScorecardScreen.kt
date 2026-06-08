@@ -1,23 +1,24 @@
 package com.scorigami.wear.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
-import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
-import com.scorigami.shared.sync.PlayerState
+import androidx.wear.compose.material.dialog.Dialog
 import com.scorigami.shared.sync.RoundState
 
 private val HoleNumberColor = Color(0xFFFFD60A)
@@ -29,143 +30,262 @@ fun WearScorecardScreen(
     onPrevHole: () -> Unit,
     onNextHole: () -> Unit,
     onEndRound: () -> Unit,
-    onScoreChange: (playerId: Long, throws: Int) -> Unit
+    onScoreChange: (playerId: Long, throws: Int) -> Unit,
+    onJumpToHole: (Int) -> Unit
 ) {
-    val listState = rememberScalingLazyListState()
     val focusRequester = remember { FocusRequester() }
+    var showHoleJump by remember { mutableStateOf(false) }
+    var showTeeOrder by remember { mutableStateOf(false) }
 
+    // Mirror the phone's honor-system sort: primary key is score on the previous hole,
+    // ties broken by the hole before that, cascading back to hole 1, then DB order.
+    val players = remember(roundState.players, currentHole) {
+        if (currentHole <= 1) roundState.players
+        else roundState.players.sortedWith(
+            Comparator { a, b ->
+                for (h in currentHole - 1 downTo 1) {
+                    val sa = a.holeScores[h] ?: Int.MAX_VALUE
+                    val sb = b.holeScores[h] ?: Int.MAX_VALUE
+                    if (sa != sb) return@Comparator sa - sb
+                }
+                0
+            }
+        )
+    }
+
+    var currentPlayerIndex by remember { mutableIntStateOf(0) }
+
+    // Reset to first player whenever the hole changes
+    LaunchedEffect(currentHole) { currentPlayerIndex = 0 }
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
-    Scaffold(
-        positionIndicator = { PositionIndicator(scalingLazyListState = listState) }
-    ) {
-        ScalingLazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .focusRequester(focusRequester)
-                .focusable(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = PaddingValues(vertical = 24.dp, horizontal = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            item {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        roundState.courseName,
-                        fontFamily = FontFamily.Cursive,
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colors.onSurfaceVariant,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(Modifier.height(4.dp))
+    val currentPlayer = players.getOrNull(currentPlayerIndex) ?: return
+    val holePar = roundState.holePars[currentHole] ?: 3
+    val isLastPlayer = currentPlayerIndex == players.lastIndex
+
+    // Key on player ID (not index) so pendingScore resets correctly if the list reorders
+    var pendingScore by remember(currentPlayer.playerId, currentHole) {
+        mutableIntStateOf(currentPlayer.holeScores[currentHole] ?: 0)
+    }
+
+    fun commitAndAdvance() {
+        if (pendingScore > 0) onScoreChange(currentPlayer.playerId, pendingScore)
+        if (isLastPlayer) {
+            onNextHole()
+        } else {
+            currentPlayerIndex++
+        }
+    }
+
+    Scaffold {
+        if (showHoleJump) {
+            val listState = rememberScalingLazyListState(initialCenterItemIndex = currentHole - 1)
+            val incompleteHoles = remember(roundState.players) {
+                (1..roundState.totalHoles).filter { holeNum ->
+                    roundState.players.any { player -> (player.holeScores[holeNum] ?: 0) == 0 }
+                }.toSet()
+            }
+            Box(modifier = Modifier.fillMaxSize()) {
+                ScalingLazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    items(roundState.totalHoles) { index ->
+                        val holeNum = index + 1
+                        val incomplete = holeNum in incompleteHoles
+                        Chip(
+                            onClick = {
+                                onJumpToHole(holeNum)
+                                showHoleJump = false
+                            },
+                            label = {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("Hole $holeNum", fontSize = 14.sp, maxLines = 1)
+                                    if (incomplete) {
+                                        Spacer(Modifier.width(5.dp))
+                                        Box(
+                                            modifier = Modifier
+                                                .size(6.dp)
+                                                .background(Color(0xFFFFB300), CircleShape)
+                                        )
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth(0.8f)
+                                .height(36.dp),
+                            colors = if (holeNum == currentHole)
+                                ChipDefaults.primaryChipColors()
+                            else
+                                ChipDefaults.secondaryChipColors()
+                        )
+                    }
+                }
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .focusRequester(focusRequester)
+                    .focusable(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) {
+                    // Hole indicator — tappable to open hole-jump picker
                     Text(
                         "Hole $currentHole / ${roundState.totalHoles}",
-                        style = MaterialTheme.typography.title1,
+                        style = MaterialTheme.typography.title2,
                         fontWeight = FontWeight.ExtraBold,
                         color = HoleNumberColor,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.clickable { showHoleJump = true }
                     )
+
+                    // Current player name — tap to show tee order
+                    Text(
+                        currentPlayer.name,
+                        style = MaterialTheme.typography.title1,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        modifier = Modifier.clickable { showTeeOrder = true }
+                    )
+
+                    // − score + controls
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        CompactButton(
+                            modifier = Modifier.size(36.dp),
+                            onClick = {
+                                pendingScore = if (pendingScore == 0) maxOf(1, holePar - 1) else pendingScore - 1
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = MaterialTheme.colors.primary,
+                                contentColor = MaterialTheme.colors.onPrimary,
+                                disabledBackgroundColor = MaterialTheme.colors.primary.copy(alpha = 0.3f),
+                                disabledContentColor = MaterialTheme.colors.onPrimary.copy(alpha = 0.3f)
+                            )
+                        ) {
+                            Text("−", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        }
+                        val scoreColor = when {
+                            pendingScore == 0 -> Color.White
+                            pendingScore < holePar -> Color(0xFF81C784)
+                            pendingScore == holePar -> Color.White
+                            else -> MaterialTheme.colors.error
+                        }
+                        Text(
+                            text = pendingScore.toString(),
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = scoreColor,
+                            modifier = Modifier.widthIn(min = 28.dp),
+                            textAlign = TextAlign.Center
+                        )
+                        CompactButton(
+                            modifier = Modifier.size(36.dp),
+                            onClick = {
+                                pendingScore = if (pendingScore == 0) holePar else pendingScore + 1
+                            },
+                            enabled = pendingScore < 20,
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = MaterialTheme.colors.primary,
+                                contentColor = MaterialTheme.colors.onPrimary,
+                                disabledBackgroundColor = MaterialTheme.colors.primary.copy(alpha = 0.3f),
+                                disabledContentColor = MaterialTheme.colors.onPrimary.copy(alpha = 0.3f)
+                            )
+                        ) {
+                            Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    // Enter / Next Hole button
+                    Chip(
+                        onClick = ::commitAndAdvance,
+                        label = {
+                            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                Text(
+                                    if (isLastPlayer) "Next Hole ▶" else "Enter",
+                                    fontSize = 13.sp,
+                                    maxLines = 1
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth(if (isLastPlayer) 0.72f else 0.52f)
+                            .height(36.dp),
+                        colors = ChipDefaults.primaryChipColors()
+                    )
+
+                    // End Round button — hidden for now, re-enable by uncommenting
+                    // Chip(
+                    //     onClick = onEndRound,
+                    //     label = { Text("End Round", fontSize = 12.sp) },
+                    //     modifier = Modifier.fillMaxWidth(0.65f),
+                    //     colors = ChipDefaults.chipColors(backgroundColor = MaterialTheme.colors.error)
+                    // )
                 }
-            }
-
-            item {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CompactButton(onClick = onPrevHole, enabled = currentHole > 1) {
-                        Text("◀", fontSize = 12.sp)
-                    }
-                    CompactButton(onClick = onNextHole, enabled = currentHole < roundState.totalHoles) {
-                        Text("▶", fontSize = 12.sp)
-                    }
-                }
-            }
-
-            items(roundState.players) { player ->
-                val throwsThisHole = player.holeScores[currentHole] ?: 0
-                WearPlayerRow(
-                    player = player,
-                    currentThrows = throwsThisHole,
-                    onDecrement = {
-                        if (throwsThisHole > 0) onScoreChange(player.playerId, throwsThisHole - 1)
-                    },
-                    onIncrement = {
-                        onScoreChange(player.playerId, throwsThisHole + 1)
-                    }
-                )
-            }
-
-            item {
-                Spacer(Modifier.height(4.dp))
-                Chip(
-                    onClick = onEndRound,
-                    label = { Text("End Round", fontSize = 12.sp) },
-                    colors = ChipDefaults.chipColors(backgroundColor = MaterialTheme.colors.error)
-                )
             }
         }
     }
-}
 
-@Composable
-private fun WearPlayerRow(
-    player: PlayerState,
-    currentThrows: Int,
-    onDecrement: () -> Unit,
-    onIncrement: () -> Unit
-) {
-    Card(onClick = {}, modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.padding(start = 10.dp, end = 2.dp, top = 8.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+    // Tee order popup — shown when player name is tapped
+    if (showTeeOrder) {
+        Dialog(
+            showDialog = true,
+            onDismissRequest = { showTeeOrder = false }
         ) {
-            // 3-letter abbreviation — width sized for 3 uppercase chars at 24sp
-            Text(
-                text = player.name.take(3).uppercase(),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White,
-                modifier = Modifier.width(56.dp),
-                maxLines = 1
-            )
-
-            Spacer(Modifier.weight(1f))
-
-            // − score + (transparent background, no circle)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                CompactButton(
-                    onClick = onDecrement,
-                    enabled = currentThrows > 0,
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Color.Transparent,
-                        contentColor = Color.White,
-                        disabledBackgroundColor = Color.Transparent,
-                        disabledContentColor = Color.White.copy(alpha = 0.3f)
-                    )
+            Card(
+                onClick = { showTeeOrder = false },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Text("−", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                }
-                Text(
-                    text = if (currentThrows == 0) "—" else currentThrows.toString(),
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White,
-                    modifier = Modifier.widthIn(min = 28.dp),
-                    textAlign = TextAlign.Center
-                )
-                CompactButton(
-                    onClick = onIncrement,
-                    enabled = currentThrows < 20,
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Color.Transparent,
-                        contentColor = Color.White,
-                        disabledBackgroundColor = Color.Transparent,
-                        disabledContentColor = Color.White.copy(alpha = 0.3f)
+                    Text(
+                        "Tee Order",
+                        style = MaterialTheme.typography.title3,
+                        fontWeight = FontWeight.Bold,
+                        color = HoleNumberColor,
+                        textAlign = TextAlign.Center
                     )
-                ) {
-                    Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(2.dp))
+                    players.forEachIndexed { i, player ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "${i + 1}.",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colors.onSurfaceVariant,
+                                modifier = Modifier.width(18.dp)
+                            )
+                            Text(
+                                player.name,
+                                fontSize = 12.sp,
+                                fontWeight = if (player.playerId == currentPlayer.playerId)
+                                    FontWeight.Bold else FontWeight.Normal,
+                                color = if (player.playerId == currentPlayer.playerId)
+                                    MaterialTheme.colors.primary else Color.White,
+                                maxLines = 1
+                            )
+                        }
+                    }
                 }
             }
         }

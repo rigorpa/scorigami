@@ -69,6 +69,7 @@ class PhoneWearableListenerService : WearableListenerService() {
             courseName = courseWithHoles.course.name,
             currentHole = currentHole,
             totalHoles = courseWithHoles.holes.size,
+            holePars = courseWithHoles.holes.associate { it.number to it.par },
             players = players.map { player ->
                 val playerHoleScores = scoreMap.entries
                     .filter { it.key.first == player.id }

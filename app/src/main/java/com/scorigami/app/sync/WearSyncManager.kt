@@ -22,25 +22,18 @@ import javax.inject.Singleton
 class WearSyncManager @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
-    private val dataClient    = Wearable.getDataClient(context)
-    private val nodeClient    = Wearable.getNodeClient(context)
-    private val messageClient = Wearable.getMessageClient(context)
+    private val dataClient = Wearable.getDataClient(context)
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     fun pushRoundState(state: RoundState) {
         scope.launch {
             try {
-                val nodes = nodeClient.connectedNodes.await()
                 val json = Json.encodeToString(state)
-                val bytes = json.toByteArray(Charsets.UTF_8)
                 val request = PutDataMapRequest.create(SyncKeys.ROUND_STATE_PATH).apply {
                     dataMap.putString("state", json)
                     dataMap.putLong("ts", System.currentTimeMillis())
                 }
                 dataClient.putDataItem(request.asPutDataRequest().setUrgent()).await()
-                nodes.forEach { node ->
-                    messageClient.sendMessage(node.id, SyncKeys.ROUND_STATE_MSG, bytes).await()
-                }
             } catch (e: Exception) {
                 Log.w("WearSync", "pushRoundState failed", e)
             }

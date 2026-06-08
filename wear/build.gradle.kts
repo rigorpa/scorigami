@@ -15,8 +15,8 @@ android {
         applicationId = "com.scorigami.app"
         minSdk = 30
         targetSdk = 35
-        versionCode = 10
-        versionName = "0.4.0"
+        versionCode = 13
+        versionName = "0.4.3"
     }
 
     buildTypes {
@@ -53,6 +53,7 @@ dependencies {
     implementation(libs.wear.compose.material)
     implementation(libs.wear.compose.foundation)
     implementation(libs.wear.compose.navigation)
+    implementation(libs.androidx.navigation.compose)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
