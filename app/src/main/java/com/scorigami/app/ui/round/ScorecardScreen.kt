@@ -11,8 +11,10 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.ui.draw.scale
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -67,9 +69,13 @@ fun ScorecardScreen(
     }
 
     val currentHoleEntity = state.holes.find { it.number == state.currentHole }
-    val hasMissingScores = state.players.any { player ->
-        state.holes.any { hole -> (state.scores[Pair(player.id, hole.number)] ?: 0) == 0 }
+    val incompleteHoles = remember(state.scores, state.players, state.holes) {
+        state.holes
+            .filter { hole -> state.players.any { player -> (state.scores[Pair(player.id, hole.number)] ?: 0) == 0 } }
+            .map { it.number }
+            .toSet()
     }
+    val hasMissingScores = incompleteHoles.isNotEmpty()
     var menuExpanded by remember { mutableStateOf(false) }
     var showCancelDialog by remember { mutableStateOf(false) }
     var showPlayersSheet by remember { mutableStateOf(false) }
@@ -327,6 +333,7 @@ fun ScorecardScreen(
                 HoleJumpDropdown(
                     currentHole = state.currentHole,
                     holes = state.holes,
+                    incompleteHoles = incompleteHoles,
                     onHoleSelected = { viewModel.navigateToHole(it) }
                 )
             }
@@ -338,6 +345,7 @@ fun ScorecardScreen(
 private fun HoleJumpDropdown(
     currentHole: Int,
     holes: List<HoleEntity>,
+    incompleteHoles: Set<Int>,
     onHoleSelected: (Int) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -367,6 +375,15 @@ private fun HoleJumpDropdown(
                             text = { Text("Hole ${hole.number}") },
                             leadingIcon = if (hole.number == currentHole) {
                                 { Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp)) }
+                            } else null,
+                            trailingIcon = if (hole.number in incompleteHoles) {
+                                {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .background(Color(0xFFFFB300), CircleShape)
+                                    )
+                                }
                             } else null,
                             onClick = {
                                 onHoleSelected(hole.number)
