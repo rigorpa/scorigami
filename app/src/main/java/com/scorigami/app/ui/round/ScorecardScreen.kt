@@ -503,6 +503,13 @@ private fun PlayerScoreCard(
         .filter { hole -> playerScores.any { it.key.second == hole.number } }
         .sumOf { it.par }
     val totalVsPar = totalThrows - parSoFar
+    val holePar = holes.find { it.number == currentHole }?.par ?: 3
+    val scoreColor = when {
+        throwsThisHole == 0 -> Color.White
+        throwsThisHole < holePar -> Color(0xFF81C784)
+        throwsThisHole == holePar -> Color.White
+        else -> MaterialTheme.colorScheme.error
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -548,8 +555,7 @@ private fun PlayerScoreCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(
                     onClick = {
-                        val par = holes.find { it.number == currentHole }?.par ?: 3
-                        val next = if (throwsThisHole == 0) maxOf(1, par - 1) else throwsThisHole - 1
+                        val next = if (throwsThisHole == 0) maxOf(1, holePar - 1) else throwsThisHole - 1
                         onScoreChange(next)
                     }
                 ) {
@@ -564,14 +570,13 @@ private fun PlayerScoreCard(
                     text = "$throwsThisHole",
                     fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = Color.White,
+                    color = scoreColor,
                     modifier = Modifier.widthIn(min = 40.dp),
                     textAlign = TextAlign.Center
                 )
                 IconButton(
                     onClick = {
-                        val par = holes.find { it.number == currentHole }?.par ?: 3
-                        val next = if (throwsThisHole == 0) par else throwsThisHole + 1
+                        val next = if (throwsThisHole == 0) holePar else throwsThisHole + 1
                         onScoreChange(next)
                     }
                 ) {

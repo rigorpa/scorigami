@@ -37,6 +37,19 @@ class WearViewModel @Inject constructor(
 
     private val _currentHole = MutableStateFlow(1)
     private var pollingJob: Job? = null
+    private var lastKnownRoundId: Long? = null
+
+    init {
+        viewModelScope.launch {
+            RoundStateHolder.state.collect { roundState ->
+                val incomingId = roundState?.roundId
+                if (incomingId != null && incomingId != lastKnownRoundId) {
+                    _currentHole.value = 1
+                }
+                lastKnownRoundId = incomingId
+            }
+        }
+    }
 
     fun startPolling() {
         if (pollingJob?.isActive == true) return

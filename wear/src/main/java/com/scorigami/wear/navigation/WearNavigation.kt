@@ -1,11 +1,15 @@
 package com.scorigami.wear.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.wear.compose.material.MaterialTheme
 import com.scorigami.wear.ui.EndRoundPromptScreen
 import com.scorigami.wear.ui.NoRoundScreen
 import com.scorigami.wear.ui.WearScorecardScreen
@@ -26,7 +30,10 @@ fun WearNavigation(viewModel: WearViewModel = hiltViewModel()) {
 
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = startDestination,
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colors.background)
     ) {
         composable(WearScreen.NoRound.route) {
             NoRoundScreen()
@@ -51,7 +58,8 @@ fun WearNavigation(viewModel: WearViewModel = hiltViewModel()) {
                         holeNumber = uiState.currentHole,
                         throws = throws
                     )
-                }
+                },
+                onJumpToHole = { hole -> viewModel.navigateToHole(hole) }
             )
         }
 

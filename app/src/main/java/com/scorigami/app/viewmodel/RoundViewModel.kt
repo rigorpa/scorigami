@@ -207,7 +207,7 @@ class RoundViewModel @Inject constructor(
             currentHole = state.currentHole,
             totalHoles = state.holes.size,
             holePars = state.holes.associate { it.number to it.par },
-            players = state.players.map { player ->
+            players = state.basePlayers.map { player ->
                 val playerHoleScores = state.scores.entries
                     .filter { it.key.first == player.id }
                     .associate { it.key.second to it.value }
