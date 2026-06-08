@@ -125,9 +125,7 @@ private fun HomeActionButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(62.dp),
-        shape = RoundedCornerShape(14.dp),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 0.dp),
+            .height(56.dp),
         enabled = enabled,
         colors = colors
     ) {
