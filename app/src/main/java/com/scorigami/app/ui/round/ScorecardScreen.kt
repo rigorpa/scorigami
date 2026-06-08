@@ -567,7 +567,7 @@ private fun PlayerScoreCard(
                     )
                 }
                 Text(
-                    text = "$throwsThisHole",
+                    text = if (throwsThisHole == 0) "—" else "$throwsThisHole",
                     fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = scoreColor,
