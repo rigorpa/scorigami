@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
+import androidx.wear.compose.material.dialog.Dialog
 import com.scorigami.shared.sync.RoundState
 
 private val HoleNumberColor = Color(0xFFFFD60A)
@@ -34,6 +35,7 @@ fun WearScorecardScreen(
 ) {
     val focusRequester = remember { FocusRequester() }
     var showHoleJump by remember { mutableStateOf(false) }
+    var showTeeOrder by remember { mutableStateOf(false) }
 
     // Mirror the phone's honor-system sort so the watch doesn't have to wait for a
     // re-push: sort by each player's score on the previous hole, lowest first.
@@ -158,14 +160,15 @@ fun WearScorecardScreen(
                         modifier = Modifier.clickable { showHoleJump = true }
                     )
 
-                    // Current player name
+                    // Current player name — tap to show tee order
                     Text(
                         currentPlayer.name,
                         style = MaterialTheme.typography.title1,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White,
                         textAlign = TextAlign.Center,
-                        maxLines = 1
+                        maxLines = 1,
+                        modifier = Modifier.clickable { showTeeOrder = true }
                     )
 
                     // − score + controls
@@ -243,6 +246,56 @@ fun WearScorecardScreen(
                     //     modifier = Modifier.fillMaxWidth(0.65f),
                     //     colors = ChipDefaults.chipColors(backgroundColor = MaterialTheme.colors.error)
                     // )
+                }
+            }
+        }
+    }
+
+    // Tee order popup — shown when player name is tapped
+    if (showTeeOrder) {
+        Dialog(
+            showDialog = true,
+            onDismissRequest = { showTeeOrder = false }
+        ) {
+            Card(
+                onClick = { showTeeOrder = false },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        "Tee Order",
+                        style = MaterialTheme.typography.title3,
+                        fontWeight = FontWeight.Bold,
+                        color = HoleNumberColor,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    players.forEachIndexed { i, player ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "${i + 1}.",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colors.onSurfaceVariant,
+                                modifier = Modifier.width(18.dp)
+                            )
+                            Text(
+                                player.name,
+                                fontSize = 12.sp,
+                                fontWeight = if (player.playerId == currentPlayer.playerId)
+                                    FontWeight.Bold else FontWeight.Normal,
+                                color = if (player.playerId == currentPlayer.playerId)
+                                    MaterialTheme.colors.primary else Color.White,
+                                maxLines = 1
+                            )
+                        }
+                    }
                 }
             }
         }
