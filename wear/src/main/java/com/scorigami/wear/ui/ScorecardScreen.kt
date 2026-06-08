@@ -1,10 +1,10 @@
 package com.scorigami.wear.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
+import androidx.wear.compose.material.dialog.Dialog
 import com.scorigami.shared.sync.RoundState
 
 private val HoleNumberColor = Color(0xFFFFD60A)
@@ -34,13 +35,21 @@ fun WearScorecardScreen(
 ) {
     val focusRequester = remember { FocusRequester() }
     var showHoleJump by remember { mutableStateOf(false) }
+    var showTeeOrder by remember { mutableStateOf(false) }
 
-    // Mirror the phone's honor-system sort so the watch doesn't have to wait for a
-    // re-push: sort by each player's score on the previous hole, lowest first.
+    // Mirror the phone's honor-system sort: primary key is score on the previous hole,
+    // ties broken by the hole before that, cascading back to hole 1, then DB order.
     val players = remember(roundState.players, currentHole) {
         if (currentHole <= 1) roundState.players
         else roundState.players.sortedWith(
-            compareBy { it.holeScores[currentHole - 1] ?: Int.MAX_VALUE }
+            Comparator { a, b ->
+                for (h in currentHole - 1 downTo 1) {
+                    val sa = a.holeScores[h] ?: Int.MAX_VALUE
+                    val sb = b.holeScores[h] ?: Int.MAX_VALUE
+                    if (sa != sb) return@Comparator sa - sb
+                }
+                0
+            }
         )
     }
 
@@ -60,7 +69,7 @@ fun WearScorecardScreen(
     }
 
     fun commitAndAdvance() {
-        onScoreChange(currentPlayer.playerId, pendingScore)
+        if (pendingScore > 0) onScoreChange(currentPlayer.playerId, pendingScore)
         if (isLastPlayer) {
             onNextHole()
         } else {
@@ -71,24 +80,12 @@ fun WearScorecardScreen(
     Scaffold {
         if (showHoleJump) {
             val listState = rememberScalingLazyListState(initialCenterItemIndex = currentHole - 1)
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(Unit) {
-                        var totalDrag = 0f
-                        detectHorizontalDragGestures(
-                            onDragStart = { totalDrag = 0f },
-                            onDragCancel = { totalDrag = 0f },
-                            onDragEnd = {
-                                if (totalDrag > 40.dp.toPx()) showHoleJump = false
-                            },
-                            onHorizontalDrag = { change, dragAmount ->
-                                change.consume()
-                                totalDrag += dragAmount
-                            }
-                        )
-                    }
-            ) {
+            val incompleteHoles = remember(roundState.players) {
+                (1..roundState.totalHoles).filter { holeNum ->
+                    roundState.players.any { player -> (player.holeScores[holeNum] ?: 0) == 0 }
+                }.toSet()
+            }
+            Box(modifier = Modifier.fillMaxSize()) {
                 ScalingLazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
@@ -96,14 +93,27 @@ fun WearScorecardScreen(
                 ) {
                     items(roundState.totalHoles) { index ->
                         val holeNum = index + 1
+                        val incomplete = holeNum in incompleteHoles
                         Chip(
                             onClick = {
                                 onJumpToHole(holeNum)
                                 showHoleJump = false
                             },
                             label = {
-                                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
                                     Text("Hole $holeNum", fontSize = 14.sp, maxLines = 1)
+                                    if (incomplete) {
+                                        Spacer(Modifier.width(5.dp))
+                                        Box(
+                                            modifier = Modifier
+                                                .size(6.dp)
+                                                .background(Color(0xFFFFB300), CircleShape)
+                                        )
+                                    }
                                 }
                             },
                             modifier = Modifier
@@ -122,25 +132,7 @@ fun WearScorecardScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .focusRequester(focusRequester)
-                    .focusable()
-                    .pointerInput(currentHole, roundState.totalHoles) {
-                        var totalDrag = 0f
-                        detectHorizontalDragGestures(
-                            onDragStart = { totalDrag = 0f },
-                            onDragCancel = { totalDrag = 0f },
-                            onDragEnd = {
-                                val threshold = 40.dp.toPx()
-                                when {
-                                    totalDrag < -threshold && currentHole < roundState.totalHoles -> onNextHole()
-                                    totalDrag > threshold && currentHole > 1 -> onPrevHole()
-                                }
-                            },
-                            onHorizontalDrag = { change, dragAmount ->
-                                change.consume()
-                                totalDrag += dragAmount
-                            }
-                        )
-                    },
+                    .focusable(),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
@@ -158,14 +150,15 @@ fun WearScorecardScreen(
                         modifier = Modifier.clickable { showHoleJump = true }
                     )
 
-                    // Current player name
+                    // Current player name — tap to show tee order
                     Text(
                         currentPlayer.name,
                         style = MaterialTheme.typography.title1,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White,
                         textAlign = TextAlign.Center,
-                        maxLines = 1
+                        maxLines = 1,
+                        modifier = Modifier.clickable { showTeeOrder = true }
                     )
 
                     // − score + controls
@@ -243,6 +236,56 @@ fun WearScorecardScreen(
                     //     modifier = Modifier.fillMaxWidth(0.65f),
                     //     colors = ChipDefaults.chipColors(backgroundColor = MaterialTheme.colors.error)
                     // )
+                }
+            }
+        }
+    }
+
+    // Tee order popup — shown when player name is tapped
+    if (showTeeOrder) {
+        Dialog(
+            showDialog = true,
+            onDismissRequest = { showTeeOrder = false }
+        ) {
+            Card(
+                onClick = { showTeeOrder = false },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        "Tee Order",
+                        style = MaterialTheme.typography.title3,
+                        fontWeight = FontWeight.Bold,
+                        color = HoleNumberColor,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    players.forEachIndexed { i, player ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "${i + 1}.",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colors.onSurfaceVariant,
+                                modifier = Modifier.width(18.dp)
+                            )
+                            Text(
+                                player.name,
+                                fontSize = 12.sp,
+                                fontWeight = if (player.playerId == currentPlayer.playerId)
+                                    FontWeight.Bold else FontWeight.Normal,
+                                color = if (player.playerId == currentPlayer.playerId)
+                                    MaterialTheme.colors.primary else Color.White,
+                                maxLines = 1
+                            )
+                        }
+                    }
                 }
             }
         }

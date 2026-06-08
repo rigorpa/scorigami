@@ -186,8 +186,16 @@ class RoundViewModel @Inject constructor(
         hole: Int
     ): List<PlayerEntity> {
         if (hole <= 1) return players
-        val prevHole = hole - 1
-        return players.sortedWith(compareBy { scores[Pair(it.id, prevHole)] ?: Int.MAX_VALUE })
+        return players.sortedWith(
+            Comparator { a, b ->
+                for (h in hole - 1 downTo 1) {
+                    val sa = scores[Pair(a.id, h)] ?: Int.MAX_VALUE
+                    val sb = scores[Pair(b.id, h)] ?: Int.MAX_VALUE
+                    if (sa != sb) return@Comparator sa - sb
+                }
+                0
+            }
+        )
     }
 
     private fun pushStateToWatch() {
