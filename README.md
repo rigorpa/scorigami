@@ -20,7 +20,7 @@ The app also runs on other Android devices (min Android 11 / API 30). A Pixel 4a
 - Add or remove players mid-round via the scorecard overflow menu
 - Enter scores on the phone or the watch in real time, kept in sync via the Wearable Data Layer
 - **Smart first-press scoring:** tapping `−` from 0 enters birdie (par − 1); tapping `+` enters par — no need to tap up from zero every hole
-- Navigate between holes by swiping left/right on both the phone and the watch; phone also has a scrollable hole-jump dropdown
+- Navigate between holes by swiping left/right on both phone and watch; phone also has a scrollable hole-jump dropdown (swipe-to-dismiss disabled on watch to prevent system gesture conflict)
 - Animated slide transition and hole-number spring bounce on the phone when changing holes
 - View the full live scorecard mid-round via the table icon in the phone top bar
 - Player order on each hole reflects the honor system (lowest score on the previous hole throws first)
@@ -104,6 +104,7 @@ The `:wear` APK is embedded in the `:app` build and installs to the paired watch
 
 | Version | Notes |
 |---|---|
+| 0.4.2 | Watch sequential score entry (one player at a time, Enter → Next Hole ▶). Honor system sort applied locally on watch. Fixed swipe-to-dismiss conflict by replacing `SwipeDismissableNavHost` with `NavHost`. Branch: `Before-Major-Wear-App-UI-Score-Entry`. |
 | 0.4.1 | Smart first-press scoring (− = birdie, + = par). Watch swipe navigation, compact watch layout (no course name/arrows, tighter cards). Phone: live scorecard sheet, spring-bounce hole transition, scrollable hole-jump with indicators, side-by-side finalize buttons. `holePars` added to RoundState sync. |
 | 0.3.6 | Sync reliability fix (per-hole scores in RoundState, dual delivery, watch polling fallback). Phone scorecard redesign: cursive course name, 3-letter player abbreviation, −/+ score entry, animated hole transitions, hole-jump dropdown. Watch scorecard matching redesign. |
 | 0.3.5 | Fix distances, player priority after previous score |
