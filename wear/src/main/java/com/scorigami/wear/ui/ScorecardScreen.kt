@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.ScalingLazyColumnDefaults
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
 import androidx.wear.compose.material.dialog.Dialog
@@ -36,6 +37,7 @@ fun WearScorecardScreen(
     val focusRequester = remember { FocusRequester() }
     var showHoleJump by remember { mutableStateOf(false) }
     var showTeeOrder by remember { mutableStateOf(false) }
+    var showEndRoundPrompt by remember { mutableStateOf(false) }
 
     // Mirror the phone's honor-system sort: primary key is score on the previous hole,
     // ties broken by the hole before that, cascading back to hole 1, then DB order.
@@ -73,7 +75,11 @@ fun WearScorecardScreen(
     fun commitAndAdvance() {
         if (pendingScore > 0) onScoreChange(currentPlayer.playerId, pendingScore)
         if (isLastPlayer) {
-            onNextHole()
+            if (currentHole >= roundState.totalHoles) {
+                showEndRoundPrompt = true
+            } else {
+                onNextHole()
+            }
         } else {
             currentPlayerIndex++
         }
@@ -166,21 +172,24 @@ fun WearScorecardScreen(
                     // − score + controls
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
                     ) {
                         CompactButton(
-                            modifier = Modifier.size(36.dp),
+                            modifier = Modifier.size(48.dp),
                             onClick = {
                                 pendingScore = if (pendingScore == 0) maxOf(1, holePar - 1) else pendingScore - 1
                             },
                             colors = ButtonDefaults.buttonColors(
-                                backgroundColor = MaterialTheme.colors.primary,
-                                contentColor = MaterialTheme.colors.onPrimary,
-                                disabledBackgroundColor = MaterialTheme.colors.primary.copy(alpha = 0.3f),
-                                disabledContentColor = MaterialTheme.colors.onPrimary.copy(alpha = 0.3f)
+                                backgroundColor = Color(0xFF2A2A2A),
+                                contentColor = Color.White,
+                                disabledBackgroundColor = Color(0xFF2A2A2A).copy(alpha = 0.4f),
+                                disabledContentColor = Color.White.copy(alpha = 0.3f)
                             )
                         ) {
-                            Text("−", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            Text("−", fontSize = 22.sp, fontWeight = FontWeight.Bold)
                         }
                         val scoreColor = when {
                             pendingScore == 0 -> Color.White
@@ -197,19 +206,19 @@ fun WearScorecardScreen(
                             textAlign = TextAlign.Center
                         )
                         CompactButton(
-                            modifier = Modifier.size(36.dp),
+                            modifier = Modifier.size(48.dp),
                             onClick = {
                                 pendingScore = if (pendingScore == 0) holePar else pendingScore + 1
                             },
                             enabled = pendingScore < 20,
                             colors = ButtonDefaults.buttonColors(
-                                backgroundColor = MaterialTheme.colors.primary,
-                                contentColor = MaterialTheme.colors.onPrimary,
-                                disabledBackgroundColor = MaterialTheme.colors.primary.copy(alpha = 0.3f),
-                                disabledContentColor = MaterialTheme.colors.onPrimary.copy(alpha = 0.3f)
+                                backgroundColor = Color(0xFF2A2A2A),
+                                contentColor = Color.White,
+                                disabledBackgroundColor = Color(0xFF2A2A2A).copy(alpha = 0.4f),
+                                disabledContentColor = Color.White.copy(alpha = 0.3f)
                             )
                         ) {
-                            Text("+", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            Text("+", fontSize = 22.sp, fontWeight = FontWeight.Bold)
                         }
                     }
 
@@ -228,7 +237,10 @@ fun WearScorecardScreen(
                         modifier = Modifier
                             .fillMaxWidth(if (isLastPlayer) 0.72f else 0.52f)
                             .height(36.dp),
-                        colors = ChipDefaults.primaryChipColors()
+                        colors = ChipDefaults.chipColors(
+                            backgroundColor = Color(0xFF2A2A2A),
+                            contentColor = Color.White
+                        )
                     )
 
                     // End Round button — hidden for now, re-enable by uncommenting
@@ -238,6 +250,38 @@ fun WearScorecardScreen(
                     //     modifier = Modifier.fillMaxWidth(0.65f),
                     //     colors = ChipDefaults.chipColors(backgroundColor = MaterialTheme.colors.error)
                     // )
+                }
+            }
+        }
+    }
+
+    // End-of-round prompt — shown when Next Hole is pressed on the final hole
+    if (showEndRoundPrompt) {
+        Dialog(
+            showDialog = true,
+            onDismissRequest = { showEndRoundPrompt = false }
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    onClick = { showEndRoundPrompt = false },
+                    modifier = Modifier.fillMaxWidth(0.85f)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 14.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            "End round on the phone app",
+                            style = MaterialTheme.typography.body1,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         }
@@ -280,10 +324,8 @@ fun WearScorecardScreen(
                             Text(
                                 player.name,
                                 fontSize = 12.sp,
-                                fontWeight = if (player.playerId == currentPlayer.playerId)
-                                    FontWeight.Bold else FontWeight.Normal,
-                                color = if (player.playerId == currentPlayer.playerId)
-                                    MaterialTheme.colors.primary else Color.White,
+                                fontWeight = FontWeight.Normal,
+                                color = Color.White,
                                 maxLines = 1
                             )
                         }

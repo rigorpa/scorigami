@@ -1,59 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Adaptive icon foreground — transparent background, disc + effects only -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Flight arc -->
+    <!-- White circle ring -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#80FFFFFF"
-        android:strokeWidth="2.5"
-        android:strokeLineCap="round"
-        android:pathData="M 18,84 Q 48,16 90,32"/>
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="5"
+        android:pathData="M 21,54 A 33,33 0 0 1 87,54 A 33,33 0 0 1 21,54"/>
 
-    <!-- Speed lines -->
+    <!-- Red S -->
     <path
         android:fillColor="#00000000"
-        android:strokeColor="#CCFFFFFF"
-        android:strokeWidth="3.5"
+        android:strokeColor="#FFCC0000"
+        android:strokeWidth="9"
         android:strokeLineCap="round"
-        android:pathData="M 20,44 L 40,44"/>
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#99FFFFFF"
-        android:strokeWidth="3"
-        android:strokeLineCap="round"
-        android:pathData="M 16,53 L 38,53"/>
-    <path
-        android:fillColor="#00000000"
-        android:strokeColor="#66FFFFFF"
-        android:strokeWidth="2.5"
-        android:strokeLineCap="round"
-        android:pathData="M 20,62 L 38,62"/>
-
-    <!-- Disc -->
-    <group
-        android:pivotX="70"
-        android:pivotY="52"
-        android:rotation="-15">
-        <path
-            android:fillColor="#FFD60A"
-            android:pathData="M 48,52 A 22,8 0 0 1 92,52 A 22,8 0 0 1 48,52 Z"/>
-        <path
-            android:fillColor="#40000000"
-            android:pathData="M 48,52 A 22,8 0 0 1 92,52 A 22,3.5 0 0 0 48,52 Z"/>
-        <path
-            android:fillColor="#881A3652"
-            android:pathData="M 59,52 A 11,4 0 0 1 81,52 A 11,4 0 0 1 59,52 Z"/>
-        <path
-            android:fillColor="#00000000"
-            android:strokeColor="#AAFFFFFF"
-            android:strokeWidth="2"
-            android:strokeLineCap="round"
-            android:pathData="M 58,49 Q 70,47 83,50"/>
-    </group>
+        android:pathData="M 64,39 C 63,31 41,31 41,42 C 41,50 67,57 67,66 C 67,75 45,75 45,67"/>
 
 </vector>
