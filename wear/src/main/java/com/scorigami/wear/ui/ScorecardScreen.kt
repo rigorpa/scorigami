@@ -5,6 +5,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,9 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
-import androidx.wear.compose.foundation.lazy.ScalingLazyColumnDefaults
-import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
 import androidx.wear.compose.material.dialog.Dialog
 import com.scorigami.shared.sync.RoundState
@@ -85,53 +85,62 @@ fun WearScorecardScreen(
         }
     }
 
+    val incompleteHoles = remember(roundState.players) {
+        (1..roundState.totalHoles).filter { holeNum ->
+            roundState.players.any { player -> (player.holeScores[holeNum] ?: 0) == 0 }
+        }.toSet()
+    }
+
     Scaffold {
         if (showHoleJump) {
-            val listState = rememberScalingLazyListState(initialCenterItemIndex = currentHole - 1)
-            val incompleteHoles = remember(roundState.players) {
-                (1..roundState.totalHoles).filter { holeNum ->
-                    roundState.players.any { player -> (player.holeScores[holeNum] ?: 0) == 0 }
-                }.toSet()
-            }
-            Box(modifier = Modifier.fillMaxSize()) {
-                ScalingLazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    items(roundState.totalHoles) { index ->
-                        val holeNum = index + 1
-                        val incomplete = holeNum in incompleteHoles
-                        Chip(
-                            onClick = {
-                                onJumpToHole(holeNum)
-                                showHoleJump = false
-                            },
-                            label = {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.Center,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text("Hole $holeNum", fontSize = 14.sp, maxLines = 1)
-                                    if (incomplete) {
-                                        Spacer(Modifier.width(5.dp))
-                                        Box(
-                                            modifier = Modifier
-                                                .size(6.dp)
-                                                .background(Color(0xFFFFB300), CircleShape)
-                                        )
-                                    }
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
+            ) {
+                (1..roundState.totalHoles).chunked(3).forEach { rowHoles ->
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        rowHoles.forEach { holeNum ->
+                            val isCurrent = holeNum == currentHole
+                            val incomplete = holeNum in incompleteHoles
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp)
+                                    .background(
+                                        if (isCurrent) HoleNumberColor else Color(0xFF2A2A2A),
+                                        RoundedCornerShape(8.dp)
+                                    )
+                                    .clickable {
+                                        onJumpToHole(holeNum)
+                                        showHoleJump = false
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "$holeNum",
+                                    fontSize = 14.sp,
+                                    fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Normal,
+                                    color = if (isCurrent) Color.Black else Color.White
+                                )
+                                if (incomplete) {
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(top = 3.dp, end = 3.dp)
+                                            .size(5.dp)
+                                            .background(Color(0xFFFFB300), CircleShape)
+                                    )
                                 }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth(0.8f)
-                                .height(36.dp),
-                            colors = if (holeNum == currentHole)
-                                ChipDefaults.primaryChipColors()
-                            else
-                                ChipDefaults.secondaryChipColors()
-                        )
+                            }
+                        }
+                        repeat(3 - rowHoles.size) { Spacer(Modifier.weight(1f)) }
                     }
                 }
             }
