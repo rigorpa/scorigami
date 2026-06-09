@@ -107,7 +107,7 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 - **Hole card:** large hole number (yellow), par, distance; ◀/▶ arrow buttons
 - **Player cards:** 3-letter uppercase abbreviation (40sp, bold, white) on the left; round vs-par centered; −/+ score controls on the right with the current throw count displayed between them (0 shown as `"—"`)
 - **Hole transitions:** `AnimatedContent` slides player cards left/right matching navigation direction (250 ms); hole number springs from 82 % → 100 % with `Spring.DampingRatioMediumBouncy` on each navigation (`Animatable` + `LaunchedEffect`)
-- **Hole jump:** `GolfCourse` icon + `DropdownMenu` at bottom-right; max height 480 dp (~10 visible items); scrollable via inner `Column` + `verticalScroll`; `ExpandLess`/`ExpandMore` overlay arrows appear via `derivedStateOf` when content exists above/below the visible window; holes with any missing player score show a small amber dot (`0xFFFFB300`, 8 dp, `CircleShape`) in the `trailingIcon` slot
+- **Hole jump:** `GolfCourse` icon + `HoleJumpGrid` button at bottom-right; opens a `Dialog` (`DialogProperties(usePlatformDefaultWidth = false)`) positioned in the lower portion of the screen; 3-column grid of holes rendered as `Box` cells (`60 dp` tall, `RoundedCornerShape(8.dp)`); current hole highlighted yellow (`HoleNumberColor`), others dark blue (`CardBackground`); amber dot (`0xFFFFB300`, 6 dp, `CircleShape`) in top-right corner of cells with any missing score; tap outside the grid to dismiss (outer `Box` carries a no-ripple `clickable` dismiss; `Surface` carries a no-op `clickable` to consume events inside)
 
 ---
 
@@ -132,10 +132,13 @@ The watch scorecard uses a **one-player-at-a-time** flow instead of showing all 
 **Layout per player:**
 - "Hole X / 18" in yellow `title2` (ExtraBold) at top — tappable to open the hole-jump picker
 - Player's full name in white `title1` (SemiBold), centered — tappable to open the tee-order popup
-- −/+ `CompactButton` (36 dp, primary-color fill, 18sp) with score between them
-- Enter / Next Hole ▶ `Chip` centered below (slim 36 dp height)
+- −/+ `CompactButton` (48 dp, `#2A2A2A` dark-grey fill, 22sp) spread to screen edges via `Arrangement.SpaceBetween` on a `fillMaxWidth` row; score centered between them
+- Enter / Next Hole ▶ `Chip` centered below (36 dp height, `#2A2A2A` fill)
+- Tapping **Next Hole ▶ on the final hole** (instead of navigating) shows a centered `Dialog` with the message "End round on the phone app" — score is still committed first if `pendingScore > 0`
 
-**Hole-jump picker:** `ScalingLazyColumn` of hole chips. Holes with any missing player score show a small amber dot (`0xFFFFB300`, 6 dp, `CircleShape`) to the right of the hole number text.
+**Hole-jump picker:** Static 3-column grid rendered as a `Column`/`Row` layout with `verticalScroll(rememberScrollState())`. Each hole is a `Box` (44 dp tall, `RoundedCornerShape(8.dp)`): current hole yellow, others `#2A2A2A`. Amber dot (`0xFFFFB300`, 5 dp) in the top-right corner of cells with any missing score. No `ScalingLazyColumn` or fling physics — eliminates scroll jank on physical hardware. Tapping a cell jumps to that hole.
+
+**Tee-order popup:** All players listed in uniform white — no current-player highlight.
 
 **Honor system on watch:** Players are sorted locally using a cascading comparator — primary key is `holeScores[currentHole - 1]`, ties broken by `holeScores[currentHole - 2]`, continuing back to hole 1, then DB registration order. No phone re-push needed when moving to a new hole.
 
@@ -223,6 +226,24 @@ The sort input is always `basePlayers` (DB order); the cascading keys make the t
 ---
 
 ## Branch History
+
+### Branch `cachyai` — UI polish & hole-jump redesign (2026-06-09)
+
+**Logo refresh (both `app` and `wear`):**
+- `ic_launcher_background.xml`: dark blue → pure black
+- `ic_launcher_foreground.xml`: flying-disc graphic → white circle ring + red bold S (cubic-bezier stroke path, `#FFCC0000`)
+- `ic_logo.xml`: same combined design (black background + ring + S) for standalone use on the phone home screen
+
+**Watch UX improvements (`ScorecardScreen.kt`):**
+- **End-of-round prompt:** tapping "Next Hole ▶" on the last hole now shows a centered `Dialog` ("End round on the phone app") instead of silently doing nothing; score is committed first if `pendingScore > 0`
+- **Score controls:** − / + `CompactButton` enlarged from 36 dp → 48 dp; symbol font 18sp → 22sp; spread to screen edges (`Arrangement.SpaceBetween`, `fillMaxWidth`); color changed from primary blue → `#2A2A2A` dark grey; Enter / Next Hole ▶ `Chip` also changed to `#2A2A2A`
+- **Hole-jump picker replaced:** `ScalingLazyColumn` removed; replaced with a static 3-column `Column`/`Row` grid + `verticalScroll`. Eliminates scroll jank on Pixel Watch 2 (no fling physics, no per-item scale transform). Current hole highlighted yellow; others `#2A2A2A`; amber dot on incomplete holes
+- **Tee-order popup:** removed current-player blue/bold highlight — all players shown in uniform white
+
+**Phone UX improvement (`ScorecardScreen.kt`):**
+- **Hole-jump picker replaced:** `DropdownMenu` + scroll arrows removed; replaced with `HoleJumpGrid` composable that opens a `Dialog` (`usePlatformDefaultWidth = false`) positioned in the lower screen half. Same 3-column grid (60 dp cells, `CardBackground` / `HoleNumberColor`). Tap outside to dismiss (backdrop `clickable` + Surface no-op `clickable` to consume inner touches)
+
+---
 
 ### Branch `main` — Bug fixes & polish (2026-06-08)
 

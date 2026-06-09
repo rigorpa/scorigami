@@ -81,7 +81,7 @@ fun HomeScreen(
                 }
 
                 HomeActionButton(
-                    text = "Start New Round",
+                    text = "New Round",
                     icon = Icons.Default.Adjust,
                     onClick = onStartRound,
                     enabled = !state.isActive
