@@ -72,7 +72,7 @@ fun HomeScreen(
 
                 if (state.isActive) {
                     HomeActionButton(
-                        text = "Resume Round — ${state.courseName}",
+                        text = "Resume Round",
                         icon = Icons.Default.PlayArrow,
                         onClick = onResume,
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)

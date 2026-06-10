@@ -20,9 +20,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.*
 import androidx.wear.compose.material.dialog.Dialog
+import com.scorigami.wear.ui.theme.HoleNumberColor
+import com.scorigami.wear.ui.theme.WearButtonBackground
+import com.scorigami.wear.ui.theme.IncompleteHoleDotColor
+import com.scorigami.wear.ui.theme.ScoreUnderParColor
 import com.scorigami.shared.sync.RoundState
-
-private val HoleNumberColor = Color(0xFFFFD60A)
 
 @Composable
 fun WearScorecardScreen(
@@ -114,7 +116,7 @@ fun WearScorecardScreen(
                                     .weight(1f)
                                     .height(44.dp)
                                     .background(
-                                        if (isCurrent) HoleNumberColor else Color(0xFF2A2A2A),
+                                        if (isCurrent) HoleNumberColor else WearButtonBackground,
                                         RoundedCornerShape(8.dp)
                                     )
                                     .clickable {
@@ -135,7 +137,7 @@ fun WearScorecardScreen(
                                             .align(Alignment.TopEnd)
                                             .padding(top = 3.dp, end = 3.dp)
                                             .size(5.dp)
-                                            .background(Color(0xFFFFB300), CircleShape)
+                                            .background(IncompleteHoleDotColor, CircleShape)
                                     )
                                 }
                             }
@@ -192,9 +194,9 @@ fun WearScorecardScreen(
                                 pendingScore = if (pendingScore == 0) maxOf(1, holePar - 1) else pendingScore - 1
                             },
                             colors = ButtonDefaults.buttonColors(
-                                backgroundColor = Color(0xFF2A2A2A),
+                                backgroundColor = WearButtonBackground,
                                 contentColor = Color.White,
-                                disabledBackgroundColor = Color(0xFF2A2A2A).copy(alpha = 0.4f),
+                                disabledBackgroundColor = WearButtonBackground.copy(alpha = 0.4f),
                                 disabledContentColor = Color.White.copy(alpha = 0.3f)
                             )
                         ) {
@@ -202,7 +204,7 @@ fun WearScorecardScreen(
                         }
                         val scoreColor = when {
                             pendingScore == 0 -> Color.White
-                            pendingScore < holePar -> Color(0xFF81C784)
+                            pendingScore < holePar -> ScoreUnderParColor
                             pendingScore == holePar -> Color.White
                             else -> MaterialTheme.colors.error
                         }
@@ -221,9 +223,9 @@ fun WearScorecardScreen(
                             },
                             enabled = pendingScore < 20,
                             colors = ButtonDefaults.buttonColors(
-                                backgroundColor = Color(0xFF2A2A2A),
+                                backgroundColor = WearButtonBackground,
                                 contentColor = Color.White,
-                                disabledBackgroundColor = Color(0xFF2A2A2A).copy(alpha = 0.4f),
+                                disabledBackgroundColor = WearButtonBackground.copy(alpha = 0.4f),
                                 disabledContentColor = Color.White.copy(alpha = 0.3f)
                             )
                         ) {
@@ -247,7 +249,7 @@ fun WearScorecardScreen(
                             .fillMaxWidth(if (isLastPlayer) 0.72f else 0.52f)
                             .height(36.dp),
                         colors = ChipDefaults.chipColors(
-                            backgroundColor = Color(0xFF2A2A2A),
+                            backgroundColor = WearButtonBackground,
                             contentColor = Color.White
                         )
                     )
