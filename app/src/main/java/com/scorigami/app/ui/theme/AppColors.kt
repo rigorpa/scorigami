@@ -8,8 +8,8 @@ val CardBackground = Color(0xFF1A3652)
 // Yellow hole number on the scorecard and hole-jump grid
 val HoleNumberColor = Color(0xFFFFD60A)
 
-// Grey highlight for the currently selected hole in the Jump to Hole grid
-val HoleJumpSelectedColor = Color(0xFF5A5A5A)
+// Grey highlight for the currently selected hole in the Jump to Hole grid (phone and watch)
+val HoleJumpSelectedColor = Color(0xFF7A7A7A)
 
 // Amber dot on holes with missing scores
 val IncompleteHoleDotColor = Color(0xFFFFB300)

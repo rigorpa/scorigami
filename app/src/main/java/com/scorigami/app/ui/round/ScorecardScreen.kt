@@ -257,7 +257,7 @@ fun ScorecardScreen(
                                 .padding(bottom = 32.dp)
                         ) {
                             Text(
-                                "Hole $hole Rules",
+                                "Hole $hole Notes",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
                             )
@@ -325,11 +325,11 @@ fun ScorecardScreen(
                                     Icon(Icons.AutoMirrored.Filled.ArrowForward, "Next hole")
                                 }
                             }
-                            // Info icon — bottom-right, only shown when hole has notes
+                            // Info icon — top-left, only shown when hole has notes
                             if (!holeEntity?.notes.isNullOrBlank()) {
                                 IconButton(
                                     onClick = { showNotesSheet = true },
-                                    modifier = Modifier.align(Alignment.BottomEnd)
+                                    modifier = Modifier.align(Alignment.TopStart)
                                 ) {
                                     Icon(
                                         Icons.Default.Info,
@@ -373,7 +373,7 @@ fun ScorecardScreen(
                 }
             }
 
-            // Hole jump — golf icon + dropdown, bottom right
+            // Hole jump — golf icon + dropdown, top left
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

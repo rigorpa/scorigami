@@ -43,14 +43,15 @@ Named color constants are centralized in `AppColors.kt` files — no inline `Col
 |---|---|---|
 | `CardBackground` | `#1A3652` | Player score card and hole navigation card background |
 | `HoleNumberColor` | `#FFD60A` | Yellow hole number on scorecard and hole-jump grid |
-| `HoleJumpSelectedColor` | `#5A5A5A` | Selected hole cell highlight in hole-jump grid |
+| `HoleJumpSelectedColor` | `#7A7A7A` | Selected hole cell highlight in hole-jump grid (phone and watch) |
 | `IncompleteHoleDotColor` | `#FFB300` | Amber dot on holes with missing scores |
 | `ScoreUnderParColor` | `#81C784` | Green — under par score display |
 
 **`wear/ui/theme/AppColors.kt`** (watch):
 | Constant | Value | Usage |
 |---|---|---|
-| `HoleNumberColor` | `#FFD60A` | Yellow hole number and current-hole highlight |
+| `HoleNumberColor` | `#FFD60A` | Yellow hole number on the scorecard |
+| `HoleJumpSelectedColor` | `#7A7A7A` | Selected hole cell highlight in hole-jump grid (matches phone) |
 | `WearButtonBackground` | `#2A2A2A` | Dark grey for −/+ buttons, Enter/Next Hole chip, non-current hole cells |
 | `IncompleteHoleDotColor` | `#FFB300` | Amber dot on holes with missing scores |
 | `ScoreUnderParColor` | `#81C784` | Green — under par score display |
@@ -162,7 +163,7 @@ The watch scorecard uses a **one-player-at-a-time** flow instead of showing all 
 - Enter / Next Hole ▶ `Chip` centered below (36 dp height, `#2A2A2A` fill)
 - Tapping **Next Hole ▶ on the final hole** (instead of navigating) shows a centered `Dialog` with the message "End round on the phone app" — score is still committed first if `pendingScore > 0`
 
-**Hole-jump picker:** Static 3-column grid rendered as a `Column`/`Row` layout with `verticalScroll(rememberScrollState())`. Each hole is a `Box` (44 dp tall, `RoundedCornerShape(8.dp)`): current hole yellow, others `#2A2A2A`. Amber dot (`0xFFFFB300`, 5 dp) in the top-right corner of cells with any missing score. No `ScalingLazyColumn` or fling physics — eliminates scroll jank on physical hardware. Tapping a cell jumps to that hole.
+**Hole-jump picker:** Static 3-column grid rendered as a `Column`/`Row` layout with `verticalScroll(rememberScrollState())`. Each hole is a `Box` (44 dp tall, `RoundedCornerShape(8.dp)`): current hole `HoleJumpSelectedColor` (`#7A7A7A`, matches phone), others `WearButtonBackground` (`#2A2A2A`); all text white. Amber dot (`0xFFFFB300`, 5 dp) in the top-right corner of cells with any missing score. No `ScalingLazyColumn` or fling physics — eliminates scroll jank on physical hardware. Tapping a cell jumps to that hole.
 
 **Tee-order popup:** All players listed in uniform white — no current-player highlight.
 
