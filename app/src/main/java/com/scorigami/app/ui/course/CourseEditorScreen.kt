@@ -28,12 +28,15 @@ fun CourseEditorScreen(
     var courseName by remember { mutableStateOf("") }
     var holeCount by remember { mutableStateOf("18") }
     var parValues by remember { mutableStateOf(List(18) { 3 }) }
+    var notesValues by remember { mutableStateOf(List(18) { "" }) }
 
     LaunchedEffect(existing) {
         if (!initialized && existing != null) {
             courseName = existing!!.course.name
             holeCount = existing!!.course.holeCount.toString()
-            parValues = existing!!.holes.sortedBy { it.number }.map { it.par }
+            val sorted = existing!!.holes.sortedBy { it.number }
+            parValues = sorted.map { it.par }
+            notesValues = sorted.map { it.notes ?: "" }
             initialized = true
         } else if (!initialized && existing == null) {
             initialized = true
@@ -43,8 +46,8 @@ fun CourseEditorScreen(
     val count = holeCount.toIntOrNull()?.coerceIn(1, 36) ?: 18
     LaunchedEffect(count) {
         if (parValues.size != count) {
-            val current = parValues
-            parValues = List(count) { i -> current.getOrElse(i) { 3 } }
+            parValues = List(count) { i -> parValues.getOrElse(i) { 3 } }
+            notesValues = List(count) { i -> notesValues.getOrElse(i) { "" } }
         }
     }
 
@@ -88,11 +91,15 @@ fun CourseEditorScreen(
                 Text("Par per Hole", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             }
             items(parValues.size) { index ->
-                HoleParRow(
+                HoleEditorRow(
                     holeNumber = index + 1,
                     par = parValues[index],
+                    notes = notesValues[index],
                     onParChange = { newPar ->
                         parValues = parValues.toMutableList().also { it[index] = newPar }
+                    },
+                    onNotesChange = { newNotes ->
+                        notesValues = notesValues.toMutableList().also { it[index] = newNotes }
                     }
                 )
             }
@@ -100,7 +107,7 @@ fun CourseEditorScreen(
                 Button(
                     onClick = {
                         if (courseName.isNotBlank()) {
-                            viewModel.saveCourse(courseName, parValues)
+                            viewModel.saveCourse(courseName, parValues, notesValues)
                             onBack()
                         }
                     },
@@ -116,27 +123,43 @@ fun CourseEditorScreen(
 }
 
 @Composable
-private fun HoleParRow(holeNumber: Int, par: Int, onParChange: (Int) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text("Hole $holeNumber", modifier = Modifier.weight(1f))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(
-                onClick = { if (par > 3) onParChange(par - 1) },
-                enabled = par > 3
-            ) { Text("−", style = MaterialTheme.typography.titleLarge) }
-            Text(
-                text = "Par $par",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.widthIn(min = 56.dp),
-            )
-            IconButton(
-                onClick = { if (par < 6) onParChange(par + 1) },
-                enabled = par < 6
-            ) { Text("+", style = MaterialTheme.typography.titleLarge) }
+private fun HoleEditorRow(
+    holeNumber: Int,
+    par: Int,
+    notes: String,
+    onParChange: (Int) -> Unit,
+    onNotesChange: (String) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Hole $holeNumber", modifier = Modifier.weight(1f))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(
+                    onClick = { if (par > 3) onParChange(par - 1) },
+                    enabled = par > 3
+                ) { Text("−", style = MaterialTheme.typography.titleLarge) }
+                Text(
+                    text = "Par $par",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.widthIn(min = 56.dp),
+                )
+                IconButton(
+                    onClick = { if (par < 6) onParChange(par + 1) },
+                    enabled = par < 6
+                ) { Text("+", style = MaterialTheme.typography.titleLarge) }
+            }
         }
+        OutlinedTextField(
+            value = notes,
+            onValueChange = onNotesChange,
+            label = { Text("Hole rules / notes (optional)") },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 2,
+            maxLines = 8
+        )
     }
 }

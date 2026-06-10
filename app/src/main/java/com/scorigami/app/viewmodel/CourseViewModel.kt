@@ -28,7 +28,7 @@ class CourseViewModel @Inject constructor(
         emit(if (editingCourseId == -1L) null else courseDao.getCourseWithHoles(editingCourseId))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    fun saveCourse(name: String, parValues: List<Int>) {
+    fun saveCourse(name: String, parValues: List<Int>, notesValues: List<String> = emptyList()) {
         viewModelScope.launch(Dispatchers.IO) {
             val courseId = if (editingCourseId == -1L) {
                 courseDao.insertCourse(CourseEntity(name = name.trim(), holeCount = parValues.size))
@@ -36,7 +36,12 @@ class CourseViewModel @Inject constructor(
                 courseDao.insertCourse(CourseEntity(id = editingCourseId, name = name.trim(), holeCount = parValues.size))
             }
             courseDao.insertHoles(parValues.mapIndexed { i, par ->
-                HoleEntity(courseId = courseId, number = i + 1, par = par)
+                HoleEntity(
+                    courseId = courseId,
+                    number = i + 1,
+                    par = par,
+                    notes = notesValues.getOrNull(i)?.trim()?.ifEmpty { null }
+                )
             })
         }
     }

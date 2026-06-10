@@ -26,6 +26,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -246,6 +247,29 @@ fun ScorecardScreen(
                 label = "hole_slide"
             ) { hole ->
                 val holeEntity = state.holes.find { it.number == hole }
+                var showNotesSheet by remember(hole) { mutableStateOf(false) }
+
+                if (showNotesSheet && !holeEntity?.notes.isNullOrBlank()) {
+                    ModalBottomSheet(onDismissRequest = { showNotesSheet = false }) {
+                        Column(
+                            modifier = Modifier
+                                .padding(horizontal = 24.dp)
+                                .padding(bottom = 32.dp)
+                        ) {
+                            Text(
+                                "Hole $hole Rules",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                text = holeEntity?.notes ?: "",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+                }
+
                 Column(modifier = Modifier.fillMaxSize()) {
                     Card(
                         modifier = Modifier
@@ -299,6 +323,20 @@ fun ScorecardScreen(
                                     enabled = hole < state.holes.size
                                 ) {
                                     Icon(Icons.AutoMirrored.Filled.ArrowForward, "Next hole")
+                                }
+                            }
+                            // Info icon — bottom-right, only shown when hole has notes
+                            if (!holeEntity?.notes.isNullOrBlank()) {
+                                IconButton(
+                                    onClick = { showNotesSheet = true },
+                                    modifier = Modifier.align(Alignment.BottomEnd)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Info,
+                                        contentDescription = "Hole rules",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(21.dp)
+                                    )
                                 }
                             }
                             // Group icon — top-right shortcut to Add/Remove Players
@@ -440,7 +478,7 @@ private fun HoleJumpGrid(
                                                 text = "${hole.number}",
                                                 fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Normal,
                                                 color = Color.White,
-                                                fontSize = 16.sp
+                                                fontSize = 20.sp
                                             )
                                             if (incomplete) {
                                                 Box(
