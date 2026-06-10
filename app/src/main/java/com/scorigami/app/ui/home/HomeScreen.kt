@@ -58,13 +58,13 @@ fun HomeScreen(
                 )
                 Spacer(modifier = Modifier.height(20.dp))
                 Text(
-                    text = "Scorigami",
+                    text = "SCORIGAMI",
                     fontSize = 42.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "Disc Golf Scorecard",
+                    text = "A Disc Golf Scorecard",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -81,7 +81,7 @@ fun HomeScreen(
                 }
 
                 HomeActionButton(
-                    text = "Start New Round",
+                    text = "New Round",
                     icon = Icons.Default.Adjust,
                     onClick = onStartRound,
                     enabled = !state.isActive

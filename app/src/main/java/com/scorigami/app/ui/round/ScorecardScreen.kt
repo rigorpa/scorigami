@@ -12,10 +12,11 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,10 +24,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material.icons.filled.GolfCourse
 import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.filled.MoreVert
@@ -330,7 +331,7 @@ fun ScorecardScreen(
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(Modifier.width(8.dp))
-                HoleJumpDropdown(
+                HoleJumpGrid(
                     currentHole = state.currentHole,
                     holes = state.holes,
                     incompleteHoles = incompleteHoles,
@@ -342,75 +343,101 @@ fun ScorecardScreen(
 }
 
 @Composable
-private fun HoleJumpDropdown(
+private fun HoleJumpGrid(
     currentHole: Int,
     holes: List<HoleEntity>,
     incompleteHoles: Set<Int>,
     onHoleSelected: (Int) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
 
-    Box {
-        OutlinedButton(onClick = { expanded = true }) {
-            Text("Hole $currentHole")
-            Spacer(Modifier.width(4.dp))
-            Icon(
-                imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
+    OutlinedButton(onClick = { showDialog = true }) {
+        Text("Hole $currentHole")
+        Spacer(Modifier.width(4.dp))
+        Icon(
+            imageVector = Icons.Default.ExpandMore,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp)
+        )
+    }
+
+    if (showDialog) {
+        Dialog(
+            onDismissRequest = { showDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
-            val scrollState = rememberScrollState()
-            val canScrollUp by remember { derivedStateOf { scrollState.value > 0 } }
-            val canScrollDown by remember { derivedStateOf { scrollState.value < scrollState.maxValue } }
-
-            Box(modifier = Modifier.heightIn(max = 480.dp)) {
-                Column(modifier = Modifier.verticalScroll(scrollState)) {
-                    holes.forEach { hole ->
-                        DropdownMenuItem(
-                            text = { Text("Hole ${hole.number}") },
-                            leadingIcon = if (hole.number == currentHole) {
-                                { Icon(Icons.Default.Check, null, modifier = Modifier.size(16.dp)) }
-                            } else null,
-                            trailingIcon = if (hole.number in incompleteHoles) {
-                                {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(8.dp)
-                                            .background(Color(0xFFFFB300), CircleShape)
-                                    )
-                                }
-                            } else null,
-                            onClick = {
-                                onHoleSelected(hole.number)
-                                expanded = false
-                            }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) { showDialog = false }
+                    .padding(top = 320.dp, start = 12.dp, end = 12.dp),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) {},
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 8.dp
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            "Jump to Hole",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(bottom = 12.dp)
                         )
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            holes.chunked(3).forEach { rowHoles ->
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    rowHoles.forEach { hole ->
+                                        val isCurrent = hole.number == currentHole
+                                        val incomplete = hole.number in incompleteHoles
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(60.dp)
+                                                .background(
+                                                    if (isCurrent) HoleNumberColor else CardBackground,
+                                                    RoundedCornerShape(8.dp)
+                                                )
+                                                .clickable {
+                                                    onHoleSelected(hole.number)
+                                                    showDialog = false
+                                                },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "${hole.number}",
+                                                fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Normal,
+                                                color = if (isCurrent) Color.Black else Color.White,
+                                                fontSize = 16.sp
+                                            )
+                                            if (incomplete) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .align(Alignment.TopEnd)
+                                                        .padding(top = 4.dp, end = 4.dp)
+                                                        .size(6.dp)
+                                                        .background(Color(0xFFFFB300), CircleShape)
+                                                )
+                                            }
+                                        }
+                                    }
+                                    repeat(3 - rowHoles.size) { Spacer(Modifier.weight(1f)) }
+                                }
+                            }
+                        }
                     }
-                }
-                if (canScrollUp) {
-                    Icon(
-                        Icons.Default.ExpandLess,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .padding(top = 2.dp),
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                    )
-                }
-                if (canScrollDown) {
-                    Icon(
-                        Icons.Default.ExpandMore,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 2.dp),
-                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                    )
                 }
             }
         }
