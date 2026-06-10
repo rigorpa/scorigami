@@ -34,6 +34,31 @@ iThrow/
 
 ---
 
+## Color System
+
+Named color constants are centralized in `AppColors.kt` files — no inline `Color(0xFF…)` literals in screen files.
+
+**`app/ui/theme/AppColors.kt`** (phone):
+| Constant | Value | Usage |
+|---|---|---|
+| `CardBackground` | `#1A3652` | Player score card and hole navigation card background |
+| `HoleNumberColor` | `#FFD60A` | Yellow hole number on scorecard and hole-jump grid |
+| `HoleJumpSelectedColor` | `#5A5A5A` | Selected hole cell highlight in hole-jump grid |
+| `IncompleteHoleDotColor` | `#FFB300` | Amber dot on holes with missing scores |
+| `ScoreUnderParColor` | `#81C784` | Green — under par score display |
+
+**`wear/ui/theme/AppColors.kt`** (watch):
+| Constant | Value | Usage |
+|---|---|---|
+| `HoleNumberColor` | `#FFD60A` | Yellow hole number and current-hole highlight |
+| `WearButtonBackground` | `#2A2A2A` | Dark grey for −/+ buttons, Enter/Next Hole chip, non-current hole cells |
+| `IncompleteHoleDotColor` | `#FFB300` | Amber dot on holes with missing scores |
+| `ScoreUnderParColor` | `#81C784` | Green — under par score display |
+
+At-par and unscored use `Color.White`. Over-par uses `MaterialTheme.colorScheme.error` (phone) / `MaterialTheme.colors.error` (wear).
+
+---
+
 ## Key Libraries
 
 | Library | Version | Purpose |
@@ -55,16 +80,17 @@ Min SDK: 30 · Compile SDK: 35 · Kotlin: 2.0.21 · AGP: 8.7.0
 
 ```
 courses     id, name, holeCount
-holes       id, courseId, number, par, distanceFeet?     (FK → courses CASCADE)
+holes       id, courseId, number, par, distanceFeet?, notes?   (FK → courses CASCADE)
 players     id, name, createdAt
-rounds      id, courseId, startedAt, completedAt?        (completedAt=null = active)
-round_players  roundId, playerId, order                  (composite PK)
-scores      roundId, playerId, holeNumber, throws        (composite PK, upsert on change)
+rounds      id, courseId, startedAt, completedAt?              (completedAt=null = active)
+round_players  roundId, playerId, order                        (composite PK)
+scores      roundId, playerId, holeNumber, throws              (composite PK, upsert on change)
 ```
 
-**DB version: 3**
+**DB version: 4**
 - Migration 1→2: adds `distanceMeters INTEGER` nullable column to `holes`
 - Migration 2→3: renames `distanceMeters` → `distanceFeet` (values were always stored in feet)
+- Migration 3→4: adds `notes TEXT` nullable column to `holes`
 
 **Sync types** (`shared/sync/`):
 - `RoundState` — full snapshot pushed phone→watch (roundId, courseName, currentHole, totalHoles, players[], **holePars: Map<Int,Int>**). `holePars` maps every hole number to its par value so the watch can apply the first-press scoring logic for any hole it navigates to independently.
@@ -104,7 +130,7 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 ### ScorecardScreen layout
 - **Top bar:** course name in `FontFamily.Cursive`; `TableChart` icon button (opens full scorecard sheet); "End Round" button; ⋮ overflow menu
 - **Full scorecard sheet:** `ModalBottomSheet` opened via the `TableChart` icon — same per-player 18-hole breakdown shown in `RoundReviewScreen` (hole number + vs-par grid, totals)
-- **Hole card:** large hole number (yellow), par, distance; ◀/▶ arrow buttons
+- **Hole card:** large hole number (yellow), par, distance; ◀/▶ arrow buttons; `Info` icon appears at bottom-right when `hole.notes` is non-null/non-blank — tapping opens a `ModalBottomSheet` titled "Hole [number] Rules" showing the full notes text
 - **Player cards:** 3-letter uppercase abbreviation (40sp, bold, white) on the left; round vs-par centered; −/+ score controls on the right with the current throw count displayed between them (0 shown as `"—"`)
 - **Hole transitions:** `AnimatedContent` slides player cards left/right matching navigation direction (250 ms); hole number springs from 82 % → 100 % with `Spring.DampingRatioMediumBouncy` on each navigation (`Animatable` + `LaunchedEffect`)
 - **Hole jump:** `GolfCourse` icon + `HoleJumpGrid` button at bottom-right; opens a `Dialog` (`DialogProperties(usePlatformDefaultWidth = false)`) positioned in the lower portion of the screen; 3-column grid of holes rendered as `Box` cells (`60 dp` tall, `RoundedCornerShape(8.dp)`); current hole highlighted yellow (`HoleNumberColor`), others dark blue (`CardBackground`); amber dot (`0xFFFFB300`, 6 dp, `CircleShape`) in top-right corner of cells with any missing score; tap outside the grid to dismiss (outer `Box` carries a no-ripple `clickable` dismiss; `Surface` carries a no-op `clickable` to consume events inside)
@@ -217,6 +243,7 @@ The sort input is always `basePlayers` (DB order); the cascading keys make the t
 - **Score default:** A score of 0 means "not yet entered" — displayed as `"—"` in the UI. The minimum recorded score is 1.
 - **vs Par display:** Under par = green (primary color), even = neutral, over par = red (error color). Only the round total vs-par is shown on the phone scorecard; per-hole vs-par was intentionally removed.
 - **Hole distances:** `distanceFeet` is nullable on `HoleEntity`. Values are stored in feet; the scorecard converts to meters for display ("xxx ft / xxx m"). Courses created via the editor have no distance; the distance line is only shown when the value is non-null.
+- **Hole notes:** `notes` is nullable on `HoleEntity` (added in migration 3→4). When non-null/non-blank, an `Info` icon appears on the hole card in `ScorecardScreen`; tapping it opens a `ModalBottomSheet` titled "Hole [number] Rules". The course editor exposes a multiline "Hole rules / notes (optional)" field per hole. Notes are not yet surfaced on the watch.
 - **holeScores in PlayerState:** The watch displays `player.holeScores[currentHole] ?: 0` for the score, not a pre-computed field. This lets the watch navigate holes independently without requesting a re-push from the phone. Both `RoundViewModel.doPushStateToWatch()` and `PhoneWearableListenerService.pushUpdatedState()` must populate this map when building `PlayerState`.
 - **Sync delivery:** `WearSyncManager.pushRoundState()` uses only `DataClient.putDataItem` (persistent, reconnect-safe). `WearListenerService` handles `onDataChanged`. The watch-side `MessageClient` path was removed — `WearListenerService` has no `onMessageReceived`, so the send was dead code.
 - **Watch polling fallback:** `WearViewModel.startPolling()` reads `DataClient` every 2 s while the watch is in the foreground (started in `onResume`, stopped in `onPause`). It calls `RoundStateHolder.update(null)` if no item is found, which navigates the watch to `NoRoundScreen` — this is the intended clear-state behavior.
@@ -227,7 +254,16 @@ The sort input is always `basePlayers` (DB order); the cascading keys make the t
 
 ## Branch History
 
-### Branch `cachyai` — UI polish & hole-jump redesign (2026-06-09)
+### Branch `cachyai` — UI polish, hole-jump redesign & hole notes (2026-06-10)
+
+**Color system centralized:**
+- `app/ui/theme/AppColors.kt` and `wear/ui/theme/AppColors.kt` introduced — all named color constants moved here; no more inline `Color(0xFF…)` literals in screen files
+
+**Hole rules / notes feature (phone):**
+- `HoleEntity` gains a nullable `notes: String?` field (migration 3→4)
+- `CourseEditorScreen`: multiline "Hole rules / notes (optional)" text field added per hole; values trimmed and saved as null when blank
+- `ScorecardScreen`: `Info` icon appears on the hole card when notes are present; tapping opens a `ModalBottomSheet` titled "Hole [number] Rules"
+- `DatabaseSeeder`: Los Colomos and El Centinela seeded with example OB/mando notes to demonstrate the feature
 
 **Logo refresh (both `app` and `wear`):**
 - `ic_launcher_background.xml`: dark blue → pure black
@@ -295,5 +331,5 @@ Dead code audit and removal. All changes are deletions only — no behavior chan
 - `WearSyncManager` MessageClient send path — the `Alpha` branch had a `messageClient.sendMessage()` call in `pushRoundState()` targeting `/round/state/push`, but `WearListenerService` on the watch only implements `onDataChanged()` (DataClient) and has no `onMessageReceived()`, making that path dead. This branch predates that addition. The working delivery path is `DataClient.putDataItem()` only.
 
 **Remaining known cleanup candidates (deferred):**
-- `PlayerEntity.createdAt` field — stored in DB but never read anywhere; requires a Room migration (3 → 4) to drop the column
+- `PlayerEntity.createdAt` field — stored in DB but never read anywhere; requires a Room migration (4 → 5) to drop the column
 - `formatVsPar()` / `vsParColor()` — duplicated identically in `ScorecardScreen.kt`, `RoundReviewScreen.kt`, and `RoundDetailScreen.kt`; candidate for consolidation into a shared util
