@@ -25,6 +25,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -45,11 +47,13 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.viewmodel.RoundViewModel
+import com.scorigami.app.ui.theme.CardBackground
+import com.scorigami.app.ui.theme.HoleNumberColor
+import com.scorigami.app.ui.theme.HoleJumpSelectedColor
+import com.scorigami.app.ui.theme.IncompleteHoleDotColor
+import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.shared.db.entity.HoleEntity
 import com.scorigami.shared.db.entity.PlayerEntity
-
-private val CardBackground = Color(0xFF1A3652)
-private val HoleNumberColor = Color(0xFFFFD60A)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -69,7 +73,7 @@ fun ScorecardScreen(
         return
     }
 
-    val currentHoleEntity = state.holes.find { it.number == state.currentHole }
+    // currentHoleEntity is now derived inside AnimatedContent using the animated hole value
     val incompleteHoles = remember(state.scores, state.players, state.holes) {
         state.holes
             .filter { hole -> state.players.any { player -> (state.scores[Pair(player.id, hole.number)] ?: 0) == 0 } }
@@ -225,63 +229,7 @@ fun ScorecardScreen(
                     )
                 }
         ) {
-            // Hole navigation card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 40.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    IconButton(
-                        onClick = { viewModel.navigateToHole(state.currentHole - 1) },
-                        enabled = state.currentHole > 1
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Previous hole")
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            "Hole ${state.currentHole}",
-                            style = MaterialTheme.typography.headlineLarge,
-                            fontSize = 44.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = HoleNumberColor,
-                            modifier = Modifier.scale(holeScale.value)
-                        )
-                        currentHoleEntity?.let {
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                "Par ${it.par}",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                            it.distanceFeet?.let { feet ->
-                                val meters = (feet / 3.28084).toInt()
-                                Spacer(Modifier.height(8.dp))
-                                Text(
-                                    "$feet ft / $meters m",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-                    IconButton(
-                        onClick = { viewModel.navigateToHole(state.currentHole + 1) },
-                        enabled = state.currentHole < state.holes.size
-                    ) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowForward, "Next hole")
-                    }
-                }
-            }
-
-            // Player score cards — slide direction matches hole navigation
+            // Hole card + player cards animate together on hole change
             AnimatedContent(
                 targetState = state.currentHole,
                 modifier = Modifier.weight(1f),
@@ -298,25 +246,134 @@ fun ScorecardScreen(
                 },
                 label = "hole_slide"
             ) { hole ->
-                LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(state.players, key = { it.id }) { player ->
-                        PlayerScoreCard(
-                            player = player,
-                            currentHole = hole,
-                            scores = state.scores,
-                            holes = state.holes,
-                            onScoreChange = { throws ->
-                                viewModel.updateScore(player.id, hole, throws)
+                val holeEntity = state.holes.find { it.number == hole }
+                var showNotesSheet by remember(hole) { mutableStateOf(false) }
+
+                if (showNotesSheet && !holeEntity?.notes.isNullOrBlank()) {
+                    ModalBottomSheet(onDismissRequest = { showNotesSheet = false }) {
+                        Column(
+                            modifier = Modifier
+                                .padding(horizontal = 24.dp)
+                                .padding(bottom = 32.dp)
+                        ) {
+                            Text(
+                                "Hole $hole Notes",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                text = holeEntity?.notes ?: "",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+                }
+
+                Column(modifier = Modifier.fillMaxSize()) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                    ) {
+                        Box {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 8.dp, vertical = 40.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                IconButton(
+                                    onClick = { viewModel.navigateToHole(hole - 1) },
+                                    enabled = hole > 1
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Previous hole")
+                                }
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        "Hole $hole",
+                                        style = MaterialTheme.typography.headlineLarge,
+                                        fontSize = 44.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = HoleNumberColor,
+                                        modifier = Modifier.scale(holeScale.value)
+                                    )
+                                    holeEntity?.let {
+                                        Spacer(Modifier.height(8.dp))
+                                        Text(
+                                            "Par ${it.par}",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        it.distanceFeet?.let { feet ->
+                                            val meters = (feet / 3.28084).toInt()
+                                            Spacer(Modifier.height(8.dp))
+                                            Text(
+                                                "$feet ft / $meters m",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+                                }
+                                IconButton(
+                                    onClick = { viewModel.navigateToHole(hole + 1) },
+                                    enabled = hole < state.holes.size
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.ArrowForward, "Next hole")
+                                }
                             }
-                        )
+                            // Info icon — top-left, only shown when hole has notes
+                            if (!holeEntity?.notes.isNullOrBlank()) {
+                                IconButton(
+                                    onClick = { showNotesSheet = true },
+                                    modifier = Modifier.align(Alignment.TopStart)
+                                ) {
+                                    Icon(
+                                        Icons.Default.Info,
+                                        contentDescription = "Hole rules",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(21.dp)
+                                    )
+                                }
+                            }
+                            // Group icon — top-right shortcut to Add/Remove Players
+                            IconButton(
+                                onClick = { showPlayersSheet = true },
+                                modifier = Modifier.align(Alignment.TopEnd)
+                            ) {
+                                Icon(
+                                    Icons.Default.Group,
+                                    contentDescription = "Add / Remove Players",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(25.dp)
+                                )
+                            }
+                        }
+                    }
+                    LazyColumn(
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        items(state.players, key = { it.id }) { player ->
+                            PlayerScoreCard(
+                                player = player,
+                                currentHole = hole,
+                                scores = state.scores,
+                                holes = state.holes,
+                                onScoreChange = { throws ->
+                                    viewModel.updateScore(player.id, hole, throws)
+                                }
+                            )
+                        }
                     }
                 }
             }
 
-            // Hole jump — golf icon + dropdown, bottom right
+            // Hole jump — golf icon + dropdown, top left
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -391,6 +448,7 @@ private fun HoleJumpGrid(
                         Text(
                             "Jump to Hole",
                             style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Normal,
                             modifier = Modifier.padding(bottom = 12.dp)
                         )
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -407,7 +465,7 @@ private fun HoleJumpGrid(
                                                 .weight(1f)
                                                 .height(60.dp)
                                                 .background(
-                                                    if (isCurrent) HoleNumberColor else CardBackground,
+                                                    if (isCurrent) HoleJumpSelectedColor else CardBackground,
                                                     RoundedCornerShape(8.dp)
                                                 )
                                                 .clickable {
@@ -419,8 +477,8 @@ private fun HoleJumpGrid(
                                             Text(
                                                 text = "${hole.number}",
                                                 fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Normal,
-                                                color = if (isCurrent) Color.Black else Color.White,
-                                                fontSize = 16.sp
+                                                color = Color.White,
+                                                fontSize = 20.sp
                                             )
                                             if (incomplete) {
                                                 Box(
@@ -428,7 +486,7 @@ private fun HoleJumpGrid(
                                                         .align(Alignment.TopEnd)
                                                         .padding(top = 4.dp, end = 4.dp)
                                                         .size(6.dp)
-                                                        .background(Color(0xFFFFB300), CircleShape)
+                                                        .background(IncompleteHoleDotColor, CircleShape)
                                                 )
                                             }
                                         }
@@ -550,7 +608,7 @@ private fun PlayerScoreCard(
     val holePar = holes.find { it.number == currentHole }?.par ?: 3
     val scoreColor = when {
         throwsThisHole == 0 -> Color.White
-        throwsThisHole < holePar -> Color(0xFF81C784)
+        throwsThisHole < holePar -> ScoreUnderParColor
         throwsThisHole == holePar -> Color.White
         else -> MaterialTheme.colorScheme.error
     }
@@ -565,13 +623,15 @@ private fun PlayerScoreCard(
                 .padding(start = 16.dp, end = 4.dp, top = 16.dp, bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 3-letter abbreviation — natural width so all 3 chars always render
+            // 4-letter abbreviation — fixed width keeps Round column aligned across all cards
             Text(
-                text = player.name.take(3).uppercase(),
+                text = player.name.take(4).uppercase(),
                 fontSize = 40.sp,
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Normal,
                 color = Color.White,
-                modifier = Modifier.padding(end = 12.dp),
+                modifier = Modifier
+                    .width(120.dp)
+                    .padding(end = 12.dp),
                 maxLines = 1
             )
 
@@ -591,7 +651,7 @@ private fun PlayerScoreCard(
                     formatVsPar(totalVsPar),
                     style = MaterialTheme.typography.titleMedium,
                     color = vsParColor(totalVsPar),
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Normal
                 )
             }
 

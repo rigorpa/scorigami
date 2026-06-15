@@ -20,5 +20,6 @@ data class HoleEntity(
     val courseId: Long,
     val number: Int,
     val par: Int,
-    val distanceFeet: Int? = null
+    val distanceFeet: Int? = null,
+    val notes: String? = null
 )

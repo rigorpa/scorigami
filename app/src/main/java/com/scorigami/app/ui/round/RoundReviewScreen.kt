@@ -34,7 +34,8 @@ fun RoundReviewScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 32.dp),
+                    .navigationBarsPadding()
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Button(
