@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.*
 import androidx.wear.compose.material.dialog.Dialog
 import com.scorigami.wear.ui.theme.HoleNumberColor
+import com.scorigami.wear.ui.theme.HoleJumpSelectedColor
 import com.scorigami.wear.ui.theme.WearButtonBackground
 import com.scorigami.wear.ui.theme.IncompleteHoleDotColor
 import com.scorigami.wear.ui.theme.ScoreUnderParColor
@@ -116,7 +117,7 @@ fun WearScorecardScreen(
                                     .weight(1f)
                                     .height(44.dp)
                                     .background(
-                                        if (isCurrent) HoleNumberColor else WearButtonBackground,
+                                        if (isCurrent) HoleJumpSelectedColor else WearButtonBackground,
                                         RoundedCornerShape(8.dp)
                                     )
                                     .clickable {
@@ -129,7 +130,7 @@ fun WearScorecardScreen(
                                     text = "$holeNum",
                                     fontSize = 14.sp,
                                     fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Normal,
-                                    color = if (isCurrent) Color.Black else Color.White
+                                    color = Color.White
                                 )
                                 if (incomplete) {
                                     Box(
