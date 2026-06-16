@@ -5,6 +5,9 @@ import androidx.compose.ui.graphics.Color
 // Player score card and hole navigation card background
 val CardBackground = Color(0xFF1A3652)
 
+// Hole info card background
+val CardGrey = Color(0xFF18191C)
+
 // Yellow hole number on the scorecard and hole-jump grid
 val HoleNumberColor = Color(0xFFFFD60A)
 

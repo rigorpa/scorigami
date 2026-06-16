@@ -1,5 +1,6 @@
 package com.scorigami.app.ui.course
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,9 +13,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.scorigami.app.ui.theme.CoursesGradientEnd
+import com.scorigami.app.ui.theme.CoursesGradientStart
 import com.scorigami.app.viewmodel.CourseViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -30,14 +35,25 @@ fun CourseListScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("My Courses") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Brush.horizontalGradient(listOf(CoursesGradientStart, CoursesGradientEnd)))
+            ) {
+                TopAppBar(
+                    title = { Text("My Courses") },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White
+                    )
+                )
+            }
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onCreateCourse) {
@@ -50,7 +66,7 @@ fun CourseListScreen(
                 Text("No courses yet. Tap + to create one.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
-            LazyColumn(modifier = Modifier.padding(padding)) {
+            LazyColumn(modifier = Modifier.fillMaxSize().background(Color.Black).padding(padding)) {
                 items(courses) { courseWithHoles ->
                     val course = courseWithHoles.course
                     val par = courseWithHoles.holes.sumOf { it.par }
@@ -62,7 +78,8 @@ fun CourseListScreen(
                                 Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
                             }
                         },
-                        modifier = Modifier.clickable { onEditCourse(course.id) }
+                        modifier = Modifier.clickable { onEditCourse(course.id) },
+                        colors = ListItemDefaults.colors(containerColor = Color.Black)
                     )
                     HorizontalDivider()
                 }

@@ -48,10 +48,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.viewmodel.RoundViewModel
 import com.scorigami.app.ui.theme.CardBackground
+import com.scorigami.app.ui.theme.CardGrey
 import com.scorigami.app.ui.theme.HoleNumberColor
 import com.scorigami.app.ui.theme.HoleJumpSelectedColor
 import com.scorigami.app.ui.theme.IncompleteHoleDotColor
+import com.scorigami.app.ui.theme.NewRoundGradientEnd
+import com.scorigami.app.ui.theme.NewRoundGradientStart
 import com.scorigami.app.ui.theme.ScoreUnderParColor
+import androidx.compose.ui.graphics.Brush
 import com.scorigami.shared.db.entity.HoleEntity
 import com.scorigami.shared.db.entity.PlayerEntity
 
@@ -159,49 +163,61 @@ fun ScorecardScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = state.courseName,
-                        fontFamily = FontFamily.Cursive,
-                        fontSize = 30.sp
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Brush.horizontalGradient(listOf(NewRoundGradientStart, NewRoundGradientEnd)))
+            ) {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = state.courseName,
+                            fontFamily = FontFamily.Cursive,
+                            fontSize = 32.sp
+                        )
+                    },
+                    actions = {
+                        IconButton(onClick = { showScorecardSheet = true }) {
+                            Icon(Icons.Default.TableChart, contentDescription = "View scorecard")
+                        }
+                        TextButton(onClick = {
+                            if (hasMissingScores) showMissingScoresDialog = true else onEndRound()
+                        }) {
+                            Text("End Round", color = MaterialTheme.colorScheme.error)
+                        }
+                        Box {
+                            IconButton(onClick = { menuExpanded = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                            }
+                            DropdownMenu(
+                                expanded = menuExpanded,
+                                onDismissRequest = { menuExpanded = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Add / Remove Players") },
+                                    onClick = {
+                                        menuExpanded = false
+                                        showPlayersSheet = true
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Cancel Round", color = MaterialTheme.colorScheme.error) },
+                                    onClick = {
+                                        menuExpanded = false
+                                        showCancelDialog = true
+                                    }
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White,
+                        actionIconContentColor = Color.White
                     )
-                },
-                actions = {
-                    IconButton(onClick = { showScorecardSheet = true }) {
-                        Icon(Icons.Default.TableChart, contentDescription = "View scorecard")
-                    }
-                    TextButton(onClick = {
-                        if (hasMissingScores) showMissingScoresDialog = true else onEndRound()
-                    }) {
-                        Text("End Round", color = MaterialTheme.colorScheme.error)
-                    }
-                    Box {
-                        IconButton(onClick = { menuExpanded = true }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "More options")
-                        }
-                        DropdownMenu(
-                            expanded = menuExpanded,
-                            onDismissRequest = { menuExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Add / Remove Players") },
-                                onClick = {
-                                    menuExpanded = false
-                                    showPlayersSheet = true
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Cancel Round", color = MaterialTheme.colorScheme.error) },
-                                onClick = {
-                                    menuExpanded = false
-                                    showCancelDialog = true
-                                }
-                            )
-                        }
-                    }
-                }
-            )
+                )
+            }
         }
     ) { padding ->
         Column(
@@ -275,7 +291,7 @@ fun ScorecardScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                        colors = CardDefaults.cardColors(containerColor = CardGrey)
                     ) {
                         Box {
                             Row(

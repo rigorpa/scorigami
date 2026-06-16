@@ -1,5 +1,6 @@
 package com.scorigami.app.ui.history
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,10 +11,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.scorigami.app.ui.theme.HistoryGradientEnd
+import com.scorigami.app.ui.theme.HistoryGradientStart
 import com.scorigami.app.viewmodel.HistoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,14 +32,25 @@ fun HistoryScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Round History") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                }
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Brush.horizontalGradient(listOf(HistoryGradientStart, HistoryGradientEnd)))
+            ) {
+                TopAppBar(
+                    title = { Text("Round History") },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White
+                    )
+                )
+            }
         }
     ) { padding ->
         if (rounds.isEmpty()) {
@@ -42,7 +58,7 @@ fun HistoryScreen(
                 Text("No completed rounds yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
-            LazyColumn(modifier = Modifier.padding(padding)) {
+            LazyColumn(modifier = Modifier.fillMaxSize().background(Color.Black).padding(padding)) {
                 items(rounds) { round ->
                     ListItem(
                         headlineContent = { Text(round.courseName, fontWeight = FontWeight.SemiBold) },
@@ -55,7 +71,8 @@ fun HistoryScreen(
                                 )
                             }
                         },
-                        modifier = Modifier.clickable { onRoundDetail(round.roundId) }
+                        modifier = Modifier.clickable { onRoundDetail(round.roundId) },
+                        colors = ListItemDefaults.colors(containerColor = Color.Black)
                     )
                     HorizontalDivider()
                 }
