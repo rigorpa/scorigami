@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -59,6 +60,29 @@ fun RoundSetupScreen(
                     }
                 }
             )
+        },
+        bottomBar = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
+            ) {
+                Button(
+                    onClick = {
+                        selectedCourseId?.let { courseId ->
+                            if (players.isNotEmpty()) {
+                                roundViewModel.startRound(courseId, players.toList())
+                                onRoundStarted()
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    enabled = selectedCourseId != null && players.isNotEmpty()
+                ) {
+                    Text("Start Round")
+                }
+            }
         }
     ) { padding ->
         LazyColumn(
@@ -99,7 +123,19 @@ fun RoundSetupScreen(
             }
 
             item {
-                Text("Players", style = MaterialTheme.typography.titleMedium)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Players", style = MaterialTheme.typography.titleMedium)
+                    IconButton(
+                        onClick = { players.shuffle() },
+                        enabled = players.size > 1
+                    ) {
+                        Icon(Icons.Default.Shuffle, contentDescription = "Shuffle player order")
+                    }
+                }
                 Spacer(Modifier.height(8.dp))
 
                 if (players.isNotEmpty()) {
@@ -164,23 +200,7 @@ fun RoundSetupScreen(
                 }
             }
 
-            item {
-                Button(
-                    onClick = {
-                        selectedCourseId?.let { courseId ->
-                            if (players.isNotEmpty()) {
-                                roundViewModel.startRound(courseId, players.toList())
-                                onRoundStarted()
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = selectedCourseId != null && players.isNotEmpty()
-                ) {
-                    Text("Start Round")
-                }
-                Spacer(Modifier.height(16.dp))
-            }
+            item { Spacer(Modifier.height(8.dp)) }
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.scorigami.app.ui.home
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -13,6 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -23,6 +26,14 @@ import com.scorigami.app.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.BuildConfig
+import com.scorigami.app.ui.theme.CoursesGradientEnd
+import com.scorigami.app.ui.theme.CoursesGradientStart
+import com.scorigami.app.ui.theme.HistoryGradientEnd
+import com.scorigami.app.ui.theme.HistoryGradientStart
+import com.scorigami.app.ui.theme.NewRoundGradientEnd
+import com.scorigami.app.ui.theme.NewRoundGradientStart
+import com.scorigami.app.ui.theme.ResumeGradientEnd
+import com.scorigami.app.ui.theme.ResumeGradientStart
 import com.scorigami.app.viewmodel.RoundViewModel
 
 @Composable
@@ -75,7 +86,7 @@ fun HomeScreen(
                         text = "Resume Round",
                         icon = Icons.Default.PlayArrow,
                         onClick = onResume,
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                        gradient = Brush.horizontalGradient(listOf(ResumeGradientStart, ResumeGradientEnd))
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                 }
@@ -84,19 +95,22 @@ fun HomeScreen(
                     text = "New Round",
                     icon = Icons.Default.Adjust,
                     onClick = onStartRound,
+                    gradient = Brush.horizontalGradient(listOf(NewRoundGradientStart, NewRoundGradientEnd)),
                     enabled = !state.isActive
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 HomeActionButton(
                     text = "My Courses",
                     icon = Icons.Default.Park,
-                    onClick = onCourses
+                    onClick = onCourses,
+                    gradient = Brush.horizontalGradient(listOf(CoursesGradientStart, CoursesGradientEnd))
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 HomeActionButton(
                     text = "Round History",
                     icon = Icons.Default.History,
-                    onClick = onHistory
+                    onClick = onHistory,
+                    gradient = Brush.horizontalGradient(listOf(HistoryGradientStart, HistoryGradientEnd))
                 )
             }
 
@@ -117,17 +131,28 @@ private fun HomeActionButton(
     text: String,
     icon: ImageVector,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
+    gradient: Brush,
+    modifier: Modifier = Modifier.fillMaxWidth().height(56.dp),
     enabled: Boolean = true,
-    colors: ButtonColors = ButtonDefaults.buttonColors()
 ) {
+    val activeGradient = if (enabled) gradient else Brush.horizontalGradient(
+        listOf(Color(0xFF3A3A3A), Color(0xFF5A5A5A))
+    )
     Button(
         onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(46.dp),
+        modifier = modifier.background(activeGradient, RoundedCornerShape(percent = 50)),
         enabled = enabled,
-        colors = colors
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.Transparent,
+            contentColor = Color.White,
+            disabledContainerColor = Color.Transparent,
+            disabledContentColor = Color.White.copy(alpha = 0.5f)
+        ),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp,
+            disabledElevation = 0.dp
+        )
     ) {
         Text(
             text = text,

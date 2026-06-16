@@ -21,7 +21,7 @@ object DatabaseSeeder {
         // Add hole-specific rules here — use null for holes with no special rules
         val notes = listOf(
             null,  // Hole 1
-            "OB road to the left and beyond.",  // Hole 2
+            "OB road to the left and beyond",  // Hole 2
             "OB half-circle area on Teepad #17",  // Hole 3
             null,  // Hole 4
             null,  // Hole 5
@@ -49,10 +49,10 @@ object DatabaseSeeder {
         val distances = listOf(274, 220, 188, 191, 202, 272, 176, 202, 203, 253, 244, 229, 189, 177, 260, 203, 211, 236)
         // Add hole-specific rules here — use null for holes with no special rules
         val notes = listOf(
-            null,  // Hole 1
-            null,  // Hole 2
-            null,  // Hole 3
-            null,  // Hole 4
+            "OB walkpath and beyond",  // Hole 1
+            "OB walkpath and beyond",  // Hole 2
+            "OB walkpath and beyond",  // Hole 3
+            "Island hole, OB all before walkpath. Dropzone marked left of hole",  // Hole 4
             null,  // Hole 5
             null,  // Hole 6
             null,  // Hole 7

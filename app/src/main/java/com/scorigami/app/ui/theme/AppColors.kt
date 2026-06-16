@@ -18,3 +18,16 @@ val IncompleteHoleDotColor = Color(0xFFFFB300)
 val ScoreUnderParColor = Color(0xFF81C784)   // green  — under par
 // at par and unscored use Color.White (standard Compose constant, no alias needed)
 // over par uses MaterialTheme.colorScheme.error from the theme
+
+// Home screen button gradients (start → end, left to right)
+val NewRoundGradientStart   = Color(0xFF0A2472)   // deep navy
+val NewRoundGradientEnd     = Color(0xFF1CA7EC)   // sky blue
+
+val CoursesGradientStart    = Color(0xFF114B20)   // dark jungle green
+val CoursesGradientEnd      = Color(0xFF43A047)   // fresh green
+
+val HistoryGradientStart    = Color(0xFF2D0C00)   // espresso brown
+val HistoryGradientEnd      = Color(0xFFCC6B0A)   // warm amber
+
+val ResumeGradientStart     = Color(0xFF4527A0)   // deep violet
+val ResumeGradientEnd       = Color(0xFF7E57C2)   // soft lavender
