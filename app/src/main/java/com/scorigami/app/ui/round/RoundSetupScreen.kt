@@ -22,7 +22,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.viewmodel.CourseViewModel
 import com.scorigami.app.viewmodel.RoundViewModel
-import com.scorigami.shared.db.entity.PlayerEntity
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable

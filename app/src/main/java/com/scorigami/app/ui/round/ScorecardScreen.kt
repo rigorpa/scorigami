@@ -49,6 +49,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.viewmodel.RoundViewModel
 import com.scorigami.app.ui.theme.CardBackground
 import com.scorigami.app.ui.theme.CardGrey
+import com.scorigami.app.ui.theme.ScaleGrey1
+import com.scorigami.app.ui.theme.ScaleGrey2
 import com.scorigami.app.ui.theme.HoleNumberColor
 import com.scorigami.app.ui.theme.HoleJumpSelectedColor
 import com.scorigami.app.ui.theme.IncompleteHoleDotColor
@@ -290,8 +292,8 @@ fun ScorecardScreen(
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        colors = CardDefaults.cardColors(containerColor = CardGrey)
+                            .padding( vertical = 8.dp),
+                        colors = CardDefaults.cardColors(containerColor = ScaleGrey1)
                     ) {
                         Box {
                             Row(
@@ -329,7 +331,7 @@ fun ScorecardScreen(
                                             Text(
                                                 "$feet ft / $meters m",
                                                 style = MaterialTheme.typography.bodyMedium,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = Color.White
                                             )
                                         }
                                     }
@@ -350,7 +352,7 @@ fun ScorecardScreen(
                                     Icon(
                                         Icons.Default.Info,
                                         contentDescription = "Hole rules",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        tint = Color.White,
                                         modifier = Modifier.size(21.dp)
                                     )
                                 }
@@ -363,14 +365,14 @@ fun ScorecardScreen(
                                 Icon(
                                     Icons.Default.Group,
                                     contentDescription = "Add / Remove Players",
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    tint = Color.White,
                                     modifier = Modifier.size(25.dp)
                                 )
                             }
                         }
                     }
                     LazyColumn(
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        contentPadding = PaddingValues(vertical = 4.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp),
                         modifier = Modifier.weight(1f)
                     ) {
@@ -400,8 +402,8 @@ fun ScorecardScreen(
                 Icon(
                     Icons.Default.GolfCourse,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
                 )
                 Spacer(Modifier.width(8.dp))
                 HoleJumpGrid(
@@ -457,7 +459,7 @@ private fun HoleJumpGrid(
                             interactionSource = remember { MutableInteractionSource() }
                         ) {},
                     shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surface,
+                    color = MaterialTheme.colorScheme.background,
                     tonalElevation = 8.dp
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -631,7 +633,7 @@ private fun PlayerScoreCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = CardBackground)
+        colors = CardDefaults.cardColors(containerColor = ScaleGrey2)
     ) {
         Row(
             modifier = Modifier
@@ -639,14 +641,13 @@ private fun PlayerScoreCard(
                 .padding(start = 16.dp, end = 4.dp, top = 16.dp, bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // 4-letter abbreviation — fixed width keeps Round column aligned across all cards
             Text(
-                text = player.name.take(4).uppercase(),
-                fontSize = 40.sp,
+                text = player.name,
+                fontSize = 36.sp,
                 fontWeight = FontWeight.Normal,
                 color = Color.White,
                 modifier = Modifier
-                    .width(120.dp)
+                    .weight(1f)
                     .padding(end = 12.dp),
                 maxLines = 1
             )
@@ -661,12 +662,12 @@ private fun PlayerScoreCard(
                 Text(
                     "Round",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.Black
                 )
                 Text(
                     formatVsPar(totalVsPar),
                     style = MaterialTheme.typography.titleMedium,
-                    color = vsParColor(totalVsPar),
+                    color = Color.White,
                     fontWeight = FontWeight.Normal
                 )
             }

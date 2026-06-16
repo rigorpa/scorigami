@@ -3,10 +3,12 @@ package com.scorigami.app.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // Player score card and hole navigation card background
-val CardBackground = Color(0xFF1A3652)
+val CardBackground = Color(0xFF37474F)
+val ScaleGrey2 = Color(0xFF546E7A)
 
 // Hole info card background
-val CardGrey = Color(0xFF18191C)
+val CardGrey = Color(0xFF42413C)
+val ScaleGrey1 = Color(0xFF37474F)
 
 // Yellow hole number on the scorecard and hole-jump grid
 val HoleNumberColor = Color(0xFFFFD60A)

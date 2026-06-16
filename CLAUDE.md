@@ -41,11 +41,20 @@ Named color constants are centralized in `AppColors.kt` files — no inline `Col
 **`app/ui/theme/AppColors.kt`** (phone):
 | Constant | Value | Usage |
 |---|---|---|
-| `CardBackground` | `#1A3652` | Player score card and hole navigation card background |
+| `CardBackground` | `#37474F` | Player score card and hole-jump grid cell background |
+| `CardGrey` | `#42413C` | Hole info card background |
 | `HoleNumberColor` | `#FFD60A` | Yellow hole number on scorecard and hole-jump grid |
 | `HoleJumpSelectedColor` | `#7A7A7A` | Selected hole cell highlight in hole-jump grid (phone and watch) |
 | `IncompleteHoleDotColor` | `#FFB300` | Amber dot on holes with missing scores |
 | `ScoreUnderParColor` | `#81C784` | Green — under par score display |
+| `NewRoundGradientStart` | `#0A2472` | Deep navy — left edge of New Round / Scorecard / Round Setup top bar gradient |
+| `NewRoundGradientEnd` | `#1CA7EC` | Sky blue — right edge of New Round / Scorecard / Round Setup top bar gradient |
+| `CoursesGradientStart` | `#114B20` | Dark jungle green — left edge of My Courses top bar gradient |
+| `CoursesGradientEnd` | `#43A047` | Fresh green — right edge of My Courses top bar gradient |
+| `HistoryGradientStart` | `#2D0C00` | Espresso brown — left edge of Round History top bar gradient |
+| `HistoryGradientEnd` | `#CC6B0A` | Warm amber — right edge of Round History top bar gradient |
+| `ResumeGradientStart` | `#4527A0` | Deep violet — left edge of Resume Round home button gradient |
+| `ResumeGradientEnd` | `#7E57C2` | Soft lavender — right edge of Resume Round home button gradient |
 
 **`wear/ui/theme/AppColors.kt`** (watch):
 | Constant | Value | Usage |
@@ -129,12 +138,27 @@ Both courses include per-hole `distanceFeet` values. Displayed on the scorecard 
 Navigation is in `app/navigation/AppNavigation.kt`.
 
 ### ScorecardScreen layout
-- **Top bar:** course name in `FontFamily.Cursive`; `TableChart` icon button (opens full scorecard sheet); "End Round" button; ⋮ overflow menu
+- **Top bar:** blue gradient (`NewRoundGradientStart` → `NewRoundGradientEnd`) wrapping a transparent `TopAppBar`; course name in `FontFamily.Cursive`; `TableChart` icon button (opens full scorecard sheet); "End Round" button; ⋮ overflow menu
 - **Full scorecard sheet:** `ModalBottomSheet` opened via the `TableChart` icon — same per-player 18-hole breakdown shown in `RoundReviewScreen` (hole number + vs-par grid, totals)
-- **Hole card:** large hole number (yellow), par, distance; ◀/▶ arrow buttons; `Info` icon appears at bottom-right when `hole.notes` is non-null/non-blank — tapping opens a `ModalBottomSheet` titled "Hole [number] Rules" showing the full notes text
-- **Player cards:** 3-letter uppercase abbreviation (40sp, bold, white) on the left; round vs-par centered; −/+ score controls on the right with the current throw count displayed between them (0 shown as `"—"`)
+- **Hole card:** `CardGrey` background; large hole number (yellow), par, distance; ◀/▶ arrow buttons; `Info` icon appears at bottom-right when `hole.notes` is non-null/non-blank — tapping opens a `ModalBottomSheet` titled "Hole [number] Rules" showing the full notes text
+- **Player cards:** full player name (`weight(1f)`, 40sp, white) on the left; round vs-par centered; −/+ score controls on the right with the current throw count displayed between them (0 shown as `"—"`); cards are full screen width (no horizontal padding on the `LazyColumn`)
 - **Hole transitions:** `AnimatedContent` slides player cards left/right matching navigation direction (250 ms); hole number springs from 82 % → 100 % with `Spring.DampingRatioMediumBouncy` on each navigation (`Animatable` + `LaunchedEffect`)
-- **Hole jump:** `GolfCourse` icon + `HoleJumpGrid` button at bottom-right; opens a `Dialog` (`DialogProperties(usePlatformDefaultWidth = false)`) positioned in the lower portion of the screen; 3-column grid of holes rendered as `Box` cells (`60 dp` tall, `RoundedCornerShape(8.dp)`); current hole highlighted yellow (`HoleNumberColor`), others dark blue (`CardBackground`); amber dot (`0xFFFFB300`, 6 dp, `CircleShape`) in top-right corner of cells with any missing score; tap outside the grid to dismiss (outer `Box` carries a no-ripple `clickable` dismiss; `Surface` carries a no-op `clickable` to consume events inside)
+- **Hole jump:** `GolfCourse` icon + `HoleJumpGrid` button at bottom-right; opens a `Dialog` (`DialogProperties(usePlatformDefaultWidth = false)`) positioned in the lower portion of the screen; 3-column grid of holes rendered as `Box` cells (`60 dp` tall, `RoundedCornerShape(8.dp)`); current hole highlighted yellow (`HoleNumberColor`), others `CardBackground`; amber dot (`0xFFFFB300`, 6 dp, `CircleShape`) in top-right corner of cells with any missing score; tap outside the grid to dismiss (outer `Box` carries a no-ripple `clickable` dismiss; `Surface` carries a no-op `clickable` to consume events inside)
+
+### CourseListScreen layout
+- **Top bar:** green gradient (`CoursesGradientStart` → `CoursesGradientEnd`) wrapping a transparent `TopAppBar`
+- **List items:** `ListItem` with `containerColor = Color.Black`; `HorizontalDivider` between entries; `LazyColumn` background is `Color.Black`
+
+### HistoryScreen layout
+- **Top bar:** amber/brown gradient (`HistoryGradientStart` → `HistoryGradientEnd`) wrapping a transparent `TopAppBar`
+- **List items:** `ListItem` with `containerColor = Color.Black`; `HorizontalDivider` between entries; `LazyColumn` background is `Color.Black`
+
+### RoundSetupScreen layout
+- **Top bar:** blue gradient (`NewRoundGradientStart` → `NewRoundGradientEnd`) matching ScorecardScreen
+- **Players section:** shuffle `IconButton` next to the "Players" heading — enabled only when `players.size > 1`, calls `players.shuffle()`
+
+### HomeScreen layout
+- **Buttons:** `HomeActionButton` composable uses `Brush.horizontalGradient` with per-button color pairs from `AppColors.kt`; disabled state falls back to a grey gradient; buttons are full-width with 56 dp height
 
 ---
 
@@ -189,7 +213,7 @@ Subsequent presses increment/decrement normally. Pressing `−` from any score >
 2. Score is written to Room (`ScoreEntity` upsert)
 3. `RoundViewModel` observes both `scoreDao.getScoresForRound()` and `playerDao.getPlayersForRoundFlow()` via `combine` inside `flatMapLatest` — picks up DB changes automatically
 4. Players are re-sorted for the current hole (honor system — see below)
-5. `pushStateToWatch()` is called (150 ms debounce) → `WearSyncManager.pushRoundState()` → DataClient put + MessageClient send
+5. `pushStateToWatch()` is called (150 ms debounce) → `WearSyncManager.pushRoundState()` → `DataClient.putDataItem` only
 6. Watch receives new `RoundState` in `WearListenerService` → updates `RoundStateHolder` → `WearViewModel` recomposes
 
 When update originates from watch: step 2 happens in `PhoneWearableListenerService` instead, then steps 3-6 follow.
@@ -334,3 +358,30 @@ Dead code audit and removal. All changes are deletions only — no behavior chan
 **Remaining known cleanup candidates (deferred):**
 - `PlayerEntity.createdAt` field — stored in DB but never read anywhere; requires a Room migration (4 → 5) to drop the column
 - `formatVsPar()` / `vsParColor()` — duplicated identically in `ScorecardScreen.kt`, `RoundReviewScreen.kt`, and `RoundDetailScreen.kt`; candidate for consolidation into a shared util
+
+---
+
+### Branch `fedxps` — UI theming & player card improvements (2026-06-16)
+
+**Gradient top bars:**
+- `HomeScreen`: `HomeActionButton` composable uses `Brush.horizontalGradient` with named color pairs (New Round: navy→sky, Courses: jungle green→fresh green, History: espresso→amber, Resume: deep violet→lavender) from `AppColors.kt`
+- `RoundSetupScreen`, `ScorecardScreen`: blue gradient (`NewRoundGradientStart` → `NewRoundGradientEnd`) top bar — transparent `TopAppBar` inside a `Box` with gradient `Modifier.background`
+- `CourseListScreen`: green gradient (`CoursesGradientStart` → `CoursesGradientEnd`) top bar
+- `HistoryScreen`: amber/brown gradient (`HistoryGradientStart` → `HistoryGradientEnd`) top bar
+
+**List screen list items:**
+- `CourseListScreen` and `HistoryScreen`: `ListItem` entries set to `containerColor = Color.Black`; `LazyColumn` background `Color.Black`; `HorizontalDivider` as separator
+
+**ScorecardScreen player cards:**
+- Removed 4-letter abbreviation — now shows full player name with `Modifier.weight(1f)`
+- Removed horizontal padding from `LazyColumn` — cards now full screen width
+
+**Hole card color:**
+- Changed from `MaterialTheme.colorScheme.primaryContainer` to `CardGrey` (`#42413C`)
+- `CardGrey` added to `AppColors.kt`; `CardBackground` updated to `#37474F`
+
+**Shuffle player order:**
+- `RoundSetupScreen`: `Shuffle` icon button next to "Players" heading; enabled when `players.size > 1`
+
+**DatabaseSeeder notes update:**
+- El Centinela holes 1–4 seeded with OB notes; Los Colomos H2 note trimmed
