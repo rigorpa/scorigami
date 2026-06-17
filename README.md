@@ -44,6 +44,8 @@ Scorigami/
 
 **Pattern:** MVVM with `StateFlow` / `collectAsStateWithLifecycle`. Hilt for dependency injection throughout.
 
+The phone scorecard UI is split into focused composables under `app/ui/round/` — `ScorecardScreen` orchestrates state and layout while `PlayerScoreCard`, `HoleInfoCard`, `HoleJumpGrid`, `FullScorecardSheet`, `AddRemovePlayersSheet`, and `ScorecardTopBar` each own a piece of the screen.
+
 **Storage:** Room database lives on the phone only. The watch has no local DB — it receives state snapshots pushed from the phone.
 
 **Phone ↔ Watch sync:**
@@ -107,6 +109,8 @@ The `:wear` APK is embedded in the `:app` build and installs to the paired watch
 
 | Version | Notes |
 |---|---|
+| 0.5.0 | Internal refactor: the phone scorecard screen was split from one ~420-line file into focused composables (`PlayerScoreCard`, `HoleInfoCard`, `HoleJumpGrid`, `FullScorecardSheet`, `AddRemovePlayersSheet`, `ScorecardTopBar`) plus a shared `ScoreFormat` helper. No behavior change. |
+| 0.4.9 | UI color cleanup on the phone app. Added a "hide score" (eye) icon on the hole card to toggle player round scores between visible and `•••`. |
 | 0.4.8 | Gradient home screen buttons (each button has its own color scheme). Matching gradient top bars on New Round, Scorecard, My Courses, and Round History screens. Player full name shown on scorecard cards (was 4-letter abbreviation). Player cards stretch full screen width. Shuffle player order button on round setup. |
 | 0.4.7 | Per-hole rules and notes for courses. OB lines, mandos, and other notes stored per hole in the course editor; info icon on the hole card opens a rules sheet. El Centinela and Los Colomos seeded with example hole rules. |
 | 0.4.6 | Add/remove players icon in scorecard overflow menu. Various phone UI changes: color updates, font weight, button spacing. |

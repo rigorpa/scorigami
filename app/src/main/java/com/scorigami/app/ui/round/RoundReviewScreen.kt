@@ -209,16 +209,3 @@ private fun StandingsCard(
         }
     }
 }
-
-@Composable
-private fun vsParColor(vsPar: Int) = when {
-    vsPar < 0 -> MaterialTheme.colorScheme.primary
-    vsPar == 0 -> MaterialTheme.colorScheme.onSurface
-    else -> MaterialTheme.colorScheme.error
-}
-
-private fun formatVsPar(vsPar: Int) = when {
-    vsPar < 0 -> "$vsPar"
-    vsPar == 0 -> "E"
-    else -> "+$vsPar"
-}
