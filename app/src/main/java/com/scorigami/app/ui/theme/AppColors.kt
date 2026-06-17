@@ -8,7 +8,6 @@ val ScaleGrey2 = Color(0xFF5A6164)
 
 // Hole info card background
 val CardGrey = Color(0xFF42413C)
-// val ScaleGrey1 = Color(0xFF37474F)
 val ScaleGrey1 = Color(0xFF354045)
 
 // Yellow hole number on the scorecard and hole-jump grid
@@ -34,8 +33,8 @@ val ScoreUnderParColor = Color(0xFF81C784)   // green  — under par
 // val NewRoundGradientStart   = Color(0xFF0A2472)   // deep navy
 // val NewRoundGradientEnd     = Color(0xFF1976D2)   // sky blue
 
-val NewRoundGradientStart   = Color(0xFF1C2E42)   // deep navy
-val NewRoundGradientEnd     = Color(0xFF474B50)   // sky blue
+val NewRoundGradientStart   = Color(0xFF1C2E42)   // deep grey
+val NewRoundGradientEnd     = Color(0xFF474B50)   // sky grey
 
 val CoursesGradientStart    = Color(0xFF24534B)   // dark jungle green
 val CoursesGradientEnd      = Color(0xFF506B67)   // fresh green

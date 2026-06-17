@@ -21,7 +21,7 @@ fun NoRoundScreen() {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Scorigami",
+                text = "SCORIGAMI",
                 style = MaterialTheme.typography.title2,
                 color = MaterialTheme.colors.primary
             )
