@@ -102,7 +102,7 @@ internal fun HoleJumpGrid(
                                                 text = "${hole.number}",
                                                 fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Normal,
                                                 color = ContentWhite,
-                                                fontSize = 20.sp
+                                                fontSize = 24.sp
                                             )
                                             if (incomplete) {
                                                 Box(
