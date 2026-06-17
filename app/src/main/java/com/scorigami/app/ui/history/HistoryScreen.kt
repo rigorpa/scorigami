@@ -13,6 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.ScreenBackground
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -46,8 +48,8 @@ fun HistoryScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
-                        titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White
+                        titleContentColor = ContentWhite,
+                        navigationIconContentColor = ContentWhite
                     )
                 )
             }
@@ -58,7 +60,7 @@ fun HistoryScreen(
                 Text("No completed rounds yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize().background(Color.Black).padding(padding)) {
+            LazyColumn(modifier = Modifier.fillMaxSize().background(ScreenBackground).padding(padding)) {
                 items(rounds) { round ->
                     ListItem(
                         headlineContent = { Text(round.courseName, fontWeight = FontWeight.SemiBold) },
@@ -72,7 +74,7 @@ fun HistoryScreen(
                             }
                         },
                         modifier = Modifier.clickable { onRoundDetail(round.roundId) },
-                        colors = ListItemDefaults.colors(containerColor = Color.Black)
+                        colors = ListItemDefaults.colors(containerColor = ScreenBackground)
                     )
                     HorizontalDivider()
                 }

@@ -15,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.ScreenBackground
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -49,8 +51,8 @@ fun CourseListScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
-                        titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White
+                        titleContentColor = ContentWhite,
+                        navigationIconContentColor = ContentWhite
                     )
                 )
             }
@@ -66,7 +68,7 @@ fun CourseListScreen(
                 Text("No courses yet. Tap + to create one.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize().background(Color.Black).padding(padding)) {
+            LazyColumn(modifier = Modifier.fillMaxSize().background(ScreenBackground).padding(padding)) {
                 items(courses) { courseWithHoles ->
                     val course = courseWithHoles.course
                     val par = courseWithHoles.holes.sumOf { it.par }
@@ -79,7 +81,7 @@ fun CourseListScreen(
                             }
                         },
                         modifier = Modifier.clickable { onEditCourse(course.id) },
-                        colors = ListItemDefaults.colors(containerColor = Color.Black)
+                        colors = ListItemDefaults.colors(containerColor = ScreenBackground)
                     )
                     HorizontalDivider()
                 }

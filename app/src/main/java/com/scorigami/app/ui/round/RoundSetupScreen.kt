@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import com.scorigami.app.ui.theme.ContentWhite
 import androidx.compose.ui.unit.dp
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
 import com.scorigami.app.ui.theme.NewRoundGradientStart
@@ -70,8 +71,8 @@ fun RoundSetupScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
-                        titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White
+                        titleContentColor = ContentWhite,
+                        navigationIconContentColor = ContentWhite
                     )
                 )
             }

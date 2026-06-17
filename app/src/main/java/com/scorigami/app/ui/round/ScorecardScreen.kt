@@ -27,6 +27,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -39,9 +41,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -56,6 +61,8 @@ import com.scorigami.app.ui.theme.HoleJumpSelectedColor
 import com.scorigami.app.ui.theme.IncompleteHoleDotColor
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
 import com.scorigami.app.ui.theme.NewRoundGradientStart
+import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.app.ui.theme.ScoreUnderParColor
 import androidx.compose.ui.graphics.Brush
 import com.scorigami.shared.db.entity.HoleEntity
@@ -92,6 +99,7 @@ fun ScorecardScreen(
     var showPlayersSheet by remember { mutableStateOf(false) }
     var showMissingScoresDialog by remember { mutableStateOf(false) }
     var showScorecardSheet by remember { mutableStateOf(false) }
+    var scoresVisible by remember { mutableStateOf(true) }
 
     // Hole number spring-scale animation
     val holeScale = remember { Animatable(1f) }
@@ -214,9 +222,9 @@ fun ScorecardScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
-                        titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White,
-                        actionIconContentColor = Color.White
+                        titleContentColor = ContentWhite,
+                        navigationIconContentColor = ContentWhite,
+                        actionIconContentColor = ContentWhite
                     )
                 )
             }
@@ -311,10 +319,16 @@ fun ScorecardScreen(
                                 }
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(
-                                        "Hole $hole",
+                                        text = buildAnnotatedString {
+                                            withStyle(SpanStyle(fontWeight = FontWeight.Normal)) {
+                                                append("Hole ")
+                                            }
+                                            withStyle(SpanStyle(fontWeight = FontWeight.ExtraBold)) {
+                                                append("$hole")
+                                            }
+                                        },
                                         style = MaterialTheme.typography.headlineLarge,
                                         fontSize = 44.sp,
-                                        fontWeight = FontWeight.ExtraBold,
                                         color = HoleNumberColor,
                                         modifier = Modifier.scale(holeScale.value)
                                     )
@@ -331,7 +345,7 @@ fun ScorecardScreen(
                                             Text(
                                                 "$feet ft / $meters m",
                                                 style = MaterialTheme.typography.bodyMedium,
-                                                color = Color.White
+                                                color = ContentWhite
                                             )
                                         }
                                     }
@@ -352,7 +366,7 @@ fun ScorecardScreen(
                                     Icon(
                                         Icons.Default.Info,
                                         contentDescription = "Hole rules",
-                                        tint = Color.White,
+                                        tint = ContentWhite,
                                         modifier = Modifier.size(21.dp)
                                     )
                                 }
@@ -365,8 +379,20 @@ fun ScorecardScreen(
                                 Icon(
                                     Icons.Default.Group,
                                     contentDescription = "Add / Remove Players",
-                                    tint = Color.White,
+                                    tint = ContentWhite,
                                     modifier = Modifier.size(25.dp)
+                                )
+                            }
+                            // Score visibility toggle — bottom-left
+                            IconButton(
+                                onClick = { scoresVisible = !scoresVisible },
+                                modifier = Modifier.align(Alignment.BottomStart)
+                            ) {
+                                Icon(
+                                    if (scoresVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = if (scoresVisible) "Hide scores" else "Show scores",
+                                    tint = ContentWhite,
+                                    modifier = Modifier.size(21.dp)
                                 )
                             }
                         }
@@ -382,6 +408,7 @@ fun ScorecardScreen(
                                 currentHole = hole,
                                 scores = state.scores,
                                 holes = state.holes,
+                                scoresVisible = scoresVisible,
                                 onScoreChange = { throws ->
                                     viewModel.updateScore(player.id, hole, throws)
                                 }
@@ -402,7 +429,7 @@ fun ScorecardScreen(
                 Icon(
                     Icons.Default.GolfCourse,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = ContentWhite,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(Modifier.width(8.dp))
@@ -495,7 +522,7 @@ private fun HoleJumpGrid(
                                             Text(
                                                 text = "${hole.number}",
                                                 fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Normal,
-                                                color = Color.White,
+                                                color = ContentWhite,
                                                 fontSize = 20.sp
                                             )
                                             if (incomplete) {
@@ -614,6 +641,7 @@ private fun PlayerScoreCard(
     currentHole: Int,
     scores: Map<Pair<Long, Int>, Int>,
     holes: List<HoleEntity>,
+    scoresVisible: Boolean,
     onScoreChange: (Int) -> Unit
 ) {
     val throwsThisHole = scores[Pair(player.id, currentHole)] ?: 0
@@ -625,9 +653,9 @@ private fun PlayerScoreCard(
     val totalVsPar = totalThrows - parSoFar
     val holePar = holes.find { it.number == currentHole }?.par ?: 3
     val scoreColor = when {
-        throwsThisHole == 0 -> Color.White
+        throwsThisHole == 0 -> ContentWhite
         throwsThisHole < holePar -> ScoreUnderParColor
-        throwsThisHole == holePar -> Color.White
+        throwsThisHole == holePar -> ContentWhite
         else -> MaterialTheme.colorScheme.error
     }
 
@@ -645,7 +673,7 @@ private fun PlayerScoreCard(
                 text = player.name,
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Normal,
-                color = Color.White,
+                color = ContentWhite,
                 modifier = Modifier
                     .weight(1f)
                     .padding(end = 12.dp),
@@ -662,12 +690,13 @@ private fun PlayerScoreCard(
                 Text(
                     "Round",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Black
+                    fontWeight = FontWeight.Bold,
+                    color = ScreenBackground
                 )
                 Text(
-                    formatVsPar(totalVsPar),
+                    text = if (scoresVisible) formatVsPar(totalVsPar) else "•••",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Color.White,
+                    color = ContentWhite,
                     fontWeight = FontWeight.Normal
                 )
             }
@@ -684,7 +713,7 @@ private fun PlayerScoreCard(
                         "−",
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = ContentWhite
                     )
                 }
                 Text(
@@ -705,7 +734,7 @@ private fun PlayerScoreCard(
                         "+",
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = ContentWhite
                     )
                 }
             }

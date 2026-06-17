@@ -32,6 +32,7 @@ import com.scorigami.app.ui.theme.HistoryGradientEnd
 import com.scorigami.app.ui.theme.HistoryGradientStart
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
 import com.scorigami.app.ui.theme.NewRoundGradientStart
+import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.ResumeGradientEnd
 import com.scorigami.app.ui.theme.ResumeGradientStart
 import com.scorigami.app.viewmodel.RoundViewModel
@@ -144,9 +145,9 @@ private fun HomeActionButton(
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Transparent,
-            contentColor = Color.White,
+            contentColor = ContentWhite,
             disabledContainerColor = Color.Transparent,
-            disabledContentColor = Color.White.copy(alpha = 0.5f)
+            disabledContentColor = ContentWhite.copy(alpha = 0.5f)
         ),
         elevation = ButtonDefaults.buttonElevation(
             defaultElevation = 0.dp,

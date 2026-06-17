@@ -19,10 +19,15 @@ val HoleJumpSelectedColor = Color(0xFF7A7A7A)
 // Amber dot on holes with missing scores
 val IncompleteHoleDotColor = Color(0xFFFFB300)
 
+// Primary content color on dark surfaces — text, icons, top bar chrome
+val ContentWhite = Color.White
+
+// App background color — list screens, list items, scorecard Round label
+val ScreenBackground = Color.Black
+
 // Score colors vs par
 val ScoreUnderParColor = Color(0xFF81C784)   // green  — under par
-// at par and unscored use Color.White (standard Compose constant, no alias needed)
-// over par uses MaterialTheme.colorScheme.error from the theme
+// at par and unscored use ContentWhite; over par uses MaterialTheme.colorScheme.error from the theme
 
 // Home screen button gradients (start → end, left to right)
 val NewRoundGradientStart   = Color(0xFF0A2472)   // deep navy
