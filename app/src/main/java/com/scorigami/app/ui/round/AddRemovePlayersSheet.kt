@@ -59,7 +59,7 @@ internal fun AddRemovePlayersSheet(
             OutlinedTextField(
                 value = nameInput,
                 onValueChange = { nameInput = it },
-                label = { Text("Add player") },
+                label = { Text("Add Player") },
                 modifier = Modifier.weight(1f),
                 singleLine = true
             )
@@ -74,13 +74,13 @@ internal fun AddRemovePlayersSheet(
                 },
                 enabled = nameInput.isNotBlank() && currentPlayers.none { it.name == nameInput.trim() }
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add player")
+                Icon(Icons.Default.Add, contentDescription = "Add Player")
             }
         }
 
         if (suggestions.isNotEmpty()) {
             Text(
-                "Previous players",
+                "Previous",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

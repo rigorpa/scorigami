@@ -76,7 +76,7 @@ fun HomeScreen(
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "A Disc Golf Scorecard",
+                    text = "A Frolf Scorecard",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

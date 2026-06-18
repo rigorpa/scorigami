@@ -1,5 +1,6 @@
 package com.scorigami.app.ui.history
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,11 +10,16 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.HistoryGradientEnd
+import com.scorigami.app.ui.theme.HistoryGradientStart
 import com.scorigami.app.viewmodel.HistoryViewModel
 import com.scorigami.shared.db.entity.HoleEntity
 import com.scorigami.shared.db.entity.PlayerEntity
@@ -28,25 +34,36 @@ fun RoundDetailScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(detail.courseName.ifEmpty { "Round Detail" })
-                        if (detail.date.isNotEmpty()) {
-                            Text(
-                                text = "Played on ${detail.date}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Brush.horizontalGradient(listOf(HistoryGradientStart, HistoryGradientEnd)))
+            ) {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text(detail.courseName.ifEmpty { "Round Detail" })
+                            if (detail.date.isNotEmpty()) {
+                                Text(
+                                    text = "Played on ${detail.date}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = ContentWhite.copy(alpha = 0.75f)
+                                )
+                            }
                         }
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                }
-            )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        titleContentColor = ContentWhite,
+                        navigationIconContentColor = ContentWhite
+                    )
+                )
+            }
         }
     ) { padding ->
         if (detail.players.isEmpty()) {
@@ -112,11 +129,11 @@ private fun DetailPlayerCard(
                             modifier = Modifier.weight(1f),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text("${hole.number}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(throws?.toString() ?: "—", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
+                            Text("${hole.number}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(
                                 text = diff?.let { formatVsPar(it) } ?: "",
-                                style = MaterialTheme.typography.labelSmall,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
                                 color = diff?.let { vsParColor(it) } ?: MaterialTheme.colorScheme.onSurface,
                                 textAlign = TextAlign.Center
                             )

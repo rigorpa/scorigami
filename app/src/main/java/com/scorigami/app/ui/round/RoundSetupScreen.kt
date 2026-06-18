@@ -101,6 +101,8 @@ fun RoundSetupScreen(
             }
         }
     ) { padding ->
+        val suggestions = allPlayers.filter { !players.contains(it.name) }
+
         LazyColumn(
             modifier = Modifier.padding(padding).padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -172,11 +174,32 @@ fun RoundSetupScreen(
                     Spacer(Modifier.height(8.dp))
                 }
 
+                if (suggestions.isNotEmpty()) {
+                    Text(
+                        "Previous",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        suggestions.forEach { player ->
+                            SuggestionChip(
+                                onClick = { players.add(player.name) },
+                                label = { Text(player.name, color = ContentWhite) }
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(8.dp))
+                }
+
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
                         value = playerNameInput,
                         onValueChange = { playerNameInput = it },
-                        label = { Text("Add New Player") },
+                        label = { Text("Add Player") },
                         modifier = Modifier.weight(1f),
                         singleLine = true
                     )
@@ -196,27 +219,7 @@ fun RoundSetupScreen(
                 }
             }
 
-            val suggestions = allPlayers.filter { !players.contains(it.name) }
-            if (suggestions.isNotEmpty()) {
-                item {
-                    Text(
-                        "Previous players",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        suggestions.forEach { player ->
-                            SuggestionChip(
-                                onClick = { players.add(player.name) },
-                                label = { Text(player.name) }
-                            )
-                        }
-                    }
-                }
-            }
-
-            item { Spacer(Modifier.height(8.dp)) }
+            item { Spacer(Modifier.height(16.dp)) }
         }
     }
 }
