@@ -14,8 +14,6 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.GolfCourse
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,7 +22,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.viewmodel.RoundViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -188,7 +185,10 @@ fun ScorecardScreen(
                         holeEntity = holeEntity,
                         totalHoles = state.holes.size,
                         holeScale = holeScale.value,
+                        holes = state.holes,
+                        incompleteHoles = incompleteHoles,
                         onNavigateToHole = { viewModel.navigateToHole(it) },
+                        onHoleSelected = { viewModel.navigateToHole(it) },
                         onAddRemovePlayers = { showPlayersSheet = true },
                         scoresVisible = scoresVisible,
                         onToggleScoresVisible = { scoresVisible = !scoresVisible }
@@ -214,27 +214,6 @@ fun ScorecardScreen(
                 }
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.Default.GolfCourse,
-                    contentDescription = null,
-                    tint = ContentWhite,
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(Modifier.width(8.dp))
-                HoleJumpGrid(
-                    currentHole = state.currentHole,
-                    holes = state.holes,
-                    incompleteHoles = incompleteHoles,
-                    onHoleSelected = { viewModel.navigateToHole(it) }
-                )
-            }
         }
     }
 }

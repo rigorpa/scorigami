@@ -1,6 +1,11 @@
 package com.scorigami.app.ui.round
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -12,15 +17,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.scorigami.app.ui.theme.CardBackground
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.HoleJumpSelectedColor
 import com.scorigami.app.ui.theme.HoleNumberColor
+import com.scorigami.app.ui.theme.IncompleteHoleDotColor
 import com.scorigami.app.ui.theme.ScaleGrey1
 import com.scorigami.shared.db.entity.HoleEntity
 
@@ -31,12 +39,16 @@ internal fun HoleInfoCard(
     holeEntity: HoleEntity?,
     totalHoles: Int,
     holeScale: Float,
+    holes: List<HoleEntity>,
+    incompleteHoles: Set<Int>,
     onNavigateToHole: (Int) -> Unit,
+    onHoleSelected: (Int) -> Unit,
     onAddRemovePlayers: () -> Unit,
     scoresVisible: Boolean,
     onToggleScoresVisible: () -> Unit
 ) {
     var showNotesSheet by remember(hole) { mutableStateOf(false) }
+    var showHoleJumpDialog by remember { mutableStateOf(false) }
 
     if (showNotesSheet && !holeEntity?.notes.isNullOrBlank()) {
         ModalBottomSheet(onDismissRequest = { showNotesSheet = false }) {
@@ -59,6 +71,89 @@ internal fun HoleInfoCard(
         }
     }
 
+    if (showHoleJumpDialog) {
+        Dialog(
+            onDismissRequest = { showHoleJumpDialog = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable(
+                        indication = null,
+                        interactionSource = remember { MutableInteractionSource() }
+                    ) { showHoleJumpDialog = false }
+                    .padding(top = 320.dp, start = 12.dp, end = 12.dp),
+                contentAlignment = Alignment.TopCenter
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) {},
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.background,
+                    tonalElevation = 8.dp
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            "Jump to Hole",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Normal,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            holes.chunked(3).forEach { rowHoles ->
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    rowHoles.forEach { h ->
+                                        val isCurrent = h.number == hole
+                                        val incomplete = h.number in incompleteHoles
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(60.dp)
+                                                .background(
+                                                    if (isCurrent) HoleJumpSelectedColor else CardBackground,
+                                                    RoundedCornerShape(8.dp)
+                                                )
+                                                .clickable {
+                                                    onHoleSelected(h.number)
+                                                    showHoleJumpDialog = false
+                                                },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "${h.number}",
+                                                fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Normal,
+                                                color = ContentWhite,
+                                                fontSize = 20.sp
+                                            )
+                                            if (incomplete) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .align(Alignment.TopEnd)
+                                                        .padding(top = 4.dp, end = 4.dp)
+                                                        .size(6.dp)
+                                                        .background(IncompleteHoleDotColor, CircleShape)
+                                                )
+                                            }
+                                        }
+                                    }
+                                    repeat(3 - rowHoles.size) { Spacer(Modifier.weight(1f)) }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -77,38 +172,51 @@ internal fun HoleInfoCard(
                     onClick = { onNavigateToHole(hole - 1) },
                     enabled = hole > 1
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Previous hole")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Previous hole", modifier = Modifier.size(48.dp))
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = buildAnnotatedString {
-                            withStyle(SpanStyle(fontWeight = FontWeight.Normal)) {
-                                append("Hole ")
-                            }
-                            withStyle(SpanStyle(fontWeight = FontWeight.ExtraBold)) {
-                                append("$hole")
-                            }
-                        },
-                        style = MaterialTheme.typography.headlineLarge,
-                        fontSize = 44.sp,
-                        color = HoleNumberColor,
-                        modifier = Modifier.scale(holeScale)
+                        text = "Hole",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 20.sp,
+                        color = HoleNumberColor
                     )
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { showHoleJumpDialog = true }
+                            .padding(horizontal = 12.dp, vertical = 2.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "$hole",
+                            style = MaterialTheme.typography.displayMedium,
+                            fontSize = 124.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = HoleNumberColor,
+                            modifier = Modifier.scale(holeScale)
+                        )
+                    }
                     holeEntity?.let {
                         Spacer(Modifier.height(8.dp))
-                        Text(
-                            "Par ${it.par}",
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                        it.distanceFeet?.let { feet ->
-                            val meters = (feet / 3.28084).toInt()
-                            Spacer(Modifier.height(8.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
                             Text(
-                                "$feet ft / $meters m",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = ContentWhite
+                                "Par ${it.par}",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold
                             )
+                            it.distanceFeet?.let { feet ->
+                                val meters = (feet / 3.28084).toInt()
+                                Text(
+                                    "  ·  $feet ft / $meters m",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = ContentWhite
+                                )
+                            }
                         }
                     }
                 }
@@ -116,7 +224,7 @@ internal fun HoleInfoCard(
                     onClick = { onNavigateToHole(hole + 1) },
                     enabled = hole < totalHoles
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowForward, "Next hole")
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, "Next hole", modifier = Modifier.size(48.dp))
                 }
             }
             if (!holeEntity?.notes.isNullOrBlank()) {
@@ -128,7 +236,7 @@ internal fun HoleInfoCard(
                         Icons.Default.Info,
                         contentDescription = "Hole rules",
                         tint = ContentWhite,
-                        modifier = Modifier.size(21.dp)
+                        modifier = Modifier.size(32.dp)
                     )
                 }
             }
@@ -140,7 +248,7 @@ internal fun HoleInfoCard(
                     Icons.Default.Group,
                     contentDescription = "Add / Remove Players",
                     tint = ContentWhite,
-                    modifier = Modifier.size(25.dp)
+                    modifier = Modifier.size(32.dp)
                 )
             }
             IconButton(
@@ -151,7 +259,7 @@ internal fun HoleInfoCard(
                     if (scoresVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                     contentDescription = if (scoresVisible) "Hide scores" else "Show scores",
                     tint = ContentWhite,
-                    modifier = Modifier.size(21.dp)
+                    modifier = Modifier.size(32.dp)
                 )
             }
         }
