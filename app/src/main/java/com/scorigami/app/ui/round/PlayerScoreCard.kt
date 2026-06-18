@@ -43,10 +43,11 @@ internal fun PlayerScoreCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = ScaleGrey2)
     ) {
+        // name and round score
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 4.dp, top = 16.dp, bottom = 16.dp),
+                .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
@@ -63,9 +64,9 @@ internal fun PlayerScoreCard(
                 )
                 Text(
                     text = if (scoresVisible) formatVsPar(totalVsPar) else "•••",
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleSmall,
                     color = ContentWhite,
-                    fontWeight = FontWeight.Normal
+                    fontWeight = FontWeight.Light
                 )
             }
 
