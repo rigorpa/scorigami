@@ -16,7 +16,7 @@ The app also runs on other Android devices (min Android 11 / API 30). A Pixel 4a
 ## Features
 
 - Create and manage courses with per-hole par values, distances, and rules/notes
-- Add players before a round — previously used names are suggested automatically
+- Add players before a round — previously used names are suggested automatically; shuffle button randomises the tee order
 - Add or remove players mid-round via the scorecard overflow menu
 - Enter scores on the phone or the watch in real time, kept in sync via the Wearable Data Layer
 - **Smart first-press scoring:** tapping `−` from 0 enters birdie (par − 1); tapping `+` enters par — no need to tap up from zero every hole
@@ -43,6 +43,8 @@ Scorigami/
 ```
 
 **Pattern:** MVVM with `StateFlow` / `collectAsStateWithLifecycle`. Hilt for dependency injection throughout.
+
+The phone scorecard UI is split into focused composables under `app/ui/round/` — `ScorecardScreen` orchestrates state and layout while `PlayerScoreCard`, `HoleInfoCard`, `HoleJumpGrid`, `FullScorecardSheet`, `AddRemovePlayersSheet`, and `ScorecardTopBar` each own a piece of the screen.
 
 **Storage:** Room database lives on the phone only. The watch has no local DB — it receives state snapshots pushed from the phone.
 
@@ -107,7 +109,12 @@ The `:wear` APK is embedded in the `:app` build and installs to the paired watch
 
 | Version | Notes |
 |---|---|
-| 0.4.5 | Hole rules/notes: per-hole notes field in course editor; info icon on hole card opens a rules sheet. Color system centralized into `AppColors.kt` for phone and watch. |
+| 0.5.0 | Internal refactor: the phone scorecard screen was split from one ~420-line file into focused composables (`PlayerScoreCard`, `HoleInfoCard`, `HoleJumpGrid`, `FullScorecardSheet`, `AddRemovePlayersSheet`, `ScorecardTopBar`) plus a shared `ScoreFormat` helper. No behavior change. |
+| 0.4.9 | UI color cleanup on the phone app. Added a "hide score" (eye) icon on the hole card to toggle player round scores between visible and `•••`. |
+| 0.4.8 | Gradient home screen buttons (each button has its own color scheme). Matching gradient top bars on New Round, Scorecard, My Courses, and Round History screens. Player full name shown on scorecard cards (was 4-letter abbreviation). Player cards stretch full screen width. Shuffle player order button on round setup. |
+| 0.4.7 | Per-hole rules and notes for courses. OB lines, mandos, and other notes stored per hole in the course editor; info icon on the hole card opens a rules sheet. El Centinela and Los Colomos seeded with example hole rules. |
+| 0.4.6 | Add/remove players icon in scorecard overflow menu. Various phone UI changes: color updates, font weight, button spacing. |
+| 0.4.5 | Color system centralized into `AppColors.kt` for phone and watch — no more inline color literals in screen files. |
 | 0.4.4 | New app logo: red S on black background with white circle ring. Watch: end-of-round dialog when pressing Next Hole ▶ on hole 18. Watch: enlarged score controls (48 dp), spread to screen edges, dark-grey colour. Watch & phone: hole-jump picker replaced with scrollable 3-column grid (eliminates scroll jank on Pixel Watch 2). Phone: hole-jump grid opens as a dialog in the lower screen half, dismissable by tapping outside. |
 | 0.4.3 | Bug fixes: score 0 renders as "—", watch can no longer commit a zero score, dead `MessageClient` send removed. Watch swipe-to-change-hole removed (conflicted with Pixel Watch 2 system back gesture). Cascading honor-system sort fixes tie-breaking. Amber incomplete-hole dot added to hole-jump picker on both phone and watch. |
 | 0.4.2 | Watch sequential score entry (one player at a time, Enter → Next Hole ▶). Honor system sort applied locally on watch. Fixed swipe-to-dismiss conflict by replacing `SwipeDismissableNavHost` with `NavHost`. Branch: `Before-Major-Wear-App-UI-Score-Entry`. |
