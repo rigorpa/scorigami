@@ -14,8 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.*
@@ -162,9 +165,14 @@ fun WearScorecardScreen(
                 ) {
                     // Hole indicator — tappable to open hole-jump picker
                     Text(
-                        "Hole $currentHole / ${roundState.totalHoles}",
-                        style = MaterialTheme.typography.title2,
-                        fontWeight = FontWeight.ExtraBold,
+                        text = buildAnnotatedString {
+                            withStyle(SpanStyle(fontSize = 32.sp, fontWeight = FontWeight.ExtraBold)) {
+                                append("$currentHole")
+                            }
+                            withStyle(SpanStyle(fontSize = 13.sp, fontWeight = FontWeight.Normal)) {
+                                append(" / ${roundState.totalHoles}")
+                            }
+                        },
                         color = HoleNumberColor,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.clickable { showHoleJump = true }
