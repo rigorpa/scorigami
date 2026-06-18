@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.ScaleGrey2
-import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.shared.db.entity.HoleEntity
 import com.scorigami.shared.db.entity.PlayerEntity
@@ -50,29 +49,17 @@ internal fun PlayerScoreCard(
                 .padding(start = 16.dp, end = 4.dp, top = 16.dp, bottom = 16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = player.name,
-                fontSize = 36.sp,
-                fontWeight = FontWeight.Normal,
-                color = ContentWhite,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 12.dp),
-                maxLines = 1
-            )
-
-            // Round vs-par — center column
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .padding(end = 12.dp)
             ) {
                 Text(
-                    "Round",
-                    style = MaterialTheme.typography.bodySmall,
+                    text = player.name,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
-                    color = ScreenBackground
+                    color = ContentWhite,
+                    maxLines = 1
                 )
                 Text(
                     text = if (scoresVisible) formatVsPar(totalVsPar) else "•••",
@@ -93,8 +80,8 @@ internal fun PlayerScoreCard(
                     Text("−", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = ContentWhite)
                 }
                 Text(
-                    text = if (throwsThisHole == 0) "—" else "$throwsThisHole",
-                    fontSize = 32.sp,
+                    text = if (throwsThisHole == 0) "0" else "$throwsThisHole",
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = scoreColor,
                     modifier = Modifier.widthIn(min = 40.dp),
