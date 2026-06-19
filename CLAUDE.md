@@ -45,7 +45,7 @@ Named color constants are centralized in `AppColors.kt` files — no inline `Col
 | `ScaleGrey1` | `#37474F` | `HoleInfoCard` card background |
 | `ScaleGrey2` | `#546E7A` | `PlayerScoreCard` card background |
 | `ContentWhite` | `Color.White` | Primary text/icon color on dark surfaces — text, icons, top bar chrome |
-| `ScreenBackground` | `Color.Black` | App background — list `LazyColumn`, `ListItem` containers, "Round" label on player card |
+| `ScreenBackground` | `Color.Black` | App background — list `LazyColumn`, `ListItem` containers |
 | `HoleNumberColor` | `#FFD60A` | Yellow hole number on scorecard and hole-jump grid |
 | `HoleJumpSelectedColor` | `#7A7A7A` | Selected hole cell highlight in hole-jump grid (phone and watch) |
 | `IncompleteHoleDotColor` | `#FFB300` | Amber dot on holes with missing scores |
@@ -146,7 +146,7 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 - **Top bar:** blue gradient (`NewRoundGradientStart` → `NewRoundGradientEnd`) wrapping a transparent `TopAppBar`; course name in `FontFamily.Cursive`; `TableChart` icon button (opens full scorecard sheet); "End Round" button; ⋮ overflow menu
 - **Full scorecard sheet:** `ModalBottomSheet` with `skipPartiallyExpanded = true` (opens full height) — per-player 18-hole breakdown with hole numbers (`labelMedium`) and vs-par scores (`bodyMedium`, bold, colored)
 - **Hole card** (`HoleInfoCard`): `ScaleGrey1` background; `Box` overlay hosts four corner icons — `Info` at `TopStart` (notes, only when `hole.notes` non-null), `Group` at `TopEnd` (add/remove players), `Visibility`/`VisibilityOff` at `BottomStart` (score hide toggle); ◀/▶ arrow buttons; hole label is stacked — small "Hole" (`titleMedium`, 20sp, `FontWeight.Normal`) above a large bold tappable hole number (`displayMedium`, 124sp, `FontWeight.ExtraBold`), both yellow (`HoleNumberColor`); the spring-bounce scale animates the number; tapping the number opens the hole-jump grid dialog (subtle ripple via `clip` + `clickable` on a `RoundedCornerShape(12.dp)` `Box`)
-- **Player cards:** full player name (`weight(1f)`, 36sp, `ContentWhite`) on the left; center column always shows "Round" label — score value shows `formatVsPar(totalVsPar)` when visible or `"•••"` when hidden; −/+ score controls on the right; cards are full screen width (no horizontal padding on the `LazyColumn`)
+- **Player cards:** left `Column` (`weight(1f)`) stacks player name (28sp, `FontWeight.Bold`, `ContentWhite`) above round vs-par score (`titleSmall`, `ContentWhite`, hidden as `"•••"` when scores hidden); plain `IconButton` −/+ controls on the right; cards are full screen width (no horizontal padding on the `LazyColumn`)
 - **Hole transitions:** `AnimatedContent` slides player cards left/right matching navigation direction (250 ms); hole number springs from 82 % → 100 % with `Spring.DampingRatioMediumBouncy` on each navigation (`Animatable` + `LaunchedEffect`)
 - **Hole jump dialog** (inlined in `HoleInfoCard`): opened by tapping the hole number; `Dialog` (`usePlatformDefaultWidth = false`) positioned in the lower screen half; `Surface` with `RoundedCornerShape(16.dp)` and `tonalElevation = 8.dp` contains the grid; 3-column grid of `Box` cells (`60 dp` tall, `RoundedCornerShape(8.dp)`); current hole `HoleJumpSelectedColor`, others `CardBackground`; amber `IncompleteHoleDotColor` dot (6 dp, `CircleShape`) top-right on cells with missing scores; tap outside to dismiss. `HoleJumpGrid.kt` (the old standalone composable with its own `OutlinedButton` trigger) is **kept in the codebase as a revert fallback** but is no longer used in any screen.
 
@@ -160,8 +160,15 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 
 ### RoundSetupScreen layout
 - **Top bar:** blue gradient (`NewRoundGradientStart` → `NewRoundGradientEnd`) matching ScorecardScreen; title and nav icon use `ContentWhite`
-- **Players section:** shuffle `IconButton` next to the "Players" heading — enabled only when `players.size > 1`, calls `players.shuffle()`
+- **Players section order:** (1) "Players" heading + shuffle `IconButton` (enabled when `players.size > 1`); (2) current players list with × remove buttons + `HorizontalDivider`s; (3) "Previous Golfers" `SuggestionChip`s (label text `ContentWhite`, only shown when un-added players exist); (4) "Add Player" `OutlinedTextField` + add `IconButton`
 - **Start Round button:** in `Scaffold` `bottomBar` — full-width, 56 dp height, 16 dp horizontal padding, matching `RoundReviewScreen` bottom bar style
+
+### CourseEditorScreen layout
+- **Top bar:** green gradient (`CoursesGradientStart` → `CoursesGradientEnd`) matching `CourseListScreen`; title and nav icon use `ContentWhite`
+
+### RoundDetailScreen layout
+- **Top bar:** amber/brown gradient (`HistoryGradientStart` → `HistoryGradientEnd`) matching `HistoryScreen`; course name as title, "Played on …" subtitle at 75 % alpha `ContentWhite`; nav icon uses `ContentWhite`
+- **Hole grid:** hole numbers `labelLarge`, vs-par scores `bodyMedium` + `FontWeight.Bold` (colored by par relationship)
 
 ### HomeScreen layout
 - **Buttons:** `HomeActionButton` composable — `Brush.horizontalGradient` applied via `Modifier.background(brush, RoundedCornerShape(percent = 50))`; `containerColor = Color.Transparent` so gradient shows through; `contentColor = ContentWhite`; disabled state falls back to a dark-grey gradient; all buttons full-width 56 dp height
@@ -188,15 +195,17 @@ The watch scorecard uses a **one-player-at-a-time** flow instead of showing all 
 3. The last player's button reads **"Next Hole ▶"** — tapping it commits their score (if > 0) and navigates to the next hole automatically
 
 **Layout per player:**
-- "Hole X / 18" in yellow `title2` (ExtraBold) at top — tappable to open the hole-jump picker
+- Hole number (42sp, `FontWeight.ExtraBold`, `HoleNumberColor`) at top — tappable to open the hole-jump picker
 - Player's full name in white `title1` (SemiBold), centered — tappable to open the tee-order popup
 - −/+ `CompactButton` (48 dp, `#2A2A2A` dark-grey fill, 22sp) spread to screen edges via `Arrangement.SpaceBetween` on a `fillMaxWidth` row; score centered between them
 - Enter / Next Hole ▶ `Chip` centered below (36 dp height, `#2A2A2A` fill)
 - Tapping **Next Hole ▶ on the final hole** (instead of navigating) shows a centered `Dialog` with the message "End round on the phone app" — score is still committed first if `pendingScore > 0`
 
-**Hole-jump picker:** Static 3-column grid rendered as a `Column`/`Row` layout with `verticalScroll(rememberScrollState())`. Each hole is a `Box` (44 dp tall, `RoundedCornerShape(8.dp)`): current hole `HoleJumpSelectedColor` (`#7A7A7A`, matches phone), others `WearButtonBackground` (`#2A2A2A`); all text white. Amber dot (`0xFFFFB300`, 5 dp) in the top-right corner of cells with any missing score. No `ScalingLazyColumn` or fling physics — eliminates scroll jank on physical hardware. Tapping a cell jumps to that hole.
+**Hole-jump picker (`WearHoleJumpGrid`):** Static 3-column grid rendered as a `Column`/`Row` layout with `verticalScroll(rememberScrollState())`. Each hole is a `Box` (44 dp tall, `RoundedCornerShape(8.dp)`): current hole `HoleJumpSelectedColor` (`#7A7A7A`, matches phone), others `WearButtonBackground` (`#2A2A2A`); all text white. Amber dot (`0xFFFFB300`, 5 dp) in the top-right corner of cells with any missing score. No `ScalingLazyColumn` or fling physics — eliminates scroll jank on physical hardware. Tapping a cell jumps to that hole.
 
-**Tee-order popup:** All players listed in uniform white — no current-player highlight.
+**Tee-order popup (`TeeOrderDialog`):** All players listed in uniform white — no current-player highlight.
+
+**End-of-round dialog (`EndRoundPromptDialog`):** "End round on the phone app" message in a dismissable `Card`.
 
 **Honor system on watch:** Players are sorted locally using a cascading comparator — primary key is `holeScores[currentHole - 1]`, ties broken by `holeScores[currentHole - 2]`, continuing back to hole 1, then DB registration order. No phone re-push needed when moving to a new hole.
 
@@ -204,7 +213,17 @@ The watch scorecard uses a **one-player-at-a-time** flow instead of showing all 
 
 **Navigation:** Uses standard `NavHost` (from `androidx.navigation.compose`) instead of `SwipeDismissableNavHost`. Horizontal swipe gestures are **not** used on the watch — they conflict with the Pixel Watch 2 system back gesture (right-edge swipe → watch face). Hole navigation is via the hole-jump picker and the Next Hole ▶ button.
 
-**End Round chip** is present in code but commented out — uncomment the `Chip` block in `WearScorecardScreen` to re-enable.
+**End Round chip** is present in code but commented out — uncomment the `Chip` block in `WearPlayerScoreEntry` to re-enable.
+
+**WearScorecardScreen component split (2026-06-19):**
+`ScorecardScreen.kt` decomposed from ~354 lines into focused `internal fun`s in `com.scorigami.wear.ui`. `ScorecardScreen.kt` is now ~97 lines of orchestration.
+
+| File | Responsibility |
+|---|---|
+| `WearHoleJumpGrid.kt` | Scrollable 3-column hole picker grid |
+| `WearPlayerScoreEntry.kt` | Hole number + player name + −/+ controls + Enter/Next Hole chip |
+| `EndRoundPromptDialog.kt` | "End round on the phone app" dialog |
+| `TeeOrderDialog.kt` | Tee order player list dialog |
 
 ---
 
@@ -418,7 +437,7 @@ Dead code audit and removal. All changes are deletions only — no behavior chan
 
 | File | Responsibility |
 |---|---|
-| `PlayerScoreCard.kt` | One player's row — name, Round vs-par, −/+ score controls (with first-press scoring) |
+| `PlayerScoreCard.kt` | One player's row — name + vs-par stacked in left column, −/+ score controls on right (no "Round" label) |
 | `HoleInfoCard.kt` | Hole card: ◀/▶ nav, animated yellow hole number, par/distance, the three corner icons (Info / Group / Visibility) **and** its own hole-notes `ModalBottomSheet` (visibility state internal, keyed on `hole`) |
 | `HoleJumpGrid.kt` | Hole-jump button + 3-column grid `Dialog` |
 | `FullScorecardSheet.kt` | Per-player 18-hole breakdown shown in the table-icon `ModalBottomSheet` |
@@ -427,3 +446,12 @@ Dead code audit and removal. All changes are deletions only — no behavior chan
 | `ScoreFormat.kt` | Shared `formatVsPar()` / `vsParColor()` helpers for the `ui.round` package |
 
 - `formatVsPar()` / `vsParColor()` were previously duplicated as `private` copies in each screen file (private copies don't collide). Extracting `PlayerScoreCard` as `internal` exposed them package-wide and clashed with `RoundReviewScreen`'s copies → consolidated into `ScoreFormat.kt`; the copies in `ScorecardScreen.kt` and `RoundReviewScreen.kt` were removed
+
+**Additional screen polish (2026-06-19):**
+- `RoundDetailScreen`: gradient top bar (espresso→amber, matching `HistoryScreen`); hole/score font sizes increased (`labelLarge` / `bodyMedium + Bold`)
+- `CourseEditorScreen`: gradient top bar (jungle→green, matching `CourseListScreen`)
+- `RoundSetupScreen`: "Previous Golfers" chips repositioned to appear between current player list and "Add Player" field; chip label text set to `ContentWhite`
+- `PlayerScoreCard`: removed separate center "Round" label column; vs-par score now stacked below player name in the left column
+
+**Wear ScorecardScreen component split (2026-06-19):**
+`ScorecardScreen.kt` decomposed from ~354 lines into focused `internal fun`s — see WearScorecardScreen layout section above for the component table.
