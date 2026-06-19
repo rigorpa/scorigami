@@ -1,5 +1,6 @@
 package com.scorigami.app.ui.round
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -7,11 +8,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.NewRoundGradientEnd
+import com.scorigami.app.ui.theme.NewRoundGradientStart
+import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.app.viewmodel.RoundViewModel
 import com.scorigami.shared.db.entity.HoleEntity
 import com.scorigami.shared.db.entity.PlayerEntity
@@ -28,7 +35,19 @@ fun RoundReviewScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Review Scores") })
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Brush.horizontalGradient(listOf(NewRoundGradientStart, NewRoundGradientEnd)))
+            ) {
+                TopAppBar(
+                    title = { Text("Review Scores") },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent,
+                        titleContentColor = ContentWhite
+                    )
+                )
+            }
         },
         bottomBar = {
             Row(
@@ -126,53 +145,55 @@ private fun PlayerReviewCard(
     val parSoFar = holes.filter { scores[Pair(player.id, it.number)] != null }.sumOf { it.par }
     val totalVsPar = totalThrows - parSoFar
 
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(player.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text(
-                    text = formatVsPar(totalVsPar),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = vsParColor(totalVsPar)
-                )
-            }
-            Spacer(Modifier.height(8.dp))
-            HorizontalDivider()
-            Spacer(Modifier.height(8.dp))
-            // Hole breakdown grid — hole number + vs-par only
-            val chunked = holes.chunked(9)
-            chunked.forEach { group ->
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    group.forEach { hole ->
-                        val throws = scores[Pair(player.id, hole.number)]
-                        val vsPar = throws?.minus(hole.par)
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "${hole.number}",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = vsPar?.let { formatVsPar(it) } ?: "—",
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold,
-                                color = vsPar?.let { vsParColor(it) } ?: MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center
-                            )
-                        }
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(player.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = ContentWhite)
+            Text(
+                text = formatVsPar(totalVsPar),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = vsParColor(totalVsPar)
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        HorizontalDivider()
+        Spacer(Modifier.height(8.dp))
+        holes.chunked(9).forEach { group ->
+            Row(modifier = Modifier.fillMaxWidth()) {
+                group.forEach { hole ->
+                    val throws = scores[Pair(player.id, hole.number)]
+                    val scoreColor = when {
+                        throws == null -> ContentWhite
+                        throws < hole.par -> ScoreUnderParColor
+                        throws == hole.par -> ContentWhite
+                        else -> MaterialTheme.colorScheme.error
+                    }
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "${hole.number}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = ContentWhite.copy(alpha = 0.5f)
+                        )
+                        Text(
+                            text = throws?.toString() ?: "—",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = scoreColor,
+                            textAlign = TextAlign.Center
+                        )
                     }
                 }
-                Spacer(Modifier.height(4.dp))
             }
+            Spacer(Modifier.height(4.dp))
         }
+        Spacer(Modifier.height(8.dp))
     }
 }
 
@@ -189,23 +210,23 @@ private fun StandingsCard(
         Standing(player.name, total, total - par)
     }.sortedBy { it.vsPar }
 
-    Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text("Standings", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(8.dp))
-            standings.forEachIndexed { i, s ->
-                val prefix = when (i) {
-                    0 -> "🥇"
-                    1 -> "🥈"
-                    2 -> "🥉"
-                    else -> "${i + 1}."
-                }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("$prefix  ${s.name}", style = MaterialTheme.typography.bodyMedium)
-                    Text(formatVsPar(s.vsPar), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = vsParColor(s.vsPar))
-                }
-                if (i < standings.lastIndex) Spacer(Modifier.height(4.dp))
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+        HorizontalDivider()
+        Spacer(Modifier.height(8.dp))
+        Text("Standings", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = ContentWhite)
+        Spacer(Modifier.height(8.dp))
+        standings.forEachIndexed { i, s ->
+            val prefix = when (i) {
+                0 -> "🥇"
+                1 -> "🥈"
+                2 -> "🥉"
+                else -> "${i + 1}."
             }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("$prefix  ${s.name}", style = MaterialTheme.typography.bodyMedium, color = ContentWhite)
+                Text(formatVsPar(s.vsPar), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = vsParColor(s.vsPar))
+            }
+            if (i < standings.lastIndex) Spacer(Modifier.height(4.dp))
         }
     }
 }
