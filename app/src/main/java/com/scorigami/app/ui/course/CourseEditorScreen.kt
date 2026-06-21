@@ -36,15 +36,19 @@ fun CourseEditorScreen(
     var parValues by remember { mutableStateOf(List(18) { 3 }) }
     var notesValues by remember { mutableStateOf(List(18) { "" }) }
 
-    LaunchedEffect(existing) {
-        if (!initialized && existing != null) {
+    LaunchedEffect(existing, viewModel.isEditing) {
+        if (initialized) return@LaunchedEffect
+        if (!viewModel.isEditing) {
+            // New course — keep the blank defaults.
+            initialized = true
+        } else if (existing != null) {
+            // Editing — populate from the loaded course. Wait (don't initialize)
+            // while existing is still null, which means the DB load hasn't finished.
             courseName = existing!!.course.name
             holeCount = existing!!.course.holeCount.toString()
             val sorted = existing!!.holes.sortedBy { it.number }
             parValues = sorted.map { it.par }
             notesValues = sorted.map { it.notes ?: "" }
-            initialized = true
-        } else if (!initialized && existing == null) {
             initialized = true
         }
     }

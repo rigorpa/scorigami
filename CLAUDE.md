@@ -80,7 +80,7 @@ At-par and unscored use `ContentWhite`. Over-par uses `MaterialTheme.colorScheme
 |---|---|---|
 | Jetpack Compose BOM | 2024.12.01 | Phone UI |
 | Wear Compose | 1.4.0 | Watch UI |
-| Room | 2.6.1 | Local DB (phone only) |
+| Room | 2.8.4 | Local DB (phone only) |
 | Hilt | 2.51.1 | Dependency injection |
 | play-services-wearable | 18.2.0 | Phone ↔ Watch Data Layer |
 | kotlinx.serialization | 1.7.3 | JSON for sync messages |
@@ -106,6 +106,8 @@ scores      roundId, playerId, holeNumber, throws              (composite PK, up
 - Migration 1→2: adds `distanceMeters INTEGER` nullable column to `holes`
 - Migration 2→3: renames `distanceMeters` → `distanceFeet` (values were always stored in feet)
 - Migration 3→4: adds `notes TEXT` nullable column to `holes`
+
+**Foreign key enforcement:** `DatabaseModule.provideDatabase()` enables FK enforcement via a `RoomDatabase.Callback` whose `onOpen(connection)` runs `connection.execSQL("PRAGMA foreign_keys = ON")`. Room does NOT enable `PRAGMA foreign_keys` by default, and Room 2.8 **removed** the old `Builder.setForeignKeyConstraintsEnabled()` method (the KMP rewrite — the `Callback` now receives an `androidx.sqlite.SQLiteConnection`, and `execSQL` is the `androidx.sqlite.execSQL` extension). The PRAGMA runs on every connection open, outside a transaction, so it takes effect. This is required for the declared `onDelete = CASCADE` constraints to fire: deleting a course cascades to its `holes`; deleting a round cascades to its `scores` and `round_players`; and editing a course (`insertCourse` with `OnConflictStrategy.REPLACE` on an existing id) cascade-deletes the old holes before `insertHoles` re-adds them — without this, course edits silently duplicated every hole row.
 
 **Sync types** (`shared/sync/`):
 - `RoundState` — full snapshot pushed phone→watch (roundId, courseName, currentHole, totalHoles, players[], **holePars: Map<Int,Int>**). `holePars` maps every hole number to its par value so the watch can apply the first-press scoring logic for any hole it navigates to independently.
@@ -235,6 +237,8 @@ The watch scorecard uses a **one-player-at-a-time** flow instead of showing all 
 
 Subsequent presses increment/decrement normally. Pressing `−` from any score > 0 decrements by 1 (reaching 0 clears the score back to "not entered"). Applies on both phone and watch. Par is looked up from `holes` (phone) or `roundState.holePars[currentHole]` (watch).
 
+When a score is cleared to 0, `RoundViewModel.updateScore()` calls `scoreDao.deleteScore(roundId, playerId, holeNumber)` rather than upserting a `throws = 0` row. A stored 0 would otherwise be counted by `parSoFar` (which keys off map presence), falsely showing the player under par. The watch's `commitAndAdvance()` already guards this with `if (pendingScore > 0)`.
+
 1. User taps −/+ on a player row (phone or watch)
 2. Score is written to Room (`ScoreEntity` upsert)
 3. `RoundViewModel` observes both `scoreDao.getScoresForRound()` and `playerDao.getPlayersForRoundFlow()` via `combine` inside `flatMapLatest` — picks up DB changes automatically
@@ -363,6 +367,28 @@ Major watch UX redesign. Created as a safety branch off `fedxps` before changes 
 - `pendingScore` keyed on player ID + hole (not player index) for correct reset on reorder
 
 ---
+
+## Code Audit Report (2026-06-21, branch `fedxps`)
+
+Full multi-module audit. The four highest-priority bugs are **fixed and verified** (UI + DB inspection via adb); the rest are tracked below as open follow-ups.
+
+**Fixed & verified:**
+- **BUG-1 — Course edits duplicated all hole rows.** Editing a course (`CourseViewModel.saveCourse` → `insertCourse` with `OnConflictStrategy.REPLACE` + `insertHoles`) re-inserted holes with `id = 0` without removing the old ones, so a course grew 18 → 36 → 54 rows per edit. Fixed by enabling FK enforcement (BUG-2), so the REPLACE cascade-deletes the old holes first. Verified: both seeded courses show exactly 18 holes.
+- **BUG-2 — FK constraints were inert.** Room never enabled `PRAGMA foreign_keys`, so every `onDelete = CASCADE` was a no-op. Fixed in `DatabaseModule` via a `RoomDatabase.Callback.onOpen { execSQL("PRAGMA foreign_keys = ON") }` (Room 2.8 removed `Builder.setForeignKeyConstraintsEnabled()`). Verified: cancelling a round dropped `scores` 2→0 and `round_players` 2→0 even though `RoundDao.deleteRound` only runs `DELETE FROM rounds` — proof the cascade fires.
+- **BUG-3 — Pressing `−` from score 1 stored `throws = 0`.** A stored 0 was counted by `parSoFar` (which keys off map presence), falsely showing the player under par. `RoundViewModel.updateScore` now calls the new `ScoreDao.deleteScore(roundId, playerId, holeNumber)` when `throws <= 0` instead of upserting. Verified: zero `throws = 0` rows in the DB after decrementing to clear.
+- **BUG-4 — Unscored holes rendered `"0"` instead of `"—"`** in `PlayerScoreCard`. Now shows `"—"`, matching `FullScorecardSheet` / `RoundReviewScreen`. Verified in UI.
+- **Bonus — Course editor opened blank when editing.** `CourseEditorScreen`'s init `LaunchedEffect` treated the transient `existing == null` (DB load not finished) as "new course" and set `initialized = true` before real data arrived, so fields never populated. Fixed by adding `CourseViewModel.isEditing` and gating: new course → init blank immediately; editing → wait for `existing != null` before populating.
+
+**Open follow-ups (not yet addressed), by priority:**
+- BUG-5: deleting a course with an **active** round silently clears `RoundUiState` (the round vanishes from the UI with no cancellation/cleanup). `CourseListScreen` / `CourseViewModel`.
+- BUG-6: wear `applicationId` is `com.scorigami.app` (identical to phone) — breaks Data Layer pairing / Play Store auto-install; should be `com.scorigami.wear`. `wear/build.gradle.kts`.
+- BUG-7: 1-frame `NoRoundScreen` flash on watch cold start when a round is active (`startDestination` always resolves to `NoRound` before the first `StateFlow` value). `WearNavigation` / `WearViewModel`.
+- ARCH-1: `buildRoundState` logic duplicated in `PhoneWearableListenerService` + `RoundViewModel` — extract a shared builder.
+- ARCH-2: `SyncKeys.ROUND_STATE_MSG` is dead (MessageClient send path was removed) — delete.
+- ARCH-3: untracked `CoroutineScope(SupervisorJob())` for DB seeding in `DatabaseModule` — prefer Room `addCallback { onCreate }`.
+- ARCH-4: `HistoryViewModel.detail` uses a non-reactive `flow{}` for outer data (round/course/players) — convert to `combine`.
+- DEAD: unused `@ApplicationContext` import in `RoundViewModel`; `wear.compose.navigation` dep in `wear/build.gradle.kts`; root `kotlin.android` plugin alias; `ic_*_vector.xml` drawables (PNGs are the ones used).
+- QUALITY: par editor minimum hardcoded to 3 (no Par 2) in `CourseEditorScreen`; inline `Color(0xFF…)` literals in `HomeScreen` disabled-button gradient; scattered `Color.White` in wear (no `ContentWhite` alias); N+1 queries in `HistoryViewModel.toSummary`; `themes.xml` missing the documented `windowSplashScreenBackground` (needs `values-v31/`); CLAUDE.md color table values drifted from `AppColors.kt`.
 
 ## Code Cleanup History
 

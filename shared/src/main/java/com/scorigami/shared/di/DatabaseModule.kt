@@ -2,6 +2,9 @@ package com.scorigami.shared.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.execSQL
 import com.scorigami.shared.db.AppDatabase
 import com.scorigami.shared.db.DatabaseSeeder
 import com.scorigami.shared.db.dao.CourseDao
@@ -28,6 +31,14 @@ object DatabaseModule {
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase {
         val db = Room.databaseBuilder(context, AppDatabase::class.java, "scorigami.db")
             .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4)
+            // Room 2.8 removed Builder.setForeignKeyConstraintsEnabled(); enable FK enforcement
+            // via a callback that runs the PRAGMA on every connection open (outside a transaction,
+            // so it takes effect). Required for the declared onDelete = CASCADE constraints to fire.
+            .addCallback(object : RoomDatabase.Callback() {
+                override fun onOpen(connection: SQLiteConnection) {
+                    connection.execSQL("PRAGMA foreign_keys = ON")
+                }
+            })
             .build()
         CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
             DatabaseSeeder.seedIfEmpty(db.courseDao())

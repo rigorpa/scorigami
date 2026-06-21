@@ -123,7 +123,11 @@ class RoundViewModel @Inject constructor(
         val roundId = _uiState.value.roundId
         if (roundId == -1L) return
         viewModelScope.launch(Dispatchers.IO) {
-            scoreDao.upsertScore(ScoreEntity(roundId = roundId, playerId = playerId, holeNumber = holeNumber, throws = throws))
+            if (throws <= 0) {
+                scoreDao.deleteScore(roundId, playerId, holeNumber)
+            } else {
+                scoreDao.upsertScore(ScoreEntity(roundId = roundId, playerId = playerId, holeNumber = holeNumber, throws = throws))
+            }
         }
     }
 
