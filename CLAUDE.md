@@ -172,12 +172,12 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 - **Top bar:** green gradient (`CoursesGradientStart` → `CoursesGradientEnd`) matching `CourseListScreen`; title and nav icon use `ContentWhite`
 
 ### RoundDetailScreen layout
-- **Top bar:** amber/brown gradient (`HistoryGradientStart` → `HistoryGradientEnd`) matching `HistoryScreen`; course name as title, "Played on …" subtitle at 75 % alpha `ContentWhite`; nav icon uses `ContentWhite`
+- **Top bar:** amber/brown gradient (`HistoryGradientStart` → `HistoryGradientEnd`) matching `HistoryScreen`; course name as title, "Played on …" subtitle at 75 % alpha `ContentWhite`; nav icon uses `ContentWhite`; **Share icon** (`Icons.Default.Share`) in `actions` — fires `Intent.ACTION_SEND` with a plain-text scorecard (course name, date, par, per-player totals + per-hole vs-par grid split in rows of 9); disabled until data loads
 - **Hole grid:** hole numbers `labelLarge`, vs-par scores `bodyMedium` + `FontWeight.Bold` (colored by par relationship)
 
 ### HomeScreen layout
 - **Buttons:** `HomeActionButton` composable — `Brush.horizontalGradient` applied via `Modifier.background(brush, RoundedCornerShape(percent = 50))`; `containerColor = Color.Transparent` so gradient shows through; `contentColor = ContentWhite`; disabled state falls back to a dark-grey gradient; all buttons full-width 56 dp height
-- **Splash screen:** `android:windowSplashScreenBackground="#FF000000"` in `app/res/values/themes.xml` — forces Android 12+ system splash to use black instead of defaulting to white
+- **Themes:** `app/res/values/themes.xml` sets `windowBackground`, `statusBarColor`, `navigationBarColor` to `#002451` (dark navy) for pre-API 31 devices. `app/res/values-v31/themes.xml` inherits the same three and additionally sets `windowSplashScreenBackground="#FF000000"` (black) — forces Android 12+ system splash to use black instead of the navy windowBackground
 
 ---
 
