@@ -118,7 +118,7 @@ scores      roundId, playerId, holeNumber, throws              (composite PK, up
 
 ## Pre-Seeded Courses
 
-Inserted on first launch by `DatabaseSeeder.seedIfEmpty()` (called from `DatabaseModule`):
+Inserted once when the DB file is first created, via `DatabaseSeeder.seedIfEmpty()` called from the Room `Callback.onCreate` in `DatabaseModule` (launched on a bounded, self-cancelling coroutine scope). Note: because seeding is tied to DB creation rather than "any time the courses table is empty," deleting all courses no longer re-seeds them on the next launch:
 
 | Course | Holes | Par | Notes |
 |---|---|---|---|
@@ -299,7 +299,7 @@ The sort input is always `basePlayers` (DB order); the cascading keys make the t
 - **vs Par display:** Under par = green (primary color), even = neutral, over par = red (error color). Only the round total vs-par is shown on the phone scorecard; per-hole vs-par was intentionally removed.
 - **Hole distances:** `distanceFeet` is nullable on `HoleEntity`. Values are stored in feet; the scorecard converts to meters for display ("xxx ft / xxx m"). Courses created via the editor have no distance; the distance line is only shown when the value is non-null.
 - **Hole notes:** `notes` is nullable on `HoleEntity` (added in migration 3→4). When non-null/non-blank, an `Info` icon appears on the hole card in `ScorecardScreen`; tapping it opens a `ModalBottomSheet` titled "Hole [number] Rules". The course editor exposes a multiline "Hole rules / notes (optional)" field per hole. Notes are not yet surfaced on the watch.
-- **holeScores in PlayerState:** The watch displays `player.holeScores[currentHole] ?: 0` for the score, not a pre-computed field. This lets the watch navigate holes independently without requesting a re-push from the phone. Both `RoundViewModel.doPushStateToWatch()` and `PhoneWearableListenerService.pushUpdatedState()` must populate this map when building `PlayerState`.
+- **holeScores in PlayerState:** The watch displays `player.holeScores[currentHole] ?: 0` for the score, not a pre-computed field. This lets the watch navigate holes independently without requesting a re-push from the phone. This map (and the rest of `PlayerState`) is populated by `RoundStateBuilder.build(...)` in `shared/sync/`, called by both `RoundViewModel.doPushStateToWatch()` (in-memory state) and `PhoneWearableListenerService.pushUpdatedState()` (fresh DB queries) — so the per-player math lives in one place.
 - **Sync delivery:** `WearSyncManager.pushRoundState()` uses only `DataClient.putDataItem` (persistent, reconnect-safe). `WearListenerService` handles `onDataChanged`. The watch-side `MessageClient` path was removed — `WearListenerService` has no `onMessageReceived`, so the send was dead code.
 - **Watch polling fallback:** `WearViewModel.startPolling()` reads `DataClient` every 2 s while the watch is in the foreground (started in `onResume`, stopped in `onPause`). It calls `RoundStateHolder.update(null)` if no item is found, which navigates the watch to `NoRoundScreen` — this is the intended clear-state behavior.
 - **Player list reactivity:** `RoundViewModel.init` uses `combine(scoreFlow, playerFlow)` so adding/removing players updates the UI immediately without needing a score change to trigger it.
@@ -381,13 +381,13 @@ Full multi-module audit. The four highest-priority bugs are **fixed and verified
 
 **Open follow-ups (not yet addressed), by priority:**
 - BUG-5: deleting a course with an **active** round silently clears `RoundUiState` (the round vanishes from the UI with no cancellation/cleanup). `CourseListScreen` / `CourseViewModel`.
-- BUG-6: wear `applicationId` is `com.scorigami.app` (identical to phone) — breaks Data Layer pairing / Play Store auto-install; should be `com.scorigami.wear`. `wear/build.gradle.kts`.
+- ~~BUG-6~~: **Rejected (false positive).** The audit wrongly claimed the wear `applicationId` (`com.scorigami.app`, same as phone) should differ. In fact the Wearable Data Layer **requires** the phone and wear apps to share the same `applicationId` and signing key — that shared id is why sync works. Play Store delivery also uses the same `applicationId`, distinguished by the wear manifest's `<uses-feature android:name="android.hardware.type.watch">`. The audit conflated `applicationId` with `namespace` (wear already uses `namespace = "com.scorigami.wear"` for its code/R-class package, which is correct). No change made.
 - BUG-7: 1-frame `NoRoundScreen` flash on watch cold start when a round is active (`startDestination` always resolves to `NoRound` before the first `StateFlow` value). `WearNavigation` / `WearViewModel`.
-- ARCH-1: `buildRoundState` logic duplicated in `PhoneWearableListenerService` + `RoundViewModel` — extract a shared builder.
-- ARCH-2: `SyncKeys.ROUND_STATE_MSG` is dead (MessageClient send path was removed) — delete.
-- ARCH-3: untracked `CoroutineScope(SupervisorJob())` for DB seeding in `DatabaseModule` — prefer Room `addCallback { onCreate }`.
-- ARCH-4: `HistoryViewModel.detail` uses a non-reactive `flow{}` for outer data (round/course/players) — convert to `combine`.
-- DEAD: unused `@ApplicationContext` import in `RoundViewModel`; `wear.compose.navigation` dep in `wear/build.gradle.kts`; root `kotlin.android` plugin alias; `ic_*_vector.xml` drawables (PNGs are the ones used).
+- ~~ARCH-1~~: **Done.** Extracted `RoundStateBuilder.build(...)` in `shared/sync/` — both `RoundViewModel.doPushStateToWatch` and `PhoneWearableListenerService.pushUpdatedState` now call it. `PlayerState` math lives in one place.
+- ~~ARCH-2~~: **Done.** `SyncKeys.ROUND_STATE_MSG` deleted.
+- ~~ARCH-3~~: **Done.** Seeding moved into Room `Callback.onCreate` (fires once on DB creation) on a bounded, self-cancelling scope, via an injected `Provider<CourseDao>`. Replaces the inline never-cancelled scope that launched on every app start. Behavior change: deleting all courses no longer re-seeds them on next launch.
+- ~~ARCH-4~~: **Done.** `HistoryViewModel.detail` converted from a `flow{}` (only scores reactive) to `combine(scoresFlow, playersFlow)`; round + course fetched once inside the suspend transform. Players are now reactive too. (`toSummary`'s one-shot queries are the separate N+1 QUALITY item, left as-is.)
+- ~~DEAD~~: **Done.** Removed unused `@ApplicationContext` import in `RoundViewModel`; `wear.compose.navigation` dep (+ orphaned toml lib entry); root `kotlin.android` plugin alias (+ orphaned toml plugin entry); all four `ic_*_vector.xml` drawables.
 - QUALITY: par editor minimum hardcoded to 3 (no Par 2) in `CourseEditorScreen`; inline `Color(0xFF…)` literals in `HomeScreen` disabled-button gradient; scattered `Color.White` in wear (no `ContentWhite` alias); N+1 queries in `HistoryViewModel.toSummary`; `themes.xml` missing the documented `windowSplashScreenBackground` (needs `values-v31/`); CLAUDE.md color table values drifted from `AppColors.kt`.
 
 ## Code Cleanup History

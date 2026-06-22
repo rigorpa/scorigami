@@ -7,11 +7,9 @@ import com.scorigami.shared.db.dao.PlayerDao
 import com.scorigami.shared.db.dao.RoundDao
 import com.scorigami.shared.db.dao.ScoreDao
 import com.scorigami.shared.db.entity.*
-import com.scorigami.shared.sync.PlayerState
-import com.scorigami.shared.sync.RoundState
+import com.scorigami.shared.sync.RoundStateBuilder
 import com.scorigami.app.sync.WearSyncManager
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -213,28 +211,13 @@ class RoundViewModel @Inject constructor(
     private fun doPushStateToWatch() {
         val state = _uiState.value
         if (!state.isActive || state.holes.isEmpty()) return
-        val roundState = RoundState(
+        val roundState = RoundStateBuilder.build(
             roundId = state.roundId,
             courseName = state.courseName,
             currentHole = state.currentHole,
-            totalHoles = state.holes.size,
-            holePars = state.holes.associate { it.number to it.par },
-            players = state.basePlayers.map { player ->
-                val playerHoleScores = state.scores.entries
-                    .filter { it.key.first == player.id }
-                    .associate { it.key.second to it.value }
-                val totalThrows = playerHoleScores.values.sum()
-                val parSoFar = state.holes
-                    .filter { hole -> playerHoleScores[hole.number] != null }
-                    .sumOf { it.par }
-                PlayerState(
-                    playerId = player.id,
-                    name = player.name,
-                    holeScores = playerHoleScores,
-                    totalThrows = totalThrows,
-                    totalVsPar = totalThrows - parSoFar
-                )
-            }
+            holes = state.holes,
+            players = state.basePlayers,
+            scores = state.scores
         )
         wearSyncManager.pushRoundState(roundState)
     }

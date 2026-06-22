@@ -68,19 +68,21 @@ class HistoryViewModel @Inject constructor(
     val detail: StateFlow<RoundDetailState> = if (detailRoundId == -1L) {
         MutableStateFlow(RoundDetailState())
     } else {
-        flow {
-            val round = roundDao.getRoundById(detailRoundId) ?: return@flow
-            val courseWithHoles = courseDao.getCourseWithHoles(round.courseId) ?: return@flow
-            val players = playerDao.getPlayersForRound(detailRoundId)
-            scoreDao.getScoresForRound(detailRoundId).collect { scores ->
-                emit(RoundDetailState(
-                    courseName = courseWithHoles.course.name,
-                    date = formatOrdinalDate(round.startedAt),
-                    holes = courseWithHoles.holes.sortedBy { it.number },
-                    players = players,
-                    scores = scores.associate { Pair(it.playerId, it.holeNumber) to it.throws }
-                ))
-            }
+        combine(
+            scoreDao.getScoresForRound(detailRoundId),
+            playerDao.getPlayersForRoundFlow(detailRoundId)
+        ) { scores, players ->
+            val round = roundDao.getRoundById(detailRoundId)
+                ?: return@combine RoundDetailState()
+            val courseWithHoles = courseDao.getCourseWithHoles(round.courseId)
+                ?: return@combine RoundDetailState()
+            RoundDetailState(
+                courseName = courseWithHoles.course.name,
+                date = formatOrdinalDate(round.startedAt),
+                holes = courseWithHoles.holes.sortedBy { it.number },
+                players = players,
+                scores = scores.associate { Pair(it.playerId, it.holeNumber) to it.throws }
+            )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RoundDetailState())
     }
 
