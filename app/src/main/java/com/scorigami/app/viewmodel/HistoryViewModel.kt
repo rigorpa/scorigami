@@ -7,10 +7,8 @@ import com.scorigami.shared.db.dao.CourseDao
 import com.scorigami.shared.db.dao.PlayerDao
 import com.scorigami.shared.db.dao.RoundDao
 import com.scorigami.shared.db.dao.ScoreDao
-import com.scorigami.shared.db.dao.CourseWithHoles
 import com.scorigami.shared.db.entity.HoleEntity
 import com.scorigami.shared.db.entity.PlayerEntity
-import com.scorigami.shared.db.entity.RoundEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import java.text.SimpleDateFormat
@@ -59,8 +57,23 @@ class HistoryViewModel @Inject constructor(
         return "$month $day$suffix, $year"
     }
 
-    val rounds: StateFlow<List<RoundSummary>> = roundDao.getCompletedRounds()
-        .map { rounds -> rounds.map { it.toSummary() } }
+    val rounds: StateFlow<List<RoundSummary>> = roundDao.getCompletedRoundSummaryRows()
+        .map { rows ->
+            // Rows arrive newest-round-first, then in tee order within each round, so
+            // groupBy preserves both the round order and the per-round player order.
+            rows.groupBy { it.roundId }.map { (roundId, roundRows) ->
+                val first = roundRows.first()
+                val playerResults = roundRows.map { it.playerName to it.totalThrows.toString() }
+                val winner = playerResults.minByOrNull { it.second.toIntOrNull() ?: Int.MAX_VALUE }?.first
+                RoundSummary(
+                    roundId = roundId,
+                    courseName = first.courseName ?: "Unknown",
+                    date = dateFormat.format(Date(first.startedAt)),
+                    playerResults = playerResults,
+                    winner = winner
+                )
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val detailRoundId: Long = savedStateHandle.get<Long>("roundId") ?: -1L
@@ -86,20 +99,4 @@ class HistoryViewModel @Inject constructor(
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RoundDetailState())
     }
 
-    private suspend fun RoundEntity.toSummary(): RoundSummary {
-        val course = courseDao.getCourseWithHoles(courseId)
-        val players = playerDao.getPlayersForRound(id)
-        val playerResults = players.map { player ->
-            val total = scoreDao.getTotalThrowsForPlayer(id, player.id) ?: 0
-            player.name to total.toString()
-        }
-        val winner = playerResults.minByOrNull { it.second.toIntOrNull() ?: Int.MAX_VALUE }?.first
-        return RoundSummary(
-            roundId = id,
-            courseName = course?.course?.name ?: "Unknown",
-            date = dateFormat.format(Date(startedAt)),
-            playerResults = playerResults,
-            winner = winner
-        )
-    }
 }
