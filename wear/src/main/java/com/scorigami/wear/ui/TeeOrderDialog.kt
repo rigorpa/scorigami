@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -12,6 +11,7 @@ import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.*
 import androidx.wear.compose.material.dialog.Dialog
 import com.scorigami.shared.sync.PlayerState
+import com.scorigami.wear.ui.theme.ContentWhite
 import com.scorigami.wear.ui.theme.HoleNumberColor
 
 @Composable
@@ -55,7 +55,7 @@ internal fun TeeOrderDialog(
                             player.name,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Normal,
-                            color = Color.White,
+                            color = ContentWhite,
                             maxLines = 1
                         )
                     }

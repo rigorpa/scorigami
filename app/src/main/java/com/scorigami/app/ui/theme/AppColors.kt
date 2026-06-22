@@ -44,3 +44,7 @@ val HistoryGradientEnd      = Color(0xFFCC6B0A)   // warm amber
 
 val ResumeGradientStart     = Color(0xFF4527A0)   // deep violet
 val ResumeGradientEnd       = Color(0xFF7E57C2)   // soft lavender
+
+// Disabled home-screen button gradient (start → end)
+val DisabledButtonGradientStart = Color(0xFF3A3A3A)
+val DisabledButtonGradientEnd   = Color(0xFF5A5A5A)

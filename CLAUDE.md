@@ -42,22 +42,24 @@ Named color constants are centralized in `AppColors.kt` files — no inline `Col
 | Constant | Value | Usage |
 |---|---|---|
 | `CardBackground` | `#37474F` | Hole-jump grid non-selected cell background |
-| `ScaleGrey1` | `#37474F` | `HoleInfoCard` card background |
-| `ScaleGrey2` | `#546E7A` | `PlayerScoreCard` card background |
+| `ScaleGrey1` | `#354045` | `HoleInfoCard` card background |
+| `ScaleGrey2` | `#5A6164` | `PlayerScoreCard` card background |
 | `ContentWhite` | `Color.White` | Primary text/icon color on dark surfaces — text, icons, top bar chrome |
 | `ScreenBackground` | `Color.Black` | App background — list `LazyColumn`, `ListItem` containers |
 | `HoleNumberColor` | `#FFD60A` | Yellow hole number on scorecard and hole-jump grid |
 | `HoleJumpSelectedColor` | `#7A7A7A` | Selected hole cell highlight in hole-jump grid (phone and watch) |
 | `IncompleteHoleDotColor` | `#FFB300` | Amber dot on holes with missing scores |
 | `ScoreUnderParColor` | `#81C784` | Green — under par score display |
-| `NewRoundGradientStart` | `#0A2472` | Deep navy — left edge of New Round / Scorecard / Round Setup top bar and home button gradient |
-| `NewRoundGradientEnd` | `#1976D2` | Medium blue — right edge of New Round / Scorecard / Round Setup top bar and home button gradient |
-| `CoursesGradientStart` | `#114B20` | Dark jungle green — left edge of My Courses top bar and home button gradient |
-| `CoursesGradientEnd` | `#388E3C` | Fresh green — right edge of My Courses top bar and home button gradient |
+| `NewRoundGradientStart` | `#1C2E42` | Deep grey-blue — left edge of New Round / Scorecard / Round Setup top bar and home button gradient |
+| `NewRoundGradientEnd` | `#474B50` | Slate grey — right edge of New Round / Scorecard / Round Setup top bar and home button gradient |
+| `CoursesGradientStart` | `#24534B` | Dark jungle green — left edge of My Courses top bar and home button gradient |
+| `CoursesGradientEnd` | `#506B67` | Muted green — right edge of My Courses top bar and home button gradient |
 | `HistoryGradientStart` | `#2D0C00` | Espresso brown — left edge of Round History top bar and home button gradient |
 | `HistoryGradientEnd` | `#CC6B0A` | Warm amber — right edge of Round History top bar and home button gradient |
 | `ResumeGradientStart` | `#4527A0` | Deep violet — left edge of Resume Round home button gradient |
 | `ResumeGradientEnd` | `#7E57C2` | Soft lavender — right edge of Resume Round home button gradient |
+| `DisabledButtonGradientStart` | `#3A3A3A` | Dark grey — left edge of a disabled `HomeActionButton` |
+| `DisabledButtonGradientEnd` | `#5A5A5A` | Mid grey — right edge of a disabled `HomeActionButton` |
 
 > `CardGrey` (`#42413C`) is defined in `AppColors.kt` but currently unused — candidate for removal.
 
@@ -69,6 +71,7 @@ Named color constants are centralized in `AppColors.kt` files — no inline `Col
 | `WearButtonBackground` | `#2A2A2A` | Dark grey for −/+ buttons, Enter/Next Hole chip, non-current hole cells |
 | `IncompleteHoleDotColor` | `#FFB300` | Amber dot on holes with missing scores |
 | `ScoreUnderParColor` | `#81C784` | Green — under par score display |
+| `ContentWhite` | `Color.White` | Primary text/icon color on dark surfaces (mirrors phone) |
 
 At-par and unscored use `ContentWhite`. Over-par uses `MaterialTheme.colorScheme.error` (phone) / `MaterialTheme.colors.error` (wear).
 
@@ -182,11 +185,14 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 
 | Screen | Route | Notes |
 |---|---|---|
+| (Loading) | `loading` | Blank background shown on cold start until the Data Layer is read once (`uiState.loaded`) — prevents a `NoRoundScreen` flash before the active round resolves |
 | NoRoundScreen | `no_round` | Shown when no active round |
 | WearScorecardScreen | `scorecard` | Current hole, −/+ per player, hole nav |
 | EndRoundPromptScreen | `end_round_prompt` | Tells user to finalize on phone |
 
-Navigation is in `wear/navigation/WearNavigation.kt`. State comes from `RoundStateHolder.state` (a singleton `StateFlow` updated by `WearListenerService`).
+Navigation is in `wear/navigation/WearNavigation.kt`. State comes from `RoundStateHolder.state` (a singleton `StateFlow` updated by `WearListenerService` and by `WearViewModel`'s Data Layer reads).
+
+**Cold-start flash fix:** `WearUiState.loaded` starts `false` and flips `true` after `WearViewModel.refreshFromDataLayer()` reads `DataClient` once (kicked off in `init`, before `onResume` polling). The NavHost's `startDestination` is the blank `loading` route while `!loaded`; a `LaunchedEffect(loaded, roundState != null)` then routes to `scorecard`/`no_round` once the state is known. This stops `NoRoundScreen` from rendering for a frame on cold start when a round is actually active.
 
 ### WearScorecardScreen layout — Sequential score entry (branch: `Before-Major-Wear-App-UI-Score-Entry`)
 
@@ -301,7 +307,7 @@ The sort input is always `basePlayers` (DB order); the cascading keys make the t
 - **Hole notes:** `notes` is nullable on `HoleEntity` (added in migration 3→4). When non-null/non-blank, an `Info` icon appears on the hole card in `ScorecardScreen`; tapping it opens a `ModalBottomSheet` titled "Hole [number] Rules". The course editor exposes a multiline "Hole rules / notes (optional)" field per hole. Notes are not yet surfaced on the watch.
 - **holeScores in PlayerState:** The watch displays `player.holeScores[currentHole] ?: 0` for the score, not a pre-computed field. This lets the watch navigate holes independently without requesting a re-push from the phone. This map (and the rest of `PlayerState`) is populated by `RoundStateBuilder.build(...)` in `shared/sync/`, called by both `RoundViewModel.doPushStateToWatch()` (in-memory state) and `PhoneWearableListenerService.pushUpdatedState()` (fresh DB queries) — so the per-player math lives in one place.
 - **Sync delivery:** `WearSyncManager.pushRoundState()` uses only `DataClient.putDataItem` (persistent, reconnect-safe). `WearListenerService` handles `onDataChanged`. The watch-side `MessageClient` path was removed — `WearListenerService` has no `onMessageReceived`, so the send was dead code.
-- **Watch polling fallback:** `WearViewModel.startPolling()` reads `DataClient` every 2 s while the watch is in the foreground (started in `onResume`, stopped in `onPause`). It calls `RoundStateHolder.update(null)` if no item is found, which navigates the watch to `NoRoundScreen` — this is the intended clear-state behavior.
+- **Watch polling fallback:** `WearViewModel.startPolling()` calls `refreshFromDataLayer()` every 2 s while the watch is in the foreground (started in `onResume`, stopped in `onPause`). `refreshFromDataLayer()` reads `DataClient` and calls `RoundStateHolder.update(round-or-null)`; a null (no item found) navigates the watch to `NoRoundScreen` — the intended clear-state behavior. The same helper runs once in `init` for the cold-start `loaded` flag (see BUG-7 fix).
 - **Player list reactivity:** `RoundViewModel.init` uses `combine(scoreFlow, playerFlow)` so adding/removing players updates the UI immediately without needing a score change to trigger it.
 - **No Gradle wrapper JAR** is included. Android Studio handles this automatically; for CLI use, run `gradle wrapper --gradle-version 8.9` once.
 
@@ -382,13 +388,13 @@ Full multi-module audit. The four highest-priority bugs are **fixed and verified
 **Open follow-ups (not yet addressed), by priority:**
 - BUG-5: deleting a course with an **active** round silently clears `RoundUiState` (the round vanishes from the UI with no cancellation/cleanup). `CourseListScreen` / `CourseViewModel`.
 - ~~BUG-6~~: **Rejected (false positive).** The audit wrongly claimed the wear `applicationId` (`com.scorigami.app`, same as phone) should differ. In fact the Wearable Data Layer **requires** the phone and wear apps to share the same `applicationId` and signing key — that shared id is why sync works. Play Store delivery also uses the same `applicationId`, distinguished by the wear manifest's `<uses-feature android:name="android.hardware.type.watch">`. The audit conflated `applicationId` with `namespace` (wear already uses `namespace = "com.scorigami.wear"` for its code/R-class package, which is correct). No change made.
-- BUG-7: 1-frame `NoRoundScreen` flash on watch cold start when a round is active (`startDestination` always resolves to `NoRound` before the first `StateFlow` value). `WearNavigation` / `WearViewModel`.
+- ~~BUG-7~~: **Done.** Added `WearUiState.loaded` + a blank `loading` start destination; `WearViewModel.refreshFromDataLayer()` reads the Data Layer once in `init` and flips `loaded`, then a `LaunchedEffect` routes to `scorecard`/`no_round`. `NoRoundScreen` no longer flashes on cold start. Also de-duplicated the poll loop to reuse `refreshFromDataLayer()`.
 - ~~ARCH-1~~: **Done.** Extracted `RoundStateBuilder.build(...)` in `shared/sync/` — both `RoundViewModel.doPushStateToWatch` and `PhoneWearableListenerService.pushUpdatedState` now call it. `PlayerState` math lives in one place.
 - ~~ARCH-2~~: **Done.** `SyncKeys.ROUND_STATE_MSG` deleted.
 - ~~ARCH-3~~: **Done.** Seeding moved into Room `Callback.onCreate` (fires once on DB creation) on a bounded, self-cancelling scope, via an injected `Provider<CourseDao>`. Replaces the inline never-cancelled scope that launched on every app start. Behavior change: deleting all courses no longer re-seeds them on next launch.
 - ~~ARCH-4~~: **Done.** `HistoryViewModel.detail` converted from a `flow{}` (only scores reactive) to `combine(scoresFlow, playersFlow)`; round + course fetched once inside the suspend transform. Players are now reactive too. (`toSummary`'s one-shot queries are the separate N+1 QUALITY item, left as-is.)
 - ~~DEAD~~: **Done.** Removed unused `@ApplicationContext` import in `RoundViewModel`; `wear.compose.navigation` dep (+ orphaned toml lib entry); root `kotlin.android` plugin alias (+ orphaned toml plugin entry); all four `ic_*_vector.xml` drawables.
-- QUALITY: par editor minimum hardcoded to 3 (no Par 2) in `CourseEditorScreen`; inline `Color(0xFF…)` literals in `HomeScreen` disabled-button gradient; scattered `Color.White` in wear (no `ContentWhite` alias); N+1 queries in `HistoryViewModel.toSummary`; `themes.xml` missing the documented `windowSplashScreenBackground` (needs `values-v31/`); CLAUDE.md color table values drifted from `AppColors.kt`.
+- QUALITY: **mostly done.** ✅ par editor now allows Par 2 (`CourseEditorScreen`, min `par > 2`); ✅ `HomeScreen` disabled-button gradient moved to `DisabledButtonGradientStart/End` in `AppColors.kt`; ✅ wear `ContentWhite` alias added and the scattered `Color.White` replaced across the 4 wear UI files; ✅ `values-v31/themes.xml` added with `windowSplashScreenBackground = #FF000000`; ✅ CLAUDE.md color table reconciled with `AppColors.kt`. **Still open:** N+1 queries in `HistoryViewModel.toSummary` (per-round course/players/per-player-throws lookups) — left for a dedicated pass since it touches the DB layer.
 
 ## Code Cleanup History
 
@@ -452,7 +458,7 @@ Dead code audit and removal. All changes are deletions only — no behavior chan
 - `android:windowSplashScreenBackground="#FF000000"` added to `app/res/values/themes.xml` — fixes Android 12+ splash defaulting to white
 
 **Hole card color:**
-- Changed from `MaterialTheme.colorScheme.primaryContainer` to `ScaleGrey1` (`#37474F`) via `HoleInfoCard`
+- Changed from `MaterialTheme.colorScheme.primaryContainer` to `ScaleGrey1` (`#354045`) via `HoleInfoCard`
 - `CardGrey` (`#42413C`) was added to `AppColors.kt` during this work but is currently unused — candidate for removal
 
 **DatabaseSeeder notes update:**

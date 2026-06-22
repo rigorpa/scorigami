@@ -8,7 +8,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -17,6 +16,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.*
+import com.scorigami.wear.ui.theme.ContentWhite
 import com.scorigami.wear.ui.theme.HoleNumberColor
 import com.scorigami.wear.ui.theme.ScoreUnderParColor
 import com.scorigami.wear.ui.theme.WearButtonBackground
@@ -64,7 +64,7 @@ internal fun WearPlayerScoreEntry(
                 playerName,
                 style = MaterialTheme.typography.title1,
                 fontWeight = FontWeight.SemiBold,
-                color = Color.White,
+                color = ContentWhite,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 modifier = Modifier.clickable { onShowTeeOrder() }
@@ -72,9 +72,9 @@ internal fun WearPlayerScoreEntry(
 
             // − score + controls
             val scoreColor = when {
-                pendingScore == 0 -> Color.White
+                pendingScore == 0 -> ContentWhite
                 pendingScore < holePar -> ScoreUnderParColor
-                pendingScore == holePar -> Color.White
+                pendingScore == holePar -> ContentWhite
                 else -> MaterialTheme.colors.error
             }
             Row(
@@ -93,9 +93,9 @@ internal fun WearPlayerScoreEntry(
                     },
                     colors = ButtonDefaults.buttonColors(
                         backgroundColor = WearButtonBackground,
-                        contentColor = Color.White,
+                        contentColor = ContentWhite,
                         disabledBackgroundColor = WearButtonBackground.copy(alpha = 0.4f),
-                        disabledContentColor = Color.White.copy(alpha = 0.3f)
+                        disabledContentColor = ContentWhite.copy(alpha = 0.3f)
                     )
                 ) {
                     Text("−", fontSize = 22.sp, fontWeight = FontWeight.Bold)
@@ -118,9 +118,9 @@ internal fun WearPlayerScoreEntry(
                     enabled = pendingScore < 20,
                     colors = ButtonDefaults.buttonColors(
                         backgroundColor = WearButtonBackground,
-                        contentColor = Color.White,
+                        contentColor = ContentWhite,
                         disabledBackgroundColor = WearButtonBackground.copy(alpha = 0.4f),
-                        disabledContentColor = Color.White.copy(alpha = 0.3f)
+                        disabledContentColor = ContentWhite.copy(alpha = 0.3f)
                     )
                 ) {
                     Text("+", fontSize = 22.sp, fontWeight = FontWeight.Bold)
@@ -144,7 +144,7 @@ internal fun WearPlayerScoreEntry(
                     .height(36.dp),
                 colors = ChipDefaults.chipColors(
                     backgroundColor = WearButtonBackground,
-                    contentColor = Color.White
+                    contentColor = ContentWhite
                 )
             )
 

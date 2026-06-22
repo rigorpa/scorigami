@@ -14,7 +14,10 @@ val WearButtonBackground = Color(0xFF2A2A2A)
 // Amber dot on holes with missing scores in the hole-jump picker
 val IncompleteHoleDotColor = Color(0xFFFFB300)
 
+// Primary content color on dark surfaces — text/icons (mirrors phone AppColors)
+val ContentWhite = Color.White
+
 // Score colors vs par
 val ScoreUnderParColor = Color(0xFF81C784)   // green  — under par
-// at par and unscored use Color.White (standard Compose constant, no alias needed)
+// at par and unscored use ContentWhite
 // over par uses MaterialTheme.colors.error from the theme

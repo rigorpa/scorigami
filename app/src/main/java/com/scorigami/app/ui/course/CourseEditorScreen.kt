@@ -160,8 +160,8 @@ private fun HoleEditorRow(
             Text("Hole $holeNumber", modifier = Modifier.weight(1f))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(
-                    onClick = { if (par > 3) onParChange(par - 1) },
-                    enabled = par > 3
+                    onClick = { if (par > 2) onParChange(par - 1) },
+                    enabled = par > 2
                 ) { Text("−", style = MaterialTheme.typography.titleLarge) }
                 Text(
                     text = "Par $par",

@@ -10,11 +10,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.Text
+import com.scorigami.wear.ui.theme.ContentWhite
 import com.scorigami.wear.ui.theme.HoleJumpSelectedColor
 import com.scorigami.wear.ui.theme.IncompleteHoleDotColor
 import com.scorigami.wear.ui.theme.WearButtonBackground
@@ -57,7 +57,7 @@ internal fun WearHoleJumpGrid(
                             text = "$holeNum",
                             fontSize = 14.sp,
                             fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Normal,
-                            color = Color.White
+                            color = ContentWhite
                         )
                         if (incomplete) {
                             Box(
