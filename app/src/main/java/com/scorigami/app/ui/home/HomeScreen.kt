@@ -26,6 +26,8 @@ import com.scorigami.app.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.BuildConfig
+import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.CoursesGradientEnd
 import com.scorigami.app.ui.theme.CoursesGradientStart
 import com.scorigami.app.ui.theme.DisabledButtonGradientEnd
@@ -34,7 +36,6 @@ import com.scorigami.app.ui.theme.HistoryGradientEnd
 import com.scorigami.app.ui.theme.HistoryGradientStart
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
 import com.scorigami.app.ui.theme.NewRoundGradientStart
-import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.ResumeGradientEnd
 import com.scorigami.app.ui.theme.ResumeGradientStart
 import com.scorigami.app.viewmodel.RoundViewModel
@@ -80,7 +81,7 @@ fun HomeScreen(
                 Text(
                     text = "A Frolf Scorecard",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = ContentLightGrey
                 )
                 Spacer(modifier = Modifier.height(56.dp))
 

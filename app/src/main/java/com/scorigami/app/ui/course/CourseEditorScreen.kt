@@ -96,7 +96,13 @@ fun CourseEditorScreen(
                     onValueChange = { courseName = it },
                     label = { Text("Course Name") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedLabelColor = ContentLightGrey,
+                        focusedLabelColor = ContentLightGrey,
+                        unfocusedTextColor = ContentWhite,
+                        focusedTextColor = ContentWhite
+                    )
                 )
             }
             item {
@@ -106,11 +112,17 @@ fun CourseEditorScreen(
                     label = { Text("Number of Holes") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedLabelColor = ContentLightGrey,
+                        focusedLabelColor = ContentLightGrey,
+                        unfocusedTextColor = ContentWhite,
+                        focusedTextColor = ContentWhite
+                    )
                 )
             }
             item {
-                Text("Par per Hole", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text("Par per Hole", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = ContentWhite)
             }
             items(parValues.size) { index ->
                 HoleEditorRow(
@@ -158,7 +170,7 @@ private fun HoleEditorRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Hole $holeNumber", modifier = Modifier.weight(1f))
+            Text("Hole $holeNumber", modifier = Modifier.weight(1f), color = ContentWhite)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(
                     onClick = { if (par > 2) onParChange(par - 1) },
@@ -181,7 +193,13 @@ private fun HoleEditorRow(
             label = { Text("Hole rules / notes (optional)") },
             modifier = Modifier.fillMaxWidth(),
             minLines = 2,
-            maxLines = 8
+            maxLines = 8,
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedLabelColor = ContentLightGrey,
+                focusedLabelColor = ContentLightGrey,
+                unfocusedTextColor = ContentWhite,
+                focusedTextColor = ContentWhite
+            )
         )
     }
 }
