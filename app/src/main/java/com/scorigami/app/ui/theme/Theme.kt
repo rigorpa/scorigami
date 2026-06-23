@@ -28,6 +28,7 @@ private val TnbError              = Color(0xFFEF5350)
 private val TnbOnError            = Color(0xFF680020)
 private val TnbErrorContainer     = Color(0xFF5C0010)
 private val TnbOnErrorContainer   = Color(0xFFFF9DA1)
+
 private val DarkColors = darkColorScheme(
     primary = TnbPrimary,
     onPrimary = TnbOnPrimary,

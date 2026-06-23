@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ScreenBackground
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -57,13 +58,13 @@ fun HistoryScreen(
     ) { padding ->
         if (rounds.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("No completed rounds yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("No completed rounds yet.", color = ContentWhite)
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize().background(ScreenBackground).padding(padding)) {
                 items(rounds) { round ->
                     ListItem(
-                        headlineContent = { Text(round.courseName, fontWeight = FontWeight.SemiBold) },
+                        headlineContent = { Text(round.courseName, fontWeight = FontWeight.Bold) },
                         supportingContent = {
                             Column {
                                 Text(round.date, style = MaterialTheme.typography.bodySmall)
@@ -74,7 +75,11 @@ fun HistoryScreen(
                             }
                         },
                         modifier = Modifier.clickable { onRoundDetail(round.roundId) },
-                        colors = ListItemDefaults.colors(containerColor = ScreenBackground)
+                        colors = ListItemDefaults.colors(
+                            containerColor = ScreenBackground,
+                            headlineColor = ContentWhite,
+                            supportingColor = ContentLightGrey
+                        )
                     )
                     HorizontalDivider()
                 }

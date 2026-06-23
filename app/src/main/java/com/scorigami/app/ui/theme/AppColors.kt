@@ -19,8 +19,11 @@ val HoleJumpSelectedColor = Color(0xFF7A7A7A)
 // Amber dot on holes with missing scores
 val IncompleteHoleDotColor = Color(0xFFFFB300)
 
-// Primary content color on dark surfaces — text, icons, top bar chrome
+// Primary content color on dark surfaces — text
 val ContentWhite = Color.White
+
+// Secondary lighter color on dark surfaces - text
+val ContentLightGrey = Color(0xFFBDBDBD)
 
 // App background color — list screens, list items, scorecard Round label
 val ScreenBackground = Color.Black

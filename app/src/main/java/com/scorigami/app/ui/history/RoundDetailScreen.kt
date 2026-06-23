@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.HistoryGradientEnd
 import com.scorigami.app.ui.theme.HistoryGradientStart
 import com.scorigami.app.viewmodel.HistoryViewModel
@@ -105,7 +106,7 @@ fun RoundDetailScreen(
                 Text(
                     "${detail.holes.size} holes · Par ${detail.holes.sumOf { it.par }}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = ContentLightGrey
                 )
             }
             items(detail.players) { player ->
@@ -152,7 +153,7 @@ private fun DetailPlayerCard(
                             modifier = Modifier.weight(1f),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text("${hole.number}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("${hole.number}", style = MaterialTheme.typography.labelLarge, color = ContentLightGrey)
                             Text(
                                 text = diff?.let { formatVsPar(it) } ?: "",
                                 style = MaterialTheme.typography.bodyMedium,
