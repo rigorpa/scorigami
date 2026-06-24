@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.shared.db.entity.HoleEntity
 import com.scorigami.shared.db.entity.PlayerEntity
 
@@ -30,51 +32,55 @@ internal fun FullScorecardSheet(
             val parSoFar = holes.filter { scores[Pair(player.id, it.number)] != null }.sumOf { it.par }
             val totalVsPar = totalThrows - parSoFar
 
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(player.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                        Text(
-                            text = formatVsPar(totalVsPar),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = vsParColor(totalVsPar)
-                        )
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    HorizontalDivider()
-                    Spacer(Modifier.height(8.dp))
-                    holes.chunked(9).forEach { group ->
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            group.forEach { hole ->
-                                val throws = scores[Pair(player.id, hole.number)]
-                                val vsPar = throws?.minus(hole.par)
-                                Column(
-                                    modifier = Modifier.weight(1f),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        text = "${hole.number}",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        text = vsPar?.let { formatVsPar(it) } ?: "—",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = vsPar?.let { vsParColor(it) } ?: MaterialTheme.colorScheme.onSurfaceVariant,
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(player.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = ContentWhite)
+                    Text(
+                        text = formatVsPar(totalVsPar),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = vsParColor(totalVsPar)
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+                HorizontalDivider()
+                Spacer(Modifier.height(8.dp))
+                holes.chunked(9).forEach { group ->
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        group.forEach { hole ->
+                            val throws = scores[Pair(player.id, hole.number)]
+                            val scoreColor = when {
+                                throws == null -> ContentWhite
+                                throws < hole.par -> ScoreUnderParColor
+                                throws == hole.par -> ContentWhite
+                                else -> MaterialTheme.colorScheme.error
+                            }
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "${hole.number}",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = ContentWhite.copy(alpha = 0.5f)
+                                )
+                                Text(
+                                    text = throws?.toString() ?: "—",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = scoreColor,
+                                    textAlign = TextAlign.Center
+                                )
                             }
                         }
-                        Spacer(Modifier.height(4.dp))
                     }
+                    Spacer(Modifier.height(4.dp))
                 }
+                Spacer(Modifier.height(8.dp))
             }
         }
     }

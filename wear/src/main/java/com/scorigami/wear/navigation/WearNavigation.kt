@@ -1,6 +1,7 @@
 package com.scorigami.wear.navigation
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -16,6 +17,7 @@ import com.scorigami.wear.ui.WearScorecardScreen
 import com.scorigami.wear.viewmodel.WearViewModel
 
 sealed class WearScreen(val route: String) {
+    object Loading : WearScreen("loading")
     object Scorecard : WearScreen("scorecard")
     object EndRoundPrompt : WearScreen("end_round_prompt")
     object NoRound : WearScreen("no_round")
@@ -26,7 +28,13 @@ fun WearNavigation(viewModel: WearViewModel = hiltViewModel()) {
     val navController = rememberNavController()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    val startDestination = if (uiState.roundState != null) WearScreen.Scorecard.route else WearScreen.NoRound.route
+    // On cold start the Data Layer hasn't been read yet (loaded == false): start on a
+    // blank Loading screen so NoRoundScreen never flashes before the round resolves.
+    val startDestination = when {
+        !uiState.loaded -> WearScreen.Loading.route
+        uiState.roundState != null -> WearScreen.Scorecard.route
+        else -> WearScreen.NoRound.route
+    }
 
     NavHost(
         navController = navController,
@@ -35,6 +43,10 @@ fun WearNavigation(viewModel: WearViewModel = hiltViewModel()) {
             .fillMaxSize()
             .background(MaterialTheme.colors.background)
     ) {
+        composable(WearScreen.Loading.route) {
+            Box(Modifier.fillMaxSize().background(MaterialTheme.colors.background))
+        }
+
         composable(WearScreen.NoRound.route) {
             NoRoundScreen()
         }
@@ -68,15 +80,14 @@ fun WearNavigation(viewModel: WearViewModel = hiltViewModel()) {
         }
     }
 
-    // React to round state changes: navigate to scorecard when a round starts
-    LaunchedEffect(uiState.roundState != null) {
-        if (uiState.roundState != null) {
-            navController.navigate(WearScreen.Scorecard.route) {
-                popUpTo(WearScreen.NoRound.route) { inclusive = true }
-                launchSingleTop = true
-            }
-        } else {
-            navController.navigate(WearScreen.NoRound.route) {
+    // Once the Data Layer has been read, route to the right top-level screen — and react
+    // to later round start/end transitions. Skipped while still loading so the blank
+    // Loading screen stays put until we actually know the round state.
+    LaunchedEffect(uiState.loaded, uiState.roundState != null) {
+        if (!uiState.loaded) return@LaunchedEffect
+        val target = if (uiState.roundState != null) WearScreen.Scorecard.route else WearScreen.NoRound.route
+        if (navController.currentDestination?.route != target) {
+            navController.navigate(target) {
                 popUpTo(0) { inclusive = true }
                 launchSingleTop = true
             }

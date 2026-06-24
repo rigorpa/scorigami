@@ -1,33 +1,8 @@
 package com.scorigami.wear.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.wear.compose.material.*
-import androidx.wear.compose.material.dialog.Dialog
-import com.scorigami.wear.ui.theme.HoleNumberColor
-import com.scorigami.wear.ui.theme.HoleJumpSelectedColor
-import com.scorigami.wear.ui.theme.WearButtonBackground
-import com.scorigami.wear.ui.theme.IncompleteHoleDotColor
-import com.scorigami.wear.ui.theme.ScoreUnderParColor
+import androidx.wear.compose.material.Scaffold
 import com.scorigami.shared.sync.RoundState
 
 @Composable
@@ -63,7 +38,6 @@ fun WearScorecardScreen(
 
     var currentPlayerIndex by remember { mutableIntStateOf(0) }
 
-    // Reset to first player whenever the hole changes
     LaunchedEffect(currentHole) { currentPlayerIndex = 0 }
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
@@ -99,259 +73,40 @@ fun WearScorecardScreen(
 
     Scaffold {
         if (showHoleJump) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
-            ) {
-                (1..roundState.totalHoles).chunked(3).forEach { rowHoles ->
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        rowHoles.forEach { holeNum ->
-                            val isCurrent = holeNum == currentHole
-                            val incomplete = holeNum in incompleteHoles
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(44.dp)
-                                    .background(
-                                        if (isCurrent) HoleJumpSelectedColor else WearButtonBackground,
-                                        RoundedCornerShape(8.dp)
-                                    )
-                                    .clickable {
-                                        onJumpToHole(holeNum)
-                                        showHoleJump = false
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "$holeNum",
-                                    fontSize = 14.sp,
-                                    fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Normal,
-                                    color = Color.White
-                                )
-                                if (incomplete) {
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.TopEnd)
-                                            .padding(top = 3.dp, end = 3.dp)
-                                            .size(5.dp)
-                                            .background(IncompleteHoleDotColor, CircleShape)
-                                    )
-                                }
-                            }
-                        }
-                        repeat(3 - rowHoles.size) { Spacer(Modifier.weight(1f)) }
-                    }
+            WearHoleJumpGrid(
+                totalHoles = roundState.totalHoles,
+                currentHole = currentHole,
+                incompleteHoles = incompleteHoles,
+                onHoleSelected = { holeNum ->
+                    onJumpToHole(holeNum)
+                    showHoleJump = false
                 }
-            }
+            )
         } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .focusRequester(focusRequester)
-                    .focusable(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                ) {
-                    // Hole indicator — tappable to open hole-jump picker
-                    Text(
-                        text = buildAnnotatedString {
-                            withStyle(SpanStyle(fontSize = 32.sp, fontWeight = FontWeight.ExtraBold)) {
-                                append("$currentHole")
-                            }
-                            withStyle(SpanStyle(fontSize = 13.sp, fontWeight = FontWeight.Normal)) {
-                                append(" / ${roundState.totalHoles}")
-                            }
-                        },
-                        color = HoleNumberColor,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.clickable { showHoleJump = true }
-                    )
-
-                    // Current player name — tap to show tee order
-                    Text(
-                        currentPlayer.name,
-                        style = MaterialTheme.typography.title1,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                        modifier = Modifier.clickable { showTeeOrder = true }
-                    )
-
-                    // − score + controls
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp)
-                    ) {
-                        CompactButton(
-                            modifier = Modifier.size(48.dp),
-                            onClick = {
-                                pendingScore = if (pendingScore == 0) maxOf(1, holePar - 1) else pendingScore - 1
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                backgroundColor = WearButtonBackground,
-                                contentColor = Color.White,
-                                disabledBackgroundColor = WearButtonBackground.copy(alpha = 0.4f),
-                                disabledContentColor = Color.White.copy(alpha = 0.3f)
-                            )
-                        ) {
-                            Text("−", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                        }
-                        val scoreColor = when {
-                            pendingScore == 0 -> Color.White
-                            pendingScore < holePar -> ScoreUnderParColor
-                            pendingScore == holePar -> Color.White
-                            else -> MaterialTheme.colors.error
-                        }
-                        Text(
-                            text = pendingScore.toString(),
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = scoreColor,
-                            modifier = Modifier.widthIn(min = 28.dp),
-                            textAlign = TextAlign.Center
-                        )
-                        CompactButton(
-                            modifier = Modifier.size(48.dp),
-                            onClick = {
-                                pendingScore = if (pendingScore == 0) holePar else pendingScore + 1
-                            },
-                            enabled = pendingScore < 20,
-                            colors = ButtonDefaults.buttonColors(
-                                backgroundColor = WearButtonBackground,
-                                contentColor = Color.White,
-                                disabledBackgroundColor = WearButtonBackground.copy(alpha = 0.4f),
-                                disabledContentColor = Color.White.copy(alpha = 0.3f)
-                            )
-                        ) {
-                            Text("+", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-
-                    // Enter / Next Hole button
-                    Chip(
-                        onClick = ::commitAndAdvance,
-                        label = {
-                            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                                Text(
-                                    if (isLastPlayer) "Next Hole ▶" else "Enter",
-                                    fontSize = 13.sp,
-                                    maxLines = 1
-                                )
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth(if (isLastPlayer) 0.72f else 0.52f)
-                            .height(36.dp),
-                        colors = ChipDefaults.chipColors(
-                            backgroundColor = WearButtonBackground,
-                            contentColor = Color.White
-                        )
-                    )
-
-                    // End Round button — hidden for now, re-enable by uncommenting
-                    // Chip(
-                    //     onClick = onEndRound,
-                    //     label = { Text("End Round", fontSize = 12.sp) },
-                    //     modifier = Modifier.fillMaxWidth(0.65f),
-                    //     colors = ChipDefaults.chipColors(backgroundColor = MaterialTheme.colors.error)
-                    // )
-                }
-            }
+            WearPlayerScoreEntry(
+                currentHole = currentHole,
+                totalHoles = roundState.totalHoles,
+                playerName = currentPlayer.name,
+                holePar = holePar,
+                isLastPlayer = isLastPlayer,
+                pendingScore = pendingScore,
+                onPendingScoreChange = { pendingScore = it },
+                onCommit = ::commitAndAdvance,
+                onShowHoleJump = { showHoleJump = true },
+                onShowTeeOrder = { showTeeOrder = true },
+                focusRequester = focusRequester
+            )
         }
     }
 
-    // End-of-round prompt — shown when Next Hole is pressed on the final hole
     if (showEndRoundPrompt) {
-        Dialog(
-            showDialog = true,
-            onDismissRequest = { showEndRoundPrompt = false }
-        ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Card(
-                    onClick = { showEndRoundPrompt = false },
-                    modifier = Modifier.fillMaxWidth(0.85f)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 14.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            "End round on the phone app",
-                            style = MaterialTheme.typography.body1,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color.White,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-            }
-        }
+        EndRoundPromptDialog(onDismiss = { showEndRoundPrompt = false })
     }
 
-    // Tee order popup — shown when player name is tapped
     if (showTeeOrder) {
-        Dialog(
-            showDialog = true,
-            onDismissRequest = { showTeeOrder = false }
-        ) {
-            Card(
-                onClick = { showTeeOrder = false },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        "Tee Order",
-                        style = MaterialTheme.typography.title3,
-                        fontWeight = FontWeight.Bold,
-                        color = HoleNumberColor,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    players.forEachIndexed { i, player ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                "${i + 1}.",
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colors.onSurfaceVariant,
-                                modifier = Modifier.width(18.dp)
-                            )
-                            Text(
-                                player.name,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Normal,
-                                color = Color.White,
-                                maxLines = 1
-                            )
-                        }
-                    }
-                }
-            }
-        }
+        TeeOrderDialog(
+            players = players,
+            onDismiss = { showTeeOrder = false }
+        )
     }
 }

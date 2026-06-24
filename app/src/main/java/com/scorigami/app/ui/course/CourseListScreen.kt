@@ -15,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.ScreenBackground
 import androidx.compose.ui.unit.dp
@@ -65,7 +67,9 @@ fun CourseListScreen(
     ) { padding ->
         if (courses.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("No courses yet. Tap + to create one.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text("No courses yet. Tap + to create one.", 
+                color = ContentLightGrey
+            )
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize().background(ScreenBackground).padding(padding)) {
@@ -73,7 +77,7 @@ fun CourseListScreen(
                     val course = courseWithHoles.course
                     val par = courseWithHoles.holes.sumOf { it.par }
                     ListItem(
-                        headlineContent = { Text(course.name) },
+                        headlineContent = { Text(course.name, fontWeight = FontWeight.Bold) },
                         supportingContent = { Text("${course.holeCount} holes · Par $par") },
                         trailingContent = {
                             IconButton(onClick = { courseToDelete = course }) {
@@ -81,7 +85,11 @@ fun CourseListScreen(
                             }
                         },
                         modifier = Modifier.clickable { onEditCourse(course.id) },
-                        colors = ListItemDefaults.colors(containerColor = ScreenBackground)
+                        colors = ListItemDefaults.colors(
+                            containerColor = ScreenBackground,
+                            headlineColor = ContentWhite,
+                            supportingColor = ContentLightGrey
+                        )
                     )
                     HorizontalDivider()
                 }

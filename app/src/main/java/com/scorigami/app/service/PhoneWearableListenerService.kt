@@ -8,8 +8,7 @@ import com.scorigami.shared.db.dao.PlayerDao
 import com.scorigami.shared.db.dao.RoundDao
 import com.scorigami.shared.db.dao.ScoreDao
 import com.scorigami.shared.db.entity.ScoreEntity
-import com.scorigami.shared.sync.PlayerState
-import com.scorigami.shared.sync.RoundState
+import com.scorigami.shared.sync.RoundStateBuilder
 import com.scorigami.shared.sync.ScoreUpdateMessage
 import com.scorigami.shared.sync.SyncKeys
 import dagger.hilt.EntryPoint
@@ -64,28 +63,13 @@ class PhoneWearableListenerService : WearableListenerService() {
         val scores = ep.scoreDao().getScoresForRoundSnapshot(roundId)
         val scoreMap = scores.associate { Pair(it.playerId, it.holeNumber) to it.throws }
 
-        val roundState = RoundState(
+        val roundState = RoundStateBuilder.build(
             roundId = roundId,
             courseName = courseWithHoles.course.name,
             currentHole = currentHole,
-            totalHoles = courseWithHoles.holes.size,
-            holePars = courseWithHoles.holes.associate { it.number to it.par },
-            players = players.map { player ->
-                val playerHoleScores = scoreMap.entries
-                    .filter { it.key.first == player.id }
-                    .associate { it.key.second to it.value }
-                val totalThrows = playerHoleScores.values.sum()
-                val parSoFar = courseWithHoles.holes
-                    .filter { hole -> playerHoleScores[hole.number] != null }
-                    .sumOf { it.par }
-                PlayerState(
-                    playerId = player.id,
-                    name = player.name,
-                    holeScores = playerHoleScores,
-                    totalThrows = totalThrows,
-                    totalVsPar = totalThrows - parSoFar
-                )
-            }
+            holes = courseWithHoles.holes,
+            players = players,
+            scores = scoreMap
         )
         ep.wearSyncManager().pushRoundState(roundState)
     }

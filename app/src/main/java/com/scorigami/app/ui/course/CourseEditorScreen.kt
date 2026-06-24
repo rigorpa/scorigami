@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.CoursesGradientEnd
 import com.scorigami.app.ui.theme.CoursesGradientStart
 import com.scorigami.app.viewmodel.CourseViewModel
@@ -36,15 +37,19 @@ fun CourseEditorScreen(
     var parValues by remember { mutableStateOf(List(18) { 3 }) }
     var notesValues by remember { mutableStateOf(List(18) { "" }) }
 
-    LaunchedEffect(existing) {
-        if (!initialized && existing != null) {
+    LaunchedEffect(existing, viewModel.isEditing) {
+        if (initialized) return@LaunchedEffect
+        if (!viewModel.isEditing) {
+            // New course — keep the blank defaults.
+            initialized = true
+        } else if (existing != null) {
+            // Editing — populate from the loaded course. Wait (don't initialize)
+            // while existing is still null, which means the DB load hasn't finished.
             courseName = existing!!.course.name
             holeCount = existing!!.course.holeCount.toString()
             val sorted = existing!!.holes.sortedBy { it.number }
             parValues = sorted.map { it.par }
             notesValues = sorted.map { it.notes ?: "" }
-            initialized = true
-        } else if (!initialized && existing == null) {
             initialized = true
         }
     }
@@ -91,7 +96,13 @@ fun CourseEditorScreen(
                     onValueChange = { courseName = it },
                     label = { Text("Course Name") },
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedLabelColor = ContentLightGrey,
+                        focusedLabelColor = ContentLightGrey,
+                        unfocusedTextColor = ContentWhite,
+                        focusedTextColor = ContentWhite
+                    )
                 )
             }
             item {
@@ -101,11 +112,17 @@ fun CourseEditorScreen(
                     label = { Text("Number of Holes") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedLabelColor = ContentLightGrey,
+                        focusedLabelColor = ContentLightGrey,
+                        unfocusedTextColor = ContentWhite,
+                        focusedTextColor = ContentWhite
+                    )
                 )
             }
             item {
-                Text("Par per Hole", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text("Par per Hole", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = ContentWhite)
             }
             items(parValues.size) { index ->
                 HoleEditorRow(
@@ -153,11 +170,11 @@ private fun HoleEditorRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Hole $holeNumber", modifier = Modifier.weight(1f))
+            Text("Hole $holeNumber", modifier = Modifier.weight(1f), color = ContentWhite)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(
-                    onClick = { if (par > 3) onParChange(par - 1) },
-                    enabled = par > 3
+                    onClick = { if (par > 2) onParChange(par - 1) },
+                    enabled = par > 2
                 ) { Text("−", style = MaterialTheme.typography.titleLarge) }
                 Text(
                     text = "Par $par",
@@ -176,7 +193,13 @@ private fun HoleEditorRow(
             label = { Text("Hole rules / notes (optional)") },
             modifier = Modifier.fillMaxWidth(),
             minLines = 2,
-            maxLines = 8
+            maxLines = 8,
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedLabelColor = ContentLightGrey,
+                focusedLabelColor = ContentLightGrey,
+                unfocusedTextColor = ContentWhite,
+                focusedTextColor = ContentWhite
+            )
         )
     }
 }

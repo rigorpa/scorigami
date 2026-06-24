@@ -81,7 +81,7 @@ internal fun PlayerScoreCard(
                     Text("−", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = ContentWhite)
                 }
                 Text(
-                    text = if (throwsThisHole == 0) "0" else "$throwsThisHole",
+                    text = if (throwsThisHole == 0) "—" else "$throwsThisHole",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = scoreColor,

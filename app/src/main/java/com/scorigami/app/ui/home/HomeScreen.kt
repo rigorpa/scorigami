@@ -26,13 +26,16 @@ import com.scorigami.app.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.BuildConfig
+import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.CoursesGradientEnd
 import com.scorigami.app.ui.theme.CoursesGradientStart
+import com.scorigami.app.ui.theme.DisabledButtonGradientEnd
+import com.scorigami.app.ui.theme.DisabledButtonGradientStart
 import com.scorigami.app.ui.theme.HistoryGradientEnd
 import com.scorigami.app.ui.theme.HistoryGradientStart
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
 import com.scorigami.app.ui.theme.NewRoundGradientStart
-import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.ResumeGradientEnd
 import com.scorigami.app.ui.theme.ResumeGradientStart
 import com.scorigami.app.viewmodel.RoundViewModel
@@ -78,7 +81,7 @@ fun HomeScreen(
                 Text(
                     text = "A Frolf Scorecard",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = ContentLightGrey
                 )
                 Spacer(modifier = Modifier.height(56.dp))
 
@@ -137,7 +140,7 @@ private fun HomeActionButton(
     enabled: Boolean = true,
 ) {
     val activeGradient = if (enabled) gradient else Brush.horizontalGradient(
-        listOf(Color(0xFF3A3A3A), Color(0xFF5A5A5A))
+        listOf(DisabledButtonGradientStart, DisabledButtonGradientEnd)
     )
     Button(
         onClick = onClick,

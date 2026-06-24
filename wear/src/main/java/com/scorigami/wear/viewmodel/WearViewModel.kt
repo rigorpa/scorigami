@@ -27,7 +27,11 @@ import javax.inject.Inject
 
 data class WearUiState(
     val roundState: RoundState? = null,
-    val currentHole: Int = 1
+    val currentHole: Int = 1,
+    // False until the Data Layer has been read at least once. Lets the UI tell
+    // "no active round" apart from "haven't checked yet" (avoids a NoRoundScreen
+    // flash on cold start when a round is actually active).
+    val loaded: Boolean = false
 )
 
 @HiltViewModel
@@ -36,6 +40,7 @@ class WearViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _currentHole = MutableStateFlow(1)
+    private val _loaded = MutableStateFlow(false)
     private var pollingJob: Job? = null
     private var lastKnownRoundId: Long? = null
 
@@ -49,29 +54,36 @@ class WearViewModel @Inject constructor(
                 lastKnownRoundId = incomingId
             }
         }
+        // Resolve the active round once up front (before polling starts in onResume) so
+        // the UI can distinguish "no round" from "not loaded yet" on cold start.
+        viewModelScope.launch { refreshFromDataLayer() }
+    }
+
+    /** Reads the current round snapshot from the Data Layer and publishes it (or null). */
+    private suspend fun refreshFromDataLayer() {
+        try {
+            val dataItems = Wearable.getDataClient(context).getDataItems().await()
+            var round: RoundState? = null
+            dataItems.forEach { item ->
+                if (item.uri.path == SyncKeys.ROUND_STATE_PATH) {
+                    val json = DataMapItem.fromDataItem(item).dataMap.getString("state")
+                    if (json != null) round = Json.decodeFromString<RoundState>(json)
+                }
+            }
+            dataItems.release()
+            RoundStateHolder.update(round)
+        } catch (e: Exception) {
+            Log.w("WearViewModel", "data layer read failed", e)
+        } finally {
+            _loaded.value = true
+        }
     }
 
     fun startPolling() {
         if (pollingJob?.isActive == true) return
         pollingJob = viewModelScope.launch {
             while (true) {
-                try {
-                    val dataItems = Wearable.getDataClient(context).getDataItems().await()
-                    var found = false
-                    dataItems.forEach { item ->
-                        if (item.uri.path == SyncKeys.ROUND_STATE_PATH) {
-                            found = true
-                            val json = DataMapItem.fromDataItem(item).dataMap.getString("state")
-                            if (json != null) {
-                                RoundStateHolder.update(Json.decodeFromString<RoundState>(json))
-                            }
-                        }
-                    }
-                    if (!found) RoundStateHolder.update(null)
-                    dataItems.release()
-                } catch (e: Exception) {
-                    Log.w("WearViewModel", "poll failed", e)
-                }
+                refreshFromDataLayer()
                 delay(2000)
             }
         }
@@ -84,10 +96,11 @@ class WearViewModel @Inject constructor(
 
     val uiState: StateFlow<WearUiState> = combine(
         RoundStateHolder.state,
-        _currentHole
-    ) { roundState, currentHole ->
+        _currentHole,
+        _loaded
+    ) { roundState, currentHole, loaded ->
         val hole = roundState?.let { currentHole.coerceIn(1, it.totalHoles) } ?: currentHole
-        WearUiState(roundState = roundState, currentHole = hole)
+        WearUiState(roundState = roundState, currentHole = hole, loaded = loaded)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WearUiState())
 
     fun navigateToHole(hole: Int) {

@@ -15,9 +15,9 @@ interface ScoreDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertScore(score: ScoreEntity)
 
-    @Query("SELECT SUM(throws) FROM scores WHERE roundId = :roundId AND playerId = :playerId")
-    suspend fun getTotalThrowsForPlayer(roundId: Long, playerId: Long): Int?
-
     @Query("DELETE FROM scores WHERE roundId = :roundId AND playerId = :playerId")
     suspend fun deleteScoresForPlayer(roundId: Long, playerId: Long)
+
+    @Query("DELETE FROM scores WHERE roundId = :roundId AND playerId = :playerId AND holeNumber = :holeNumber")
+    suspend fun deleteScore(roundId: Long, playerId: Long, holeNumber: Int)
 }

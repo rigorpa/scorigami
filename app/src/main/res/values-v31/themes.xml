@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ system splash screen. Black to match the app's black background
+         and launcher icon, instead of defaulting to the (blue) windowBackground. -->
+    <style name="Theme.Scorigami" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#002451</item>
+        <item name="android:statusBarColor">#002451</item>
+        <item name="android:navigationBarColor">#002451</item>
+        <item name="android:windowSplashScreenBackground">#FF000000</item>
+    </style>
+</resources>

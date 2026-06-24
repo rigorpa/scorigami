@@ -24,6 +24,9 @@ class CourseViewModel @Inject constructor(
 
     private val editingCourseId: Long = savedStateHandle.get<Long>("courseId") ?: -1L
 
+    /** True when opened to edit an existing course; false when creating a new one. */
+    val isEditing: Boolean = editingCourseId != -1L
+
     val editingCourse: StateFlow<CourseWithHoles?> = flow {
         emit(if (editingCourseId == -1L) null else courseDao.getCourseWithHoles(editingCourseId))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
