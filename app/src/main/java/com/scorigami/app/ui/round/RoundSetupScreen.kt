@@ -1,9 +1,11 @@
 package com.scorigami.app.ui.round
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -23,6 +25,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.viewmodel.CourseViewModel
 import com.scorigami.app.viewmodel.RoundViewModel
+import com.scorigami.shared.db.entity.PlayerEntity
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -53,6 +56,32 @@ fun RoundSetupScreen(
         if (selectedCourseId == null && sortedCourses.isNotEmpty()) {
             selectedCourseId = sortedCourses.first().course.id
         }
+    }
+
+    var playerToDelete by remember { mutableStateOf<PlayerEntity?>(null) }
+
+    if (playerToDelete != null) {
+        val player = playerToDelete!!
+        AlertDialog(
+            onDismissRequest = { playerToDelete = null },
+            title = { Text("Remove Player?") },
+            text = { Text("Are you sure you want to remove \"${player.name}\" from history? This will hide them from suggestions, but their past rounds and scores will remain intact.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        roundViewModel.archivePlayer(player.id)
+                        playerToDelete = null
+                    }
+                ) {
+                    Text("Remove", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { playerToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -186,10 +215,41 @@ fun RoundSetupScreen(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         suggestions.forEach { player ->
-                            SuggestionChip(
-                                onClick = { players.add(player.name) },
-                                label = { Text(player.name, color = ContentWhite) }
-                            )
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .clickable { players.add(player.name) }
+                                        .padding(start = 12.dp, end = 6.dp, top = 6.dp, bottom = 6.dp)
+                                ) {
+                                    Text(
+                                        text = player.name,
+                                        color = ContentWhite,
+                                        style = MaterialTheme.typography.labelLarge
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .size(20.dp)
+                                            .clickable(
+                                                onClick = { playerToDelete = player },
+                                                onClickLabel = "Remove ${player.name}"
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = null,
+                                            tint = Color.Red,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                     Spacer(Modifier.height(8.dp))
