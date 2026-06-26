@@ -35,7 +35,12 @@ object DatabaseModule {
         courseDaoProvider: Provider<CourseDao>
     ): AppDatabase {
         return Room.databaseBuilder(context, AppDatabase::class.java, "scorigami.db")
-            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4)
+            .addMigrations(
+                AppDatabase.MIGRATION_1_2,
+                AppDatabase.MIGRATION_2_3,
+                AppDatabase.MIGRATION_3_4,
+                AppDatabase.MIGRATION_4_5
+            )
             .addCallback(object : RoomDatabase.Callback() {
                 // Seed the pre-loaded courses exactly once, when the DB file is first created.
                 // (Previously launched on every app start via an inline scope that was never

@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PlayerDao {
-    @Query("SELECT * FROM players ORDER BY name ASC")
+    @Query("SELECT * FROM players WHERE isArchived = 0 ORDER BY name ASC")
     fun getAllPlayers(): Flow<List<PlayerEntity>>
 
     @Query("SELECT * FROM players WHERE id = :id")
@@ -33,4 +33,10 @@ interface PlayerDao {
         ORDER BY rp.`order` ASC
     """)
     fun getPlayersForRoundFlow(roundId: Long): Flow<List<PlayerEntity>>
+
+    @Update
+    suspend fun updatePlayer(player: PlayerEntity)
+
+    @Query("UPDATE players SET isArchived = 1 WHERE id = :playerId")
+    suspend fun archivePlayer(playerId: Long)
 }

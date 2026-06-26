@@ -104,8 +104,12 @@ class RoundViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             val players = playerNames.map { name ->
                 val existing = playerDao.getPlayerByName(name.trim())
-                if (existing != null) existing
-                else {
+                if (existing != null) {
+                    if (existing.isArchived) {
+                        playerDao.updatePlayer(existing.copy(isArchived = false))
+                    }
+                    existing
+                } else {
                     val id = playerDao.insertPlayer(PlayerEntity(name = name.trim()))
                     PlayerEntity(id = id, name = name.trim())
                 }
@@ -162,7 +166,12 @@ class RoundViewModel @Inject constructor(
         if (roundId == -1L) return
         viewModelScope.launch(Dispatchers.IO) {
             val existing = playerDao.getPlayerByName(name.trim())
-            val player = existing ?: run {
+            val player = if (existing != null) {
+                if (existing.isArchived) {
+                    playerDao.updatePlayer(existing.copy(isArchived = false))
+                }
+                existing
+            } else {
                 val id = playerDao.insertPlayer(PlayerEntity(name = name.trim()))
                 PlayerEntity(id = id, name = name.trim())
             }
@@ -181,6 +190,13 @@ class RoundViewModel @Inject constructor(
             roundDao.removeRoundPlayer(roundId, playerId)
         }
     }
+
+    fun archivePlayer(playerId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            playerDao.archivePlayer(playerId)
+        }
+    }
+
 
     private fun sortPlayersForHole(
         players: List<PlayerEntity>,
