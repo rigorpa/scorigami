@@ -1,128 +1,63 @@
-# Scorigami — Disc Golf Scoring App
+# ⛳ Scorigami — Disc Golf Scoring App
 
-A native Android + Wear OS disc golf scoring app for tracking rounds in real time across your phone and watch.
+A disc golf scoring app built for your **Android phone** and **Pixel Watch**. Track your round in real time, right from your wrist or your pocket.
 
-## Target Devices
+> **Coming soon:** Support for additional Wear OS watches beyond Pixel Watch.
 
-| Device | Model |
+---
+
+## 📱 What It Does
+
+Scorigami makes keeping score on the disc golf course simple and enjoyable:
+
+- **Set up a round** — pick your course, add your players, and go
+- **Score on your phone or your watch** — both stay in sync automatically
+- **Jump to any hole instantly** — tap the hole grid to skip around; no scrolling through every hole
+- **Honor system built in** — the player order updates automatically based on who had the best score on the last hole
+- **See your round at a glance** — check the full live scorecard anytime mid-round
+- **Know the rules for each hole** — OB lines, mandatory routes, and notes are right there when you need them
+- **Review and save** — go through your full scorecard before finishing the round
+- **Browse your history** — look back at past rounds with full per-hole breakdowns
+
+---
+
+## 🗺️ Courses
+
+Creating your own course is quick and easy — it takes about **2 minutes** to get a course set up and ready to play.
+
+> **Coming soon:** The ability to share courses directly with other Scorigami users.
+
+---
+
+## 📋 Revision History
+
+A high-level look at how Scorigami has grown over time:
+
+| Version | What Changed |
 |---|---|
-| Phone | Google Pixel 8 Pro |
-| Watch | Google Pixel Watch 2 (Wear OS 4) |
-
-The app also runs on other Android devices (min Android 11 / API 30). A Pixel 4a or similar works fine for testing the phone app without a paired watch.
-
----
-
-## Features
-
-- Create and manage courses with per-hole par values, distances, and rules/notes
-- Add players before a round — previously used names are suggested automatically; shuffle button randomises the tee order
-- Add or remove players mid-round via the scorecard overflow menu
-- Enter scores on the phone or the watch in real time, kept in sync via the Wearable Data Layer
-- **Smart first-press scoring:** tapping `−` from 0 enters birdie (par − 1); tapping `+` enters par — no need to tap up from zero every hole
-- Navigate between holes by swiping left/right on the phone, or via the hole-jump grid picker on both phone and watch
-- The hole-jump picker shows all 18 holes as a 3-column grid — tap any cell to jump instantly; the current hole is highlighted yellow
-- Holes with missing scores are flagged with an amber dot in the hole-jump grid (phone and watch)
-- Per-hole rules and notes — tap the info icon on the hole card to see OB lines, mandos, or any rule the course editor stored for that hole
-- Animated slide transition and hole-number spring bounce on the phone when changing holes
-- View the full live scorecard mid-round via the table icon in the phone top bar
-- Player order on each hole reflects the honor system (lowest score on the previous hole goes first; ties broken by the hole before that, cascading)
-- Cancel an in-progress round without saving it to history
-- Review the full scorecard before finalizing a round
-- Browse round history with per-hole breakdowns and standings
+| **0.5.5** | Bigger fonts on the watch for easier reading at a glance. Ability to remove a player's name during round entry while keeping your score history intact. |
+| **0.5.4** | Score visibility toggle brought to the watch — hide or reveal scores right from your wrist. Home screen color updates. |
+| **0.5.3** | Several bug fixes and stability improvements across the app. Screen orientation is now locked to keep the experience consistent. |
+| **0.5.2** | Scorecard UI refresh on the phone. Watch UI improvements and the watch app's code reorganized into cleaner, more focused files. Share a round from your history as plain text straight from the top bar. |
+| **0.5.1** | "Jump to hole" moved from a bottom bar icon to simply tapping the hole number — more intuitive and less clutter. Hole number font updated for better visibility. |
+| **0.5.0** | Under-the-hood cleanup to keep the codebase organized as features grow. No visible changes. |
+| **0.4.9** | UI color polish. Added an option to hide player scores mid-round for a bit of suspense. |
+| **0.4.8** | Colorful gradient buttons and top bars across the whole app. Full player names on scorecards. Shuffle button to randomize who tees off first. |
+| **0.4.7** | Per-hole rules and notes — OB lines, mandos, and any other course notes show up right on the hole card. |
+| **0.4.6** | Add or remove players mid-round without losing your progress. More phone UI polish. |
+| **0.4.5** | Consistent colors throughout the entire app — phone and watch now match. |
+| **0.4.4** | New app icon. End-of-round confirmation on the watch after hole 18. Bigger, easier-to-tap score buttons on the watch. Improved hole-jump grid on both devices. |
+| **0.4.3** | Bug fixes: zero scores now display cleanly, honor-system tie-breaking improved, incomplete holes flagged in the hole grid. |
+| **0.4.2** | Watch scoring revamped — enter scores one player at a time, then advance to the next hole. |
+| **0.4.1** | Smart scoring shortcut: one tap on − enters birdie, one tap on + enters par. Live scorecard sheet, animated hole transitions on the phone. |
+| **0.3.6** | Major sync reliability improvements. Full scorecard redesign on both phone and watch. |
+| **0.3.5** | Fixed hole distances and player priority ordering. |
+| **0.3.4** | Player reordering based on previous hole score. Change player list from the new round screen. |
+| **0.3.3** | Cancel a round in progress. Add or remove players. Swipe between holes. |
+| **0.3.2** | Distances added to the scorecard. Default course name fixes. |
+| **0.2** | Dark theme, larger fonts, player name suggestions from history, version display. |
+| **0.1** | First release — full scoring, round history, course editor, and Pixel Watch support. |
 
 ---
 
-## Project Structure
-
-```
-Scorigami/
-├── shared/   # Room DB, entities, DAOs, phone↔watch sync contracts
-├── app/      # Phone app — Jetpack Compose, MVVM, Hilt
-└── wear/     # Wear OS app — Compose for Wear OS, stateless (driven by phone)
-```
-
-**Pattern:** MVVM with `StateFlow` / `collectAsStateWithLifecycle`. Hilt for dependency injection throughout.
-
-The phone scorecard UI is split into focused composables under `app/ui/round/` — `ScorecardScreen` orchestrates state and layout while `PlayerScoreCard`, `HoleInfoCard`, `HoleJumpGrid`, `FullScorecardSheet`, `AddRemovePlayersSheet`, and `ScorecardTopBar` each own a piece of the screen.
-
-**Storage:** Room database lives on the phone only. The watch has no local DB — it receives state snapshots pushed from the phone.
-
-**Phone ↔ Watch sync:**
-- Phone → Watch: full `RoundState` pushed on every score change or hole navigation via `DataClient.putDataItem` (persistent, survives reconnect). The watch also polls `DataClient` every 2 s while foregrounded as a fallback
-- Watch → Phone: lightweight `ScoreUpdateMessage` sent when the user taps −/+
-- `RoundState` carries per-hole scores for every player (not just the current hole), so the watch always shows the correct score regardless of which hole it is viewing independently
-
----
-
-## Pre-Seeded Courses
-
-Inserted on first launch:
-
-| Course | Holes | Par | Notes |
-|---|---|---|---|
-| Los Colomos | 18 | 56 | H2 and H13 are Par 4; all others Par 3 |
-| El Centinela | 18 | 54 | All holes Par 3 |
-
-Both courses include per-hole distances (meters and feet) and example hole rules/notes (OB lines, mandatory routes, etc.) to demonstrate the feature.
-
----
-
-## Key Libraries
-
-| Library | Purpose |
-|---|---|
-| Jetpack Compose BOM 2024.12.01 | Phone UI |
-| Wear Compose 1.4.0 | Watch UI |
-| Room 2.6.1 | Local database (phone only) |
-| Hilt 2.51.1 | Dependency injection |
-| play-services-wearable 18.2.0 | Phone ↔ Watch Data Layer |
-| kotlinx.serialization 1.7.3 | JSON for sync messages |
-| Navigation Compose 2.8.5 | Phone navigation |
-
-Min SDK: 30 · Compile SDK: 35 · Kotlin: 2.0.21 · AGP: 8.7.0
-
----
-
-## Setup
-
-### Requirements
-
-- Android Studio (install via AUR on Arch Linux: `yay -S android-studio`)
-- A physical Android device with USB Debugging enabled, or an Android emulator
-
-### Running the app
-
-1. Open Android Studio → **Open** → select this folder
-2. Let Gradle sync complete (first sync downloads ~500 MB)
-3. Enable USB Debugging on your phone:
-   - **Settings → About phone** → tap **Build number** 7 times
-   - **Settings → System → Developer options** → enable **USB debugging**
-4. Plug in your phone, approve the USB debugging prompt on the device
-5. Select your device in the Android Studio toolbar and click **Run**
-
-The `:wear` APK is embedded in the `:app` build and installs to the paired watch automatically.
-
----
-
-## Version History
-
-| Version | Notes |
-|---|---|
-| 0.5.0 | Internal refactor: the phone scorecard screen was split from one ~420-line file into focused composables (`PlayerScoreCard`, `HoleInfoCard`, `HoleJumpGrid`, `FullScorecardSheet`, `AddRemovePlayersSheet`, `ScorecardTopBar`) plus a shared `ScoreFormat` helper. No behavior change. |
-| 0.4.9 | UI color cleanup on the phone app. Added a "hide score" (eye) icon on the hole card to toggle player round scores between visible and `•••`. |
-| 0.4.8 | Gradient home screen buttons (each button has its own color scheme). Matching gradient top bars on New Round, Scorecard, My Courses, and Round History screens. Player full name shown on scorecard cards (was 4-letter abbreviation). Player cards stretch full screen width. Shuffle player order button on round setup. |
-| 0.4.7 | Per-hole rules and notes for courses. OB lines, mandos, and other notes stored per hole in the course editor; info icon on the hole card opens a rules sheet. El Centinela and Los Colomos seeded with example hole rules. |
-| 0.4.6 | Add/remove players icon in scorecard overflow menu. Various phone UI changes: color updates, font weight, button spacing. |
-| 0.4.5 | Color system centralized into `AppColors.kt` for phone and watch — no more inline color literals in screen files. |
-| 0.4.4 | New app logo: red S on black background with white circle ring. Watch: end-of-round dialog when pressing Next Hole ▶ on hole 18. Watch: enlarged score controls (48 dp), spread to screen edges, dark-grey colour. Watch & phone: hole-jump picker replaced with scrollable 3-column grid (eliminates scroll jank on Pixel Watch 2). Phone: hole-jump grid opens as a dialog in the lower screen half, dismissable by tapping outside. |
-| 0.4.3 | Bug fixes: score 0 renders as "—", watch can no longer commit a zero score, dead `MessageClient` send removed. Watch swipe-to-change-hole removed (conflicted with Pixel Watch 2 system back gesture). Cascading honor-system sort fixes tie-breaking. Amber incomplete-hole dot added to hole-jump picker on both phone and watch. |
-| 0.4.2 | Watch sequential score entry (one player at a time, Enter → Next Hole ▶). Honor system sort applied locally on watch. Fixed swipe-to-dismiss conflict by replacing `SwipeDismissableNavHost` with `NavHost`. Branch: `Before-Major-Wear-App-UI-Score-Entry`. |
-| 0.4.1 | Smart first-press scoring (− = birdie, + = par). Watch swipe navigation, compact watch layout (no course name/arrows, tighter cards). Phone: live scorecard sheet, spring-bounce hole transition, scrollable hole-jump with indicators, side-by-side finalize buttons. `holePars` added to RoundState sync. |
-| 0.3.6 | Sync reliability fix (per-hole scores in RoundState, dual delivery, watch polling fallback). Phone scorecard redesign: cursive course name, 3-letter player abbreviation, −/+ score entry, animated hole transitions, hole-jump dropdown. Watch scorecard matching redesign. |
-| 0.3.5 | Fix distances, player priority after previous score |
-| 0.3.4 | Reorder based on previous score, change player list in new round screen |
-| 0.3.3 | Add ability to cancel round, add/remove players, swipe ability |
-| 0.3.2 | Add distances to scorecard, fix names to default courses |
-| 0.2 | Tomorrow Night Blue theme, larger fonts, player history suggestions, version display, ordinal dates in round detail |
-| 0.1 | Initial release — full scoring, history, course editor, Wear OS sync |
+*Built with ❤️ for disc golfers who just want to focus on their game.*
