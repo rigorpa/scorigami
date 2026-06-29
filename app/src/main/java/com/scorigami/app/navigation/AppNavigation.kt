@@ -1,6 +1,9 @@
 package com.scorigami.app.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -14,6 +17,7 @@ import com.scorigami.app.ui.home.HomeScreen
 import com.scorigami.app.ui.round.RoundReviewScreen
 import com.scorigami.app.ui.round.RoundSetupScreen
 import com.scorigami.app.ui.round.ScorecardScreen
+import com.scorigami.shared.sync.SgCourse
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
@@ -31,8 +35,20 @@ sealed class Screen(val route: String) {
 }
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    pendingImport: MutableState<SgCourse?> = mutableStateOf(null)
+) {
     val navController = rememberNavController()
+
+    // When a .sgcourse file is opened, navigate to the course list for import
+    LaunchedEffect(pendingImport.value) {
+        if (pendingImport.value != null) {
+            navController.navigate(Screen.CourseList.route) {
+                popUpTo(Screen.Home.route)
+                launchSingleTop = true
+            }
+        }
+    }
 
     NavHost(navController = navController, startDestination = Screen.Home.route) {
 
@@ -49,7 +65,8 @@ fun AppNavigation() {
             CourseListScreen(
                 onBack = { navController.popBackStack() },
                 onCreateCourse = { navController.navigate(Screen.CourseEditor.createRoute()) },
-                onEditCourse = { id -> navController.navigate(Screen.CourseEditor.createRoute(id)) }
+                onEditCourse = { id -> navController.navigate(Screen.CourseEditor.createRoute(id)) },
+                pendingImport = pendingImport
             )
         }
 
@@ -111,3 +128,4 @@ fun AppNavigation() {
         }
     }
 }
+

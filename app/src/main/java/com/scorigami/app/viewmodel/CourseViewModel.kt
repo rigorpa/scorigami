@@ -7,6 +7,7 @@ import com.scorigami.shared.db.dao.CourseDao
 import com.scorigami.shared.db.dao.CourseWithHoles
 import com.scorigami.shared.db.entity.CourseEntity
 import com.scorigami.shared.db.entity.HoleEntity
+import com.scorigami.shared.sync.SgCourse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -31,6 +32,9 @@ class CourseViewModel @Inject constructor(
         emit(if (editingCourseId == -1L) null else courseDao.getCourseWithHoles(editingCourseId))
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    private val _importedCourse = MutableSharedFlow<Pair<String, Int>>(extraBufferCapacity = 1)
+    val importedCourse: SharedFlow<Pair<String, Int>> = _importedCourse.asSharedFlow()
+
     fun saveCourse(name: String, parValues: List<Int>, notesValues: List<String> = emptyList()) {
         viewModelScope.launch(Dispatchers.IO) {
             val courseId = if (editingCourseId == -1L) {
@@ -52,4 +56,34 @@ class CourseViewModel @Inject constructor(
     fun deleteCourse(course: CourseEntity) {
         viewModelScope.launch(Dispatchers.IO) { courseDao.deleteCourse(course) }
     }
+
+    fun importCourse(sgCourse: SgCourse) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val existingNames = courseDao.getAllCourseNames().toSet()
+            val finalName = deduplicateName(sgCourse.name, existingNames)
+
+            val courseId = courseDao.insertCourse(
+                CourseEntity(name = finalName, holeCount = sgCourse.holes.size)
+            )
+            courseDao.insertHoles(sgCourse.holes.map { hole ->
+                HoleEntity(
+                    courseId = courseId,
+                    number = hole.number,
+                    par = maxOf(2, hole.par),
+                    distanceFeet = hole.distanceFeet,
+                    notes = hole.notes
+                )
+            })
+
+            _importedCourse.tryEmit(Pair(finalName, sgCourse.holes.size))
+        }
+    }
+
+    private fun deduplicateName(name: String, existingNames: Set<String>): String {
+        if (name !in existingNames) return name
+        var suffix = 2
+        while ("$name ($suffix)" in existingNames) suffix++
+        return "$name ($suffix)"
+    }
 }
+

@@ -3,9 +3,10 @@ package com.scorigami.app.ui.course
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -13,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -33,7 +33,6 @@ fun CourseEditorScreen(
     var initialized by remember { mutableStateOf(false) }
 
     var courseName by remember { mutableStateOf("") }
-    var holeCount by remember { mutableStateOf("18") }
     var parValues by remember { mutableStateOf(List(18) { 3 }) }
     var notesValues by remember { mutableStateOf(List(18) { "" }) }
 
@@ -46,19 +45,10 @@ fun CourseEditorScreen(
             // Editing — populate from the loaded course. Wait (don't initialize)
             // while existing is still null, which means the DB load hasn't finished.
             courseName = existing!!.course.name
-            holeCount = existing!!.course.holeCount.toString()
             val sorted = existing!!.holes.sortedBy { it.number }
             parValues = sorted.map { it.par }
             notesValues = sorted.map { it.notes ?: "" }
             initialized = true
-        }
-    }
-
-    val count = holeCount.toIntOrNull()?.coerceIn(1, 36) ?: 18
-    LaunchedEffect(count) {
-        if (parValues.size != count) {
-            parValues = List(count) { i -> parValues.getOrElse(i) { 3 } }
-            notesValues = List(count) { i -> notesValues.getOrElse(i) { "" } }
         }
     }
 
@@ -106,22 +96,6 @@ fun CourseEditorScreen(
                 )
             }
             item {
-                OutlinedTextField(
-                    value = holeCount,
-                    onValueChange = { holeCount = it.filter { c -> c.isDigit() }.take(2) },
-                    label = { Text("Number of Holes") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedLabelColor = ContentLightGrey,
-                        focusedLabelColor = ContentLightGrey,
-                        unfocusedTextColor = ContentWhite,
-                        focusedTextColor = ContentWhite
-                    )
-                )
-            }
-            item {
                 Text("Par per Hole", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = ContentWhite)
             }
             items(parValues.size) { index ->
@@ -129,13 +103,31 @@ fun CourseEditorScreen(
                     holeNumber = index + 1,
                     par = parValues[index],
                     notes = notesValues[index],
+                    canRemove = parValues.size > 1,
                     onParChange = { newPar ->
                         parValues = parValues.toMutableList().also { it[index] = newPar }
                     },
                     onNotesChange = { newNotes ->
                         notesValues = notesValues.toMutableList().also { it[index] = newNotes }
+                    },
+                    onRemove = {
+                        parValues = parValues.toMutableList().also { it.removeAt(index) }
+                        notesValues = notesValues.toMutableList().also { it.removeAt(index) }
                     }
                 )
+            }
+            item {
+                OutlinedButton(
+                    onClick = {
+                        parValues = parValues + 3
+                        notesValues = notesValues + ""
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Add Hole")
+                }
             }
             item {
                 Button(
@@ -161,8 +153,10 @@ private fun HoleEditorRow(
     holeNumber: Int,
     par: Int,
     notes: String,
+    canRemove: Boolean,
     onParChange: (Int) -> Unit,
-    onNotesChange: (String) -> Unit
+    onNotesChange: (String) -> Unit,
+    onRemove: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
@@ -185,6 +179,14 @@ private fun HoleEditorRow(
                     onClick = { if (par < 6) onParChange(par + 1) },
                     enabled = par < 6
                 ) { Text("+", style = MaterialTheme.typography.titleLarge) }
+                IconButton(onClick = onRemove, enabled = canRemove) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Remove hole",
+                        tint = if (canRemove) MaterialTheme.colorScheme.error
+                               else ContentLightGrey.copy(alpha = 0.3f)
+                    )
+                }
             }
         }
         OutlinedTextField(
