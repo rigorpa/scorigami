@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,6 +33,7 @@ fun HistoryScreen(
     viewModel: HistoryViewModel = hiltViewModel()
 ) {
     val rounds by viewModel.rounds.collectAsStateWithLifecycle()
+    var showShareHint by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -45,6 +47,11 @@ fun HistoryScreen(
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { showShareHint = true }) {
+                            Icon(Icons.Default.Share, contentDescription = "Share round", tint = ContentWhite)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -83,6 +90,31 @@ fun HistoryScreen(
                     )
                     HorizontalDivider()
                 }
+            }
+        }
+    }
+
+    // Share hint — a bottom sheet matching AddRemovePlayersSheet; the actual share lives on
+    // the round detail screen, so this just tells the user to pick a round first.
+    if (showShareHint) {
+        ModalBottomSheet(onDismissRequest = { showShareHint = false }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    "Share a Round",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    "Select a round first to share",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = ContentLightGrey
+                )
             }
         }
     }
