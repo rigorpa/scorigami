@@ -67,7 +67,7 @@ internal fun TeeOrderDialog(
                             )
                             Text(
                                 player.name,
-                                fontSize = 12.sp,
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Normal,
                                 color = ContentWhite,
                                 maxLines = 1,
@@ -75,7 +75,7 @@ internal fun TeeOrderDialog(
                             )
                             Text(
                                 text = if (scoresVisible) formatVsPar(player.totalVsPar) else "•••",
-                                fontSize = 14.sp,
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = if (scoresVisible) vsParColor(player.totalVsPar) else ContentWhite,
                                 textAlign = TextAlign.End

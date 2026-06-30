@@ -7,6 +7,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -161,32 +163,49 @@ fun CourseListScreen(
         )
     }
 
-    // Share course picker dialog
+    // Share course picker — a bottom sheet matching the app's dark list styling
     if (showSharePicker) {
-        AlertDialog(
+        ModalBottomSheet(
             onDismissRequest = { showSharePicker = false },
-            title = { Text("Share a Course") },
-            text = {
-                LazyColumn {
-                    items(courses) { courseWithHoles ->
-                        val course = courseWithHoles.course
-                        val par = courseWithHoles.holes.sumOf { it.par }
-                        ListItem(
-                            headlineContent = { Text(course.name) },
-                            supportingContent = { Text("${course.holeCount} holes · Par $par") },
-                            modifier = Modifier.clickable {
-                                showSharePicker = false
-                                scope.launch { shareCourse(context, courseWithHoles) }
-                            }
+            containerColor = ScreenBackground
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 32.dp)
+            ) {
+                Text(
+                    "Share a Course",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ContentWhite,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+                courses.forEach { courseWithHoles ->
+                    val course = courseWithHoles.course
+                    val par = courseWithHoles.holes.sumOf { it.par }
+                    ListItem(
+                        headlineContent = { Text(course.name, fontWeight = FontWeight.Bold) },
+                        supportingContent = { Text("${course.holeCount} holes · Par $par") },
+                        trailingContent = {
+                            Icon(Icons.Default.Share, contentDescription = null, tint = ContentWhite)
+                        },
+                        modifier = Modifier.clickable {
+                            showSharePicker = false
+                            scope.launch { shareCourse(context, courseWithHoles) }
+                        },
+                        colors = ListItemDefaults.colors(
+                            containerColor = ScreenBackground,
+                            headlineColor = ContentWhite,
+                            supportingColor = ContentLightGrey,
+                            trailingIconColor = ContentWhite
                         )
-                        HorizontalDivider()
-                    }
+                    )
+                    HorizontalDivider()
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = { showSharePicker = false }) { Text("Cancel") }
             }
-        )
+        }
     }
 }
 
