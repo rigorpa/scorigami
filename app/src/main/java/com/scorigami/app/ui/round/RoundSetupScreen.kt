@@ -220,21 +220,20 @@ fun RoundSetupScreen(
                                 color = MaterialTheme.colorScheme.surfaceVariant,
                                 modifier = Modifier.padding(vertical = 4.dp)
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .clickable { players.add(player.name) }
-                                        .padding(start = 12.dp, end = 6.dp, top = 6.dp, bottom = 6.dp)
-                                ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    // Name area — tap to add
                                     Text(
                                         text = player.name,
                                         color = ContentWhite,
-                                        style = MaterialTheme.typography.labelLarge
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        modifier = Modifier
+                                            .clickable { players.add(player.name) }
+                                            .padding(start = 18.dp, end = 10.dp, top = 12.dp, bottom = 12.dp)
                                     )
-                                    Spacer(Modifier.width(6.dp))
+                                    // Remove target
                                     Box(
                                         modifier = Modifier
-                                            .size(20.dp)
+                                            .size(width = 40.dp, height = 48.dp)
                                             .clickable(
                                                 onClick = { playerToDelete = player },
                                                 onClickLabel = "Remove ${player.name}"
@@ -245,7 +244,7 @@ fun RoundSetupScreen(
                                             imageVector = Icons.Default.Close,
                                             contentDescription = null,
                                             tint = Color.Red,
-                                            modifier = Modifier.size(14.dp)
+                                            modifier = Modifier.size(16.dp)
                                         )
                                     }
                                 }
