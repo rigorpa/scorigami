@@ -172,7 +172,9 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 - **Per-hole rows:** par −/+ stepper (2–6) with a remove-hole × (disabled when only 1 hole remains); "Add Hole" `OutlinedButton` appends a Par 3; each hole also has a single-line **"Distance ft (optional)"** field (number keyboard, digits-only filter, max 5 chars, blank = null) and a multiline "Hole rules / notes (optional)" field. On save, all three lists (par / distance / notes) are rebuilt into fresh `HoleEntity` rows — the FK cascade removes the old ones
 
 ### RoundDetailScreen layout
-- **Top bar:** amber/brown gradient (`HistoryGradientStart` → `HistoryGradientEnd`) matching `HistoryScreen`; course name as title, "Played on …" subtitle at 75 % alpha `ContentWhite`; nav icon uses `ContentWhite`; **Share icon** (`Icons.Default.Share`) in `actions` — fires `Intent.ACTION_SEND` with a plain-text scorecard (course name, date, par, per-player totals + per-hole vs-par grid split in rows of 9); disabled until data loads
+- **Top bar:** amber/brown gradient (`HistoryGradientStart` → `HistoryGradientEnd`) matching `HistoryScreen`; course name as title, "Played on …" subtitle at 75 % alpha `ContentWhite`; nav icon uses `ContentWhite`; **Share icon** (`Icons.Default.Share`) in `actions` — opens `ShareRoundDialog` (disabled until data loads)
+- **PNG sharing (`ShareRoundDialog.kt`):** preview dialog showing `ShareScorecardCard` — a branded 340.dp-wide card (gradient header + `ic_logo`, course, date, per-player 9-hole vs-par grids, footer) rendered from `RoundDetailState`. Share button captures the card via `rememberGraphicsLayer()` → `toImageBitmap()` (the record modifier lives on the card, not the scroll container, so the full card is captured even when the preview viewport clips it), compresses to PNG on `Dispatchers.IO` into `cacheDir/shared_rounds/` (dir purged each share; `file_paths.xml` has a matching `cache-path`), and fires `ACTION_SEND image/png` via the existing FileProvider with `ClipData` for the share-sheet thumbnail. The old plain-text share was removed.
+- **Player order:** `HistoryViewModel.detail` sorts players best round first — lowest total vs-par, tiebreak fewest throws, no-score players last, stable within ties (tee order). Applies to both the on-screen cards and the share card.
 - **Hole grid:** hole numbers `labelLarge`, vs-par scores `bodyMedium` + `FontWeight.Bold` (colored by par relationship)
 
 ### HomeScreen layout
@@ -211,7 +213,7 @@ The watch scorecard uses a **one-player-at-a-time** flow instead of showing all 
 
 **Hole-jump picker (`WearHoleJumpGrid`):** Static 3-column grid rendered as a `Column`/`Row` layout with `verticalScroll(rememberScrollState())`. Each hole is a `Box` (44 dp tall, `RoundedCornerShape(8.dp)`): current hole `HoleJumpSelectedColor` (`#7A7A7A`, matches phone), others `WearButtonBackground` (`#2A2A2A`); all text white. Amber dot (`0xFFFFB300`, 5 dp) in the top-right corner of cells with any missing score. No `ScalingLazyColumn` or fling physics — eliminates scroll jank on physical hardware. Tapping a cell jumps to that hole.
 
-**Tee-order popup (`TeeOrderDialog`):** All players listed in uniform white — no current-player highlight.
+**Tee-order view (`TeeOrderScreen`):** an **inline full-screen Scaffold branch** like the hole-jump grid — NOT a wear `Dialog` (a Dialog spawns a second platform window plus the Wear OS entrance animation, which is very slow on emulators; the inline swap is instant). All players in uniform white with a numbered list; a bottom eye toggle (local `ic_visibility`/`ic_visibility_off` drawables — no icon library on wear) reveals each player's round vs-par, colored green/white/red. Tap anywhere else to go back.
 
 **End-of-round dialog (`EndRoundPromptDialog`):** "End round on the phone app" message in a dismissable `Card`.
 
@@ -231,7 +233,7 @@ The watch scorecard uses a **one-player-at-a-time** flow instead of showing all 
 | `WearHoleJumpGrid.kt` | Scrollable 3-column hole picker grid |
 | `WearPlayerScoreEntry.kt` | Hole number + player name + −/+ controls + Enter/Next Hole chip |
 | `EndRoundPromptDialog.kt` | "End round on the phone app" dialog |
-| `TeeOrderDialog.kt` | Tee order player list dialog |
+| `TeeOrderScreen.kt` | Inline full-screen tee-order list with score-visibility eye toggle |
 
 ---
 

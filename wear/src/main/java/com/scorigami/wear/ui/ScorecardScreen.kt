@@ -80,6 +80,12 @@ fun WearScorecardScreen(
                     showHoleJump = false
                 }
             )
+        } else if (showTeeOrder) {
+            // Inline branch (not a Dialog) — same instant swap as the hole-jump grid.
+            TeeOrderScreen(
+                players = players,
+                onDismiss = { showTeeOrder = false }
+            )
         } else {
             WearPlayerScoreEntry(
                 currentHole = currentHole,
@@ -98,12 +104,5 @@ fun WearScorecardScreen(
 
     if (showEndRoundPrompt) {
         EndRoundPromptDialog(onDismiss = { showEndRoundPrompt = false })
-    }
-
-    if (showTeeOrder) {
-        TeeOrderDialog(
-            players = players,
-            onDismiss = { showTeeOrder = false }
-        )
     }
 }
