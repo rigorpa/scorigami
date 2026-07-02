@@ -89,12 +89,27 @@ class HistoryViewModel @Inject constructor(
                 ?: return@combine RoundDetailState()
             val courseWithHoles = courseDao.getCourseWithHoles(round.courseId)
                 ?: return@combine RoundDetailState()
+            val holes = courseWithHoles.holes.sortedBy { it.number }
+            val scoreMap = scores.associate { Pair(it.playerId, it.holeNumber) to it.throws }
+            // Best round first: lowest vs-par, then fewest throws; players with no
+            // scores sort last. Stable sort keeps tee order among exact ties.
+            val sortedPlayers = players.sortedWith(
+                compareBy(
+                    { player -> if (scores.none { it.playerId == player.id }) 1 else 0 },
+                    { player ->
+                        val throws = scores.filter { it.playerId == player.id }.sumOf { it.throws }
+                        val par = holes.filter { scoreMap[Pair(player.id, it.number)] != null }.sumOf { it.par }
+                        throws - par
+                    },
+                    { player -> scores.filter { it.playerId == player.id }.sumOf { it.throws } }
+                )
+            )
             RoundDetailState(
                 courseName = courseWithHoles.course.name,
                 date = formatOrdinalDate(round.startedAt),
-                holes = courseWithHoles.holes.sortedBy { it.number },
-                players = players,
-                scores = scores.associate { Pair(it.playerId, it.holeNumber) to it.throws }
+                holes = holes,
+                players = sortedPlayers,
+                scores = scoreMap
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RoundDetailState())
     }
