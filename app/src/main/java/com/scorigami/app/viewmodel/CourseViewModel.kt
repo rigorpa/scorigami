@@ -35,7 +35,12 @@ class CourseViewModel @Inject constructor(
     private val _importedCourse = MutableSharedFlow<Pair<String, Int>>(extraBufferCapacity = 1)
     val importedCourse: SharedFlow<Pair<String, Int>> = _importedCourse.asSharedFlow()
 
-    fun saveCourse(name: String, parValues: List<Int>, notesValues: List<String> = emptyList()) {
+    fun saveCourse(
+        name: String,
+        parValues: List<Int>,
+        notesValues: List<String> = emptyList(),
+        distanceValues: List<Int?> = emptyList()
+    ) {
         viewModelScope.launch(Dispatchers.IO) {
             val courseId = if (editingCourseId == -1L) {
                 courseDao.insertCourse(CourseEntity(name = name.trim(), holeCount = parValues.size))
@@ -47,6 +52,7 @@ class CourseViewModel @Inject constructor(
                     courseId = courseId,
                     number = i + 1,
                     par = par,
+                    distanceFeet = distanceValues.getOrNull(i),
                     notes = notesValues.getOrNull(i)?.trim()?.ifEmpty { null }
                 )
             })

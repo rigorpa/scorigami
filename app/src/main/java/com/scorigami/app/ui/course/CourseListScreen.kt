@@ -47,7 +47,7 @@ fun CourseListScreen(
     onBack: () -> Unit,
     onCreateCourse: () -> Unit,
     onEditCourse: (Long) -> Unit,
-    pendingImport: MutableState<SgCourse?> = mutableStateOf(null),
+    pendingImport: MutableState<SgCourse?>,
     viewModel: CourseViewModel = hiltViewModel()
 ) {
     val courses by viewModel.courses.collectAsStateWithLifecycle()

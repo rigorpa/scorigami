@@ -9,9 +9,7 @@ import com.scorigami.shared.sync.RoundState
 fun WearScorecardScreen(
     roundState: RoundState,
     currentHole: Int,
-    onPrevHole: () -> Unit,
     onNextHole: () -> Unit,
-    onEndRound: () -> Unit,
     onScoreChange: (playerId: Long, throws: Int) -> Unit,
     onJumpToHole: (Int) -> Unit
 ) {
@@ -85,7 +83,6 @@ fun WearScorecardScreen(
         } else {
             WearPlayerScoreEntry(
                 currentHole = currentHole,
-                totalHoles = roundState.totalHoles,
                 playerName = currentPlayer.name,
                 holePar = holePar,
                 isLastPlayer = isLastPlayer,

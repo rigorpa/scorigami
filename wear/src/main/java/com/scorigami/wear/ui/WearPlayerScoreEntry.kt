@@ -24,7 +24,6 @@ import com.scorigami.wear.ui.theme.WearButtonBackground
 @Composable
 internal fun WearPlayerScoreEntry(
     currentHole: Int,
-    totalHoles: Int,
     playerName: String,
     holePar: Int,
     isLastPlayer: Boolean,
@@ -148,7 +147,10 @@ internal fun WearPlayerScoreEntry(
                 )
             )
 
-            // End Round button — hidden for now, re-enable by uncommenting
+            // End Round button — hidden for now. To re-enable: uncomment, add an
+            // `onEndRound: () -> Unit` param back to this composable and to
+            // WearScorecardScreen, and wire it in WearNavigation (navigate to
+            // WearScreen.EndRoundPrompt.route).
             // Chip(
             //     onClick = onEndRound,
             //     label = { Text("End Round", fontSize = 12.sp) },

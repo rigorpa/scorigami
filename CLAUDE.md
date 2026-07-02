@@ -61,8 +61,6 @@ Named color constants are centralized in `AppColors.kt` files — no inline `Col
 | `DisabledButtonGradientStart` | `#3A3A3A` | Dark grey — left edge of a disabled `HomeActionButton` |
 | `DisabledButtonGradientEnd` | `#5A5A5A` | Mid grey — right edge of a disabled `HomeActionButton` |
 
-> `CardGrey` (`#42413C`) is defined in `AppColors.kt` but currently unused — candidate for removal.
-
 **`wear/ui/theme/AppColors.kt`** (watch):
 | Constant | Value | Usage |
 |---|---|---|
@@ -84,13 +82,13 @@ At-par and unscored use `ContentWhite`. Over-par uses `MaterialTheme.colorScheme
 | Jetpack Compose BOM | 2024.12.01 | Phone UI |
 | Wear Compose | 1.4.0 | Watch UI |
 | Room | 2.8.4 | Local DB (phone only) |
-| Hilt | 2.51.1 | Dependency injection |
+| Hilt | 2.59.2 | Dependency injection |
 | play-services-wearable | 18.2.0 | Phone ↔ Watch Data Layer |
 | kotlinx.serialization | 1.7.3 | JSON for sync messages |
 | Navigation Compose | 2.8.5 | Phone navigation |
 | Wear Compose Navigation | 1.4.0 | Watch navigation |
 
-Min SDK: 30 · Compile SDK: 35 · Kotlin: 2.0.21 · AGP: 8.7.0
+Min SDK: 30 · Compile SDK: 35 · Kotlin: 2.2.10 · AGP: 9.2.1
 
 ---
 
@@ -99,16 +97,17 @@ Min SDK: 30 · Compile SDK: 35 · Kotlin: 2.0.21 · AGP: 8.7.0
 ```
 courses     id, name, holeCount
 holes       id, courseId, number, par, distanceFeet?, notes?   (FK → courses CASCADE)
-players     id, name, createdAt
+players     id, name, createdAt, isArchived
 rounds      id, courseId, startedAt, completedAt?              (completedAt=null = active)
 round_players  roundId, playerId, order                        (composite PK)
 scores      roundId, playerId, holeNumber, throws              (composite PK, upsert on change)
 ```
 
-**DB version: 4**
+**DB version: 5**
 - Migration 1→2: adds `distanceMeters INTEGER` nullable column to `holes`
 - Migration 2→3: renames `distanceMeters` → `distanceFeet` (values were always stored in feet)
 - Migration 3→4: adds `notes TEXT` nullable column to `holes`
+- Migration 4→5: adds `isArchived INTEGER NOT NULL DEFAULT 0` column to `players` — archived players are hidden from the "Previous Golfers" suggestions (`PlayerDao.getAllPlayers()` filters `isArchived = 0`); archiving happens from Round Setup, and adding an archived name to a round auto-unarchives it (`RoundViewModel`)
 
 **Foreign key enforcement:** `DatabaseModule.provideDatabase()` enables FK enforcement via a `RoomDatabase.Callback` whose `onOpen(connection)` runs `connection.execSQL("PRAGMA foreign_keys = ON")`. Room does NOT enable `PRAGMA foreign_keys` by default, and Room 2.8 **removed** the old `Builder.setForeignKeyConstraintsEnabled()` method (the KMP rewrite — the `Callback` now receives an `androidx.sqlite.SQLiteConnection`, and `execSQL` is the `androidx.sqlite.execSQL` extension). The PRAGMA runs on every connection open, outside a transaction, so it takes effect. This is required for the declared `onDelete = CASCADE` constraints to fire: deleting a course cascades to its `holes`; deleting a round cascades to its `scores` and `round_players`; and editing a course (`insertCourse` with `OnConflictStrategy.REPLACE` on an existing id) cascade-deletes the old holes before `insertHoles` re-adds them — without this, course edits silently duplicated every hole row.
 
@@ -170,6 +169,7 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 
 ### CourseEditorScreen layout
 - **Top bar:** green gradient (`CoursesGradientStart` → `CoursesGradientEnd`) matching `CourseListScreen`; title and nav icon use `ContentWhite`
+- **Per-hole rows:** par −/+ stepper (2–6) with a remove-hole × (disabled when only 1 hole remains); "Add Hole" `OutlinedButton` appends a Par 3; each hole also has a single-line **"Distance ft (optional)"** field (number keyboard, digits-only filter, max 5 chars, blank = null) and a multiline "Hole rules / notes (optional)" field. On save, all three lists (par / distance / notes) are rebuilt into fresh `HoleEntity` rows — the FK cascade removes the old ones
 
 ### RoundDetailScreen layout
 - **Top bar:** amber/brown gradient (`HistoryGradientStart` → `HistoryGradientEnd`) matching `HistoryScreen`; course name as title, "Played on …" subtitle at 75 % alpha `ContentWhite`; nav icon uses `ContentWhite`; **Share icon** (`Icons.Default.Share`) in `actions` — fires `Intent.ACTION_SEND` with a plain-text scorecard (course name, date, par, per-player totals + per-hole vs-par grid split in rows of 9); disabled until data loads
@@ -221,7 +221,7 @@ The watch scorecard uses a **one-player-at-a-time** flow instead of showing all 
 
 **Navigation:** Uses standard `NavHost` (from `androidx.navigation.compose`) instead of `SwipeDismissableNavHost`. Horizontal swipe gestures are **not** used on the watch — they conflict with the Pixel Watch 2 system back gesture (right-edge swipe → watch face). Hole navigation is via the hole-jump picker and the Next Hole ▶ button.
 
-**End Round chip** is present in code but commented out — uncomment the `Chip` block in `WearPlayerScoreEntry` to re-enable.
+**End Round chip** is present in code but commented out. To re-enable: uncomment the `Chip` block in `WearPlayerScoreEntry` and re-add the `onEndRound` callback param through `WearScorecardScreen` → `WearNavigation` (the unused params were removed in the 2026-07-02 review; the `EndRoundPrompt` route/screen still exist).
 
 **WearScorecardScreen component split (2026-06-19):**
 `ScorecardScreen.kt` decomposed from ~354 lines into focused `internal fun`s in `com.scorigami.wear.ui`. `ScorecardScreen.kt` is now ~97 lines of orchestration.
@@ -303,13 +303,13 @@ The sort input is always `basePlayers` (DB order); the cascading keys make the t
 - **Player reuse:** When starting a round, typing a name that already exists in the `players` table reuses that player (matched by name, case-sensitive). Same logic applies when adding a player mid-round.
 - **Score default:** A score of 0 means "not yet entered" — displayed as `"—"` in the UI. The minimum recorded score is 1.
 - **vs Par display:** Under par = green (primary color), even = neutral, over par = red (error color). Only the round total vs-par is shown on the phone scorecard; per-hole vs-par was intentionally removed.
-- **Hole distances:** `distanceFeet` is nullable on `HoleEntity`. Values are stored in feet; the scorecard converts to meters for display ("xxx ft / xxx m"). Courses created via the editor have no distance; the distance line is only shown when the value is non-null.
+- **Hole distances:** `distanceFeet` is nullable on `HoleEntity`. Values are stored in feet; the scorecard converts to meters for display ("xxx ft / xxx m"). The course editor exposes a per-hole "Distance ft (optional)" field (digits only, blank = null); the distance line is only shown when the value is non-null.
 - **Hole notes:** `notes` is nullable on `HoleEntity` (added in migration 3→4). When non-null/non-blank, an `Info` icon appears on the hole card in `ScorecardScreen`; tapping it opens a `ModalBottomSheet` titled "Hole [number] Rules". The course editor exposes a multiline "Hole rules / notes (optional)" field per hole. Notes are not yet surfaced on the watch.
 - **holeScores in PlayerState:** The watch displays `player.holeScores[currentHole] ?: 0` for the score, not a pre-computed field. This lets the watch navigate holes independently without requesting a re-push from the phone. This map (and the rest of `PlayerState`) is populated by `RoundStateBuilder.build(...)` in `shared/sync/`, called by both `RoundViewModel.doPushStateToWatch()` (in-memory state) and `PhoneWearableListenerService.pushUpdatedState()` (fresh DB queries) — so the per-player math lives in one place.
 - **Sync delivery:** `WearSyncManager.pushRoundState()` uses only `DataClient.putDataItem` (persistent, reconnect-safe). `WearListenerService` handles `onDataChanged`. The watch-side `MessageClient` path was removed — `WearListenerService` has no `onMessageReceived`, so the send was dead code.
 - **Watch polling fallback:** `WearViewModel.startPolling()` calls `refreshFromDataLayer()` every 2 s while the watch is in the foreground (started in `onResume`, stopped in `onPause`). `refreshFromDataLayer()` reads `DataClient` and calls `RoundStateHolder.update(round-or-null)`; a null (no item found) navigates the watch to `NoRoundScreen` — the intended clear-state behavior. The same helper runs once in `init` for the cold-start `loaded` flag (see BUG-7 fix).
 - **Player list reactivity:** `RoundViewModel.init` uses `combine(scoreFlow, playerFlow)` so adding/removing players updates the UI immediately without needing a score change to trigger it.
-- **No Gradle wrapper JAR** is included. Android Studio handles this automatically; for CLI use, run `gradle wrapper --gradle-version 8.9` once.
+- **Gradle wrapper is committed** (`gradlew`, `gradlew.bat`, `gradle-wrapper.jar`) — CLI builds work via `./gradlew`.
 
 ---
 
@@ -414,8 +414,8 @@ Dead code audit and removal. All changes are deletions only — no behavior chan
 - `WearSyncManager` MessageClient send path — the `Alpha` branch had a `messageClient.sendMessage()` call in `pushRoundState()` targeting `/round/state/push`, but `WearListenerService` on the watch only implements `onDataChanged()` (DataClient) and has no `onMessageReceived()`, making that path dead. This branch predates that addition. The working delivery path is `DataClient.putDataItem()` only.
 
 **Remaining known cleanup candidates (deferred):**
-- `PlayerEntity.createdAt` field — stored in DB but never read anywhere; requires a Room migration (4 → 5) to drop the column
-- `formatVsPar()` / `vsParColor()` in `RoundDetailScreen.kt` (`ui.history` package) — still a private copy. The `ui.round` package was consolidated into `ScoreFormat.kt` (see the scorecard component-split note below); `RoundDetailScreen` was left alone to avoid a cross-package dependency for a trivial helper
+- `PlayerEntity.createdAt` field — stored in DB but never read anywhere; requires a Room migration (5 → 6) to drop the column
+- ~~`formatVsPar()` / `vsParColor()` in `RoundDetailScreen.kt`~~ — **Done (2026-07-02 review).** Private copies removed; now imports the `internal` helpers from `ui.round/ScoreFormat.kt`
 
 ---
 
@@ -459,7 +459,7 @@ Dead code audit and removal. All changes are deletions only — no behavior chan
 
 **Hole card color:**
 - Changed from `MaterialTheme.colorScheme.primaryContainer` to `ScaleGrey1` (`#354045`) via `HoleInfoCard`
-- `CardGrey` (`#42413C`) was added to `AppColors.kt` during this work but is currently unused — candidate for removal
+- `CardGrey` (`#42413C`) was added to `AppColors.kt` during this work but was never used — removed in the 2026-07-02 review
 
 **DatabaseSeeder notes update:**
 - El Centinela H1–H2 seeded with OB notes; Los Colomos H2 note trimmed

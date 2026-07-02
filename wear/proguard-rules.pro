@@ -1,2 +1,2 @@
--keep class com.ithrow.** { *; }
+-keep class com.scorigami.** { *; }
 -keepattributes *Annotation*

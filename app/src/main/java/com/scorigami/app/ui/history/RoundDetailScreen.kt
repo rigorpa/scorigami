@@ -23,6 +23,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.ContentLightGrey
+import com.scorigami.app.ui.round.formatVsPar
+import com.scorigami.app.ui.round.vsParColor
 import com.scorigami.app.ui.theme.HistoryGradientEnd
 import com.scorigami.app.ui.theme.HistoryGradientStart
 import com.scorigami.app.viewmodel.HistoryViewModel
@@ -205,17 +207,4 @@ private fun shareRound(context: Context, text: String) {
         putExtra(Intent.EXTRA_TEXT, text)
     }
     context.startActivity(Intent.createChooser(intent, "Share round"))
-}
-
-@Composable
-private fun vsParColor(v: Int) = when {
-    v < 0 -> MaterialTheme.colorScheme.primary
-    v == 0 -> MaterialTheme.colorScheme.onSurface
-    else -> MaterialTheme.colorScheme.error
-}
-
-private fun formatVsPar(v: Int) = when {
-    v < 0 -> "$v"
-    v == 0 -> "E"
-    else -> "+$v"
 }

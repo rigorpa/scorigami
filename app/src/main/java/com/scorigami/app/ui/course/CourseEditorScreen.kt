@@ -7,10 +7,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -35,6 +37,7 @@ fun CourseEditorScreen(
     var courseName by remember { mutableStateOf("") }
     var parValues by remember { mutableStateOf(List(18) { 3 }) }
     var notesValues by remember { mutableStateOf(List(18) { "" }) }
+    var distanceValues by remember { mutableStateOf(List(18) { "" }) }
 
     LaunchedEffect(existing, viewModel.isEditing) {
         if (initialized) return@LaunchedEffect
@@ -48,6 +51,7 @@ fun CourseEditorScreen(
             val sorted = existing!!.holes.sortedBy { it.number }
             parValues = sorted.map { it.par }
             notesValues = sorted.map { it.notes ?: "" }
+            distanceValues = sorted.map { it.distanceFeet?.toString() ?: "" }
             initialized = true
         }
     }
@@ -103,6 +107,7 @@ fun CourseEditorScreen(
                     holeNumber = index + 1,
                     par = parValues[index],
                     notes = notesValues[index],
+                    distance = distanceValues[index],
                     canRemove = parValues.size > 1,
                     onParChange = { newPar ->
                         parValues = parValues.toMutableList().also { it[index] = newPar }
@@ -110,9 +115,13 @@ fun CourseEditorScreen(
                     onNotesChange = { newNotes ->
                         notesValues = notesValues.toMutableList().also { it[index] = newNotes }
                     },
+                    onDistanceChange = { newDistance ->
+                        distanceValues = distanceValues.toMutableList().also { it[index] = newDistance }
+                    },
                     onRemove = {
                         parValues = parValues.toMutableList().also { it.removeAt(index) }
                         notesValues = notesValues.toMutableList().also { it.removeAt(index) }
+                        distanceValues = distanceValues.toMutableList().also { it.removeAt(index) }
                     }
                 )
             }
@@ -121,6 +130,7 @@ fun CourseEditorScreen(
                     onClick = {
                         parValues = parValues + 3
                         notesValues = notesValues + ""
+                        distanceValues = distanceValues + ""
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -133,7 +143,12 @@ fun CourseEditorScreen(
                 Button(
                     onClick = {
                         if (courseName.isNotBlank()) {
-                            viewModel.saveCourse(courseName, parValues, notesValues)
+                            viewModel.saveCourse(
+                                courseName,
+                                parValues,
+                                notesValues,
+                                distanceValues.map { it.toIntOrNull() }
+                            )
                             onBack()
                         }
                     },
@@ -153,9 +168,11 @@ private fun HoleEditorRow(
     holeNumber: Int,
     par: Int,
     notes: String,
+    distance: String,
     canRemove: Boolean,
     onParChange: (Int) -> Unit,
     onNotesChange: (String) -> Unit,
+    onDistanceChange: (String) -> Unit,
     onRemove: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -189,6 +206,20 @@ private fun HoleEditorRow(
                 }
             }
         }
+        OutlinedTextField(
+            value = distance,
+            onValueChange = { new -> onDistanceChange(new.filter { it.isDigit() }.take(5)) },
+            label = { Text("Distance ft (optional)") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            colors = OutlinedTextFieldDefaults.colors(
+                unfocusedLabelColor = ContentLightGrey,
+                focusedLabelColor = ContentLightGrey,
+                unfocusedTextColor = ContentWhite,
+                focusedTextColor = ContentWhite
+            )
+        )
         OutlinedTextField(
             value = notes,
             onValueChange = onNotesChange,

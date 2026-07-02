@@ -7,7 +7,6 @@ val CardBackground = Color(0xFF37474F)
 val ScaleGrey2 = Color(0xFF5A6164)
 
 // Hole info card background
-val CardGrey = Color(0xFF42413C)
 val ScaleGrey1 = Color(0xFF354045)
 
 // Yellow hole number on the scorecard and hole-jump grid
