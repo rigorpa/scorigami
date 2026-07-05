@@ -1,11 +1,13 @@
 package com.scorigami.app.ui.round
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -17,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ContentWhite
 import androidx.compose.ui.unit.dp
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
@@ -169,41 +172,64 @@ fun RoundSetupScreen(
                 }
             }
 
+            // Players area — outlined box delimiting where round players collect
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                // Border matches the Course dropdown's OutlinedTextField outline
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outline,
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
                 ) {
-                    Text("Players", style = MaterialTheme.typography.titleMedium)
-                    IconButton(
-                        onClick = { players.shuffle() },
-                        enabled = players.size > 1
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Shuffle, contentDescription = "Shuffle player order")
-                    }
-                }
-                Spacer(Modifier.height(8.dp))
-
-                if (players.isNotEmpty()) {
-                    Column {
-                        players.forEach { name ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(name, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
-                                IconButton(onClick = { players.remove(name) }) {
-                                    Icon(Icons.Default.Close, "Remove $name", tint = MaterialTheme.colorScheme.error)
-                                }
-                            }
-                            HorizontalDivider()
+                        Text("Players", style = MaterialTheme.typography.titleMedium)
+                        IconButton(
+                            onClick = { players.shuffle() },
+                            enabled = players.size > 1
+                        ) {
+                            Icon(Icons.Default.Shuffle, contentDescription = "Shuffle player order")
                         }
                     }
                     Spacer(Modifier.height(8.dp))
-                }
 
-                if (suggestions.isNotEmpty()) {
+                    if (players.isEmpty()) {
+                        Text(
+                            "No players yet — add below or tap a previous golfer",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = ContentLightGrey
+                        )
+                        Spacer(Modifier.height(8.dp))
+                    } else {
+                        Column {
+                            players.forEach { name ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(name, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+                                    IconButton(onClick = { players.remove(name) }) {
+                                        Icon(Icons.Default.Close, "Remove $name", tint = MaterialTheme.colorScheme.error)
+                                    }
+                                }
+                                HorizontalDivider()
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
+                    }
+                }
+            }
+
+            // Previous golfers — bottom portion of the screen, below the players box
+            if (suggestions.isNotEmpty()) {
+                item {
                     Text(
                         "Previous",
                         style = MaterialTheme.typography.bodyMedium,
@@ -251,9 +277,11 @@ fun RoundSetupScreen(
                             }
                         }
                     }
-                    Spacer(Modifier.height(8.dp))
                 }
+            }
 
+            // Add Player — below the previous-golfer pills
+            item {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
                         value = playerNameInput,

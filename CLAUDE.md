@@ -169,7 +169,9 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 
 ### RoundSetupScreen layout
 - **Top bar:** blue gradient (`NewRoundGradientStart` → `NewRoundGradientEnd`) matching ScorecardScreen; title and nav icon use `ContentWhite`
-- **Players section order:** (1) "Players" heading + shuffle `IconButton` (enabled when `players.size > 1`); (2) current players list with × remove buttons + `HorizontalDivider`s; (3) "Previous Golfers" `SuggestionChip`s (label text `ContentWhite`, only shown when un-added players exist); (4) "Add Player" `OutlinedTextField` + add `IconButton`
+- **Players box:** the players area sits in an outlined box styled to match the Course dropdown's `OutlinedTextField` border (1.dp `colorScheme.outline`, `RoundedCornerShape(4.dp)`) so it reads as the container names land in — contents: (1) "Players" heading + shuffle `IconButton` (enabled when `players.size > 1`); (2) current players list with × remove buttons + `HorizontalDivider`s (or a grey "No players yet…" hint when empty)
+- **Previous golfers:** pill chips (`Surface` + `CircleShape`, ~48dp tall; name area taps to add, separate 40×48dp red × zone archives via confirm dialog) live in their own item **below the players box**
+- **Add Player:** `OutlinedTextField` + add `IconButton` in its own item **below the previous-golfer pills**, at the bottom of the scrollable content
 - **Start Round button:** in `Scaffold` `bottomBar` — full-width, 56 dp height, 16 dp horizontal padding, matching `RoundReviewScreen` bottom bar style
 
 ### CourseEditorScreen layout
