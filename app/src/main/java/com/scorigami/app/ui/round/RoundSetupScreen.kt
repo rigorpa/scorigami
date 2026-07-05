@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ContentWhite
 import androidx.compose.ui.unit.dp
@@ -142,8 +143,6 @@ fun RoundSetupScreen(
             item { Spacer(Modifier.height(8.dp)) }
 
             item {
-                Text("Select Course", style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(8.dp))
                 ExposedDropdownMenuBox(
                     expanded = courseDropdownExpanded,
                     onExpandedChange = { courseDropdownExpanded = it }
@@ -152,7 +151,16 @@ fun RoundSetupScreen(
                         value = selectedCourse?.let { "${it.course.name} (Par ${it.holes.sumOf { h -> h.par }})" } ?: "Choose a course",
                         onValueChange = {},
                         readOnly = true,
+                        label = {
+                            Text("Course", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = courseDropdownExpanded) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedLabelColor = ContentWhite,
+                            focusedLabelColor = ContentWhite,
+                            unfocusedTextColor = ContentWhite,
+                            focusedTextColor = ContentWhite
+                        ),
                         modifier = Modifier.fillMaxWidth().menuAnchor()
                     )
                     ExposedDropdownMenu(
@@ -172,44 +180,19 @@ fun RoundSetupScreen(
                 }
             }
 
-            // Players area — outlined box delimiting where round players collect
+            // Players area — outlined box with a floating border label, matching the
+            // OutlinedTextField look of the Course and Add Player fields
             item {
-                // Border matches the Course dropdown's OutlinedTextField outline
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(
-                            width = 1.dp,
-                            color = MaterialTheme.colorScheme.outline,
-                            shape = RoundedCornerShape(4.dp)
-                        )
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Players", style = MaterialTheme.typography.titleMedium)
-                        IconButton(
-                            onClick = { players.shuffle() },
-                            enabled = players.size > 1
-                        ) {
-                            Icon(Icons.Default.Shuffle, contentDescription = "Shuffle player order")
-                        }
-                    }
-                    Spacer(Modifier.height(8.dp))
-
+                LabeledOutlineBox(label = "Players") {
                     if (players.isEmpty()) {
                         Text(
                             "No players yet — add below or tap a previous golfer",
                             style = MaterialTheme.typography.bodyMedium,
                             color = ContentLightGrey
                         )
-                        Spacer(Modifier.height(8.dp))
                     } else {
                         Column {
-                            players.forEach { name ->
+                            players.forEachIndexed { index, name ->
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically
@@ -219,10 +202,19 @@ fun RoundSetupScreen(
                                         Icon(Icons.Default.Close, "Remove $name", tint = MaterialTheme.colorScheme.error)
                                     }
                                 }
-                                HorizontalDivider()
+                                if (index < players.lastIndex) HorizontalDivider()
                             }
                         }
-                        Spacer(Modifier.height(8.dp))
+                        if (players.size > 1) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                IconButton(onClick = { players.shuffle() }) {
+                                    Icon(Icons.Default.Shuffle, contentDescription = "Shuffle player order")
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -230,48 +222,44 @@ fun RoundSetupScreen(
             // Previous golfers — bottom portion of the screen, below the players box
             if (suggestions.isNotEmpty()) {
                 item {
-                    Text(
-                        "Previous",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        suggestions.forEach { player ->
-                            Surface(
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    // Name area — tap to add
-                                    Text(
-                                        text = player.name,
-                                        color = ContentWhite,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        modifier = Modifier
-                                            .clickable { players.add(player.name) }
-                                            .padding(start = 18.dp, end = 10.dp, top = 12.dp, bottom = 12.dp)
-                                    )
-                                    // Remove target
-                                    Box(
-                                        modifier = Modifier
-                                            .size(width = 40.dp, height = 48.dp)
-                                            .clickable(
-                                                onClick = { playerToDelete = player },
-                                                onClickLabel = "Remove ${player.name}"
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Close,
-                                            contentDescription = null,
-                                            tint = Color.Red,
-                                            modifier = Modifier.size(16.dp)
+                    LabeledOutlineBox(label = "Previous Golfers") {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            suggestions.forEach { player ->
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        // Name area — tap to add
+                                        Text(
+                                            text = player.name,
+                                            color = ContentWhite,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            modifier = Modifier
+                                                .clickable { players.add(player.name) }
+                                                .padding(start = 18.dp, end = 10.dp, top = 12.dp, bottom = 12.dp)
                                         )
+                                        // Remove target
+                                        Box(
+                                            modifier = Modifier
+                                                .size(width = 40.dp, height = 48.dp)
+                                                .clickable(
+                                                    onClick = { playerToDelete = player },
+                                                    onClickLabel = "Remove ${player.name}"
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = null,
+                                                tint = Color.Red,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -286,7 +274,15 @@ fun RoundSetupScreen(
                     OutlinedTextField(
                         value = playerNameInput,
                         onValueChange = { playerNameInput = it },
-                        label = { Text("Add Player") },
+                        label = {
+                            Text("Add Player", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedLabelColor = ContentWhite,
+                            focusedLabelColor = ContentWhite,
+                            unfocusedTextColor = ContentWhite,
+                            focusedTextColor = ContentWhite
+                        ),
                         modifier = Modifier.weight(1f),
                         singleLine = true
                     )
@@ -308,5 +304,41 @@ fun RoundSetupScreen(
 
             item { Spacer(Modifier.height(16.dp)) }
         }
+    }
+}
+
+/**
+ * Outlined container with a small label floating on the top border — mimics the
+ * OutlinedTextField look so custom sections (Players, Previous Golfers) match the
+ * Course and Add Player fields on this screen.
+ */
+@Composable
+private fun LabeledOutlineBox(
+    label: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 14.dp) // room for the label to straddle the border
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline,
+                    shape = RoundedCornerShape(4.dp)
+                )
+                .padding(horizontal = 12.dp, vertical = 12.dp),
+            content = content
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = ContentWhite,
+            modifier = Modifier
+                .padding(start = 12.dp)
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 4.dp)
+        )
     }
 }

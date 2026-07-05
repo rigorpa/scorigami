@@ -169,9 +169,8 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 
 ### RoundSetupScreen layout
 - **Top bar:** blue gradient (`NewRoundGradientStart` → `NewRoundGradientEnd`) matching ScorecardScreen; title and nav icon use `ContentWhite`
-- **Players box:** the players area sits in an outlined box styled to match the Course dropdown's `OutlinedTextField` border (1.dp `colorScheme.outline`, `RoundedCornerShape(4.dp)`) so it reads as the container names land in — contents: (1) "Players" heading + shuffle `IconButton` (enabled when `players.size > 1`); (2) current players list with × remove buttons + `HorizontalDivider`s (or a grey "No players yet…" hint when empty)
-- **Previous golfers:** pill chips (`Surface` + `CircleShape`, ~48dp tall; name area taps to add, separate 40×48dp red × zone archives via confirm dialog) live in their own item **below the players box**
-- **Add Player:** `OutlinedTextField` + add `IconButton` in its own item **below the previous-golfer pills**, at the bottom of the scrollable content
+- **Unified outlined-box language:** every section mimics the `OutlinedTextField` look — a 1.dp `colorScheme.outline` border with 4.dp corners and a **bold white `titleSmall` label** floating on the top border. The Course dropdown and Add Player field are real `OutlinedTextField`s (labels "Course" / "Add Player" styled `titleSmall` Bold via the label lambda, `ContentWhite` label + text colors); the custom sections use the private `LabeledOutlineBox` composable (label `Text` with a `background(colorScheme.background)` patch straddling the border)
+- **Screen order:** (1) Course dropdown; (2) `LabeledOutlineBox("Players")` — player rows with × remove + dividers, a grey "No players yet…" hint when empty, and an end-aligned shuffle `IconButton` under the list when `players.size > 1`; (3) `LabeledOutlineBox("Previous Golfers")` — pill chips (`Surface` + `CircleShape`, ~48dp tall; name area taps to add, separate 40×48dp red × zone archives via confirm dialog); (4) Add Player `OutlinedTextField` + add `IconButton` at the bottom of the scrollable content
 - **Start Round button:** in `Scaffold` `bottomBar` — full-width, 56 dp height, 16 dp horizontal padding, matching `RoundReviewScreen` bottom bar style
 
 ### CourseEditorScreen layout
