@@ -191,6 +191,17 @@ fun RoundSetupScreen(
                             color = ContentLightGrey
                         )
                     } else {
+                        // Shuffle sits at the top-right of the box, above the player list
+                        if (players.size > 1) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                IconButton(onClick = { players.shuffle() }) {
+                                    Icon(Icons.Default.Shuffle, contentDescription = "Shuffle player order")
+                                }
+                            }
+                        }
                         Column {
                             players.forEachIndexed { index, name ->
                                 Row(
@@ -203,16 +214,6 @@ fun RoundSetupScreen(
                                     }
                                 }
                                 if (index < players.lastIndex) HorizontalDivider()
-                            }
-                        }
-                        if (players.size > 1) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End
-                            ) {
-                                IconButton(onClick = { players.shuffle() }) {
-                                    Icon(Icons.Default.Shuffle, contentDescription = "Shuffle player order")
-                                }
                             }
                         }
                     }
