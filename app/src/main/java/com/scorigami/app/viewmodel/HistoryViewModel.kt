@@ -3,6 +3,7 @@ package com.scorigami.app.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.scorigami.shared.db.dao.C1xDao
 import com.scorigami.shared.db.dao.CourseDao
 import com.scorigami.shared.db.dao.ObDao
 import com.scorigami.shared.db.dao.PlayerDao
@@ -30,7 +31,8 @@ data class RoundDetailState(
     val holes: List<HoleEntity> = emptyList(),
     val players: List<PlayerEntity> = emptyList(),
     val scores: Map<Pair<Long, Int>, Int> = emptyMap(),
-    val obCounts: Map<Pair<Long, Int>, Int> = emptyMap()
+    val obCounts: Map<Pair<Long, Int>, Int> = emptyMap(),
+    val c1xCounts: Map<Pair<Long, Int>, Int> = emptyMap()
 )
 
 @HiltViewModel
@@ -40,6 +42,7 @@ class HistoryViewModel @Inject constructor(
     private val playerDao: PlayerDao,
     private val scoreDao: ScoreDao,
     private val obDao: ObDao,
+    private val c1xDao: C1xDao,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -87,8 +90,9 @@ class HistoryViewModel @Inject constructor(
         combine(
             scoreDao.getScoresForRound(detailRoundId),
             playerDao.getPlayersForRoundFlow(detailRoundId),
-            obDao.getObForRound(detailRoundId)
-        ) { scores, players, obEntries ->
+            obDao.getObForRound(detailRoundId),
+            c1xDao.getC1xForRound(detailRoundId)
+        ) { scores, players, obEntries, c1xEntries ->
             val round = roundDao.getRoundById(detailRoundId)
                 ?: return@combine RoundDetailState()
             val courseWithHoles = courseDao.getCourseWithHoles(round.courseId)
@@ -114,7 +118,8 @@ class HistoryViewModel @Inject constructor(
                 holes = holes,
                 players = sortedPlayers,
                 scores = scoreMap,
-                obCounts = obEntries.associate { Pair(it.playerId, it.holeNumber) to it.count }
+                obCounts = obEntries.associate { Pair(it.playerId, it.holeNumber) to it.count },
+                c1xCounts = c1xEntries.associate { Pair(it.playerId, it.holeNumber) to it.count }
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RoundDetailState())
     }

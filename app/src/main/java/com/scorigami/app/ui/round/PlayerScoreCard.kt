@@ -20,20 +20,22 @@ import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.shared.db.entity.HoleEntity
 import com.scorigami.shared.db.entity.PlayerEntity
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun PlayerScoreCard(
     player: PlayerEntity,
     currentHole: Int,
     scores: Map<Pair<Long, Int>, Int>,
     obCounts: Map<Pair<Long, Int>, Int>,
+    c1xCounts: Map<Pair<Long, Int>, Int>,
     holes: List<HoleEntity>,
     scoresVisible: Boolean,
     onScoreChange: (Int) -> Unit,
-    onObChange: (Int) -> Unit
+    onObChange: (Int) -> Unit,
+    onC1xChange: (Int) -> Unit
 ) {
     val throwsThisHole = scores[Pair(player.id, currentHole)] ?: 0
     val obThisHole = obCounts[Pair(player.id, currentHole)] ?: 0
+    val c1xThisHole = c1xCounts[Pair(player.id, currentHole)] ?: 0
     val playerScores = scores.entries.filter { it.key.first == player.id }
     val totalThrows = playerScores.sumOf { it.value }
     val parSoFar = holes
@@ -79,34 +81,20 @@ internal fun PlayerScoreCard(
                 )
             }
 
-            // OB counter for this hole — tap to add one, long-press to remove one
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Cycles - → 1 → 2 → 3+ → back to -; long-press steps one back
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .combinedClickable(
-                            onClick = { onObChange(if (obThisHole >= 3) 0 else obThisHole + 1) },
-                            onLongClick = { if (obThisHole > 0) onObChange(obThisHole - 1) },
-                            onClickLabel = "Add OB for ${player.name}",
-                            onLongClickLabel = "Remove OB for ${player.name}"
-                        )
-                        .padding(horizontal = 8.dp, vertical = 10.dp)
-                        .widthIn(min = 44.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = when {
-                            obThisHole == 0 -> "- OB"
-                            obThisHole >= 3 -> "3+ OB"
-                            else -> "$obThisHole OB"
-                        },
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = ObColor,
-                        maxLines = 1
-                    )
-                }
+                // Per-hole stat counters — cycle - → 1 → 2 → 3+ → back to -; long-press steps one back
+                StatCycleButton(
+                    label = "OB",
+                    count = obThisHole,
+                    playerName = player.name,
+                    onCountChange = onObChange
+                )
+                StatCycleButton(
+                    label = "C1x",
+                    count = c1xThisHole,
+                    playerName = player.name,
+                    onCountChange = onC1xChange
+                )
 
                 // − score + controls
                 IconButton(
@@ -135,5 +123,41 @@ internal fun PlayerScoreCard(
                 }
             }
         }
+    }
+}
+
+/** Dark-yellow per-hole stat counter: tap cycles - → 1 → 2 → 3+ → -, long-press steps back. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun StatCycleButton(
+    label: String,
+    count: Int,
+    playerName: String,
+    onCountChange: (Int) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .combinedClickable(
+                onClick = { onCountChange(if (count >= 3) 0 else count + 1) },
+                onLongClick = { if (count > 0) onCountChange(count - 1) },
+                onClickLabel = "Add $label for $playerName",
+                onLongClickLabel = "Remove $label for $playerName"
+            )
+            .padding(horizontal = 8.dp, vertical = 10.dp)
+            .widthIn(min = 44.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = when {
+                count == 0 -> "- $label"
+                count >= 3 -> "3+ $label"
+                else -> "$count $label"
+            },
+            fontSize = 17.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = ObColor,
+            maxLines = 1
+        )
     }
 }

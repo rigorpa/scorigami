@@ -105,7 +105,8 @@ fun RoundDetailScreen(
                     player = player,
                     holes = detail.holes,
                     scores = detail.scores,
-                    obCounts = detail.obCounts
+                    obCounts = detail.obCounts,
+                    c1xCounts = detail.c1xCounts
                 )
             }
             item { Spacer(Modifier.height(8.dp)) }
@@ -125,12 +126,14 @@ private fun DetailPlayerCard(
     player: PlayerEntity,
     holes: List<HoleEntity>,
     scores: Map<Pair<Long, Int>, Int>,
-    obCounts: Map<Pair<Long, Int>, Int>
+    obCounts: Map<Pair<Long, Int>, Int>,
+    c1xCounts: Map<Pair<Long, Int>, Int>
 ) {
     val totalThrows = scores.entries.filter { it.key.first == player.id }.sumOf { it.value }
     val totalPar = holes.filter { scores[Pair(player.id, it.number)] != null }.sumOf { it.par }
     val vsPar = totalThrows - totalPar
     val totalOb = obCounts.entries.filter { it.key.first == player.id }.sumOf { it.value }
+    val totalC1x = c1xCounts.entries.filter { it.key.first == player.id }.sumOf { it.value }
 
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp)) {
@@ -171,9 +174,13 @@ private fun DetailPlayerCard(
                 }
                 Spacer(Modifier.height(4.dp))
             }
-            if (totalOb > 0) {
+            val statLine = listOfNotNull(
+                "$totalOb OB".takeIf { totalOb > 0 },
+                "$totalC1x C1x".takeIf { totalC1x > 0 }
+            ).joinToString("  ·  ")
+            if (statLine.isNotEmpty()) {
                 Text(
-                    text = "$totalOb OB",
+                    text = statLine,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = ObColor

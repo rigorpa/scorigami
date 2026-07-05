@@ -4,6 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.scorigami.shared.db.dao.C1xDao
 import com.scorigami.shared.db.dao.CourseDao
 import com.scorigami.shared.db.dao.ObDao
 import com.scorigami.shared.db.dao.PlayerDao
@@ -19,9 +20,10 @@ import com.scorigami.shared.db.entity.*
         RoundEntity::class,
         RoundPlayerEntity::class,
         ScoreEntity::class,
-        ObEntity::class
+        ObEntity::class,
+        C1xEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -30,6 +32,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun roundDao(): RoundDao
     abstract fun scoreDao(): ScoreDao
     abstract fun obDao(): ObDao
+    abstract fun c1xDao(): C1xDao
 
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -68,6 +71,23 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                 database.execSQL(
                     "CREATE INDEX IF NOT EXISTS `index_ob_counts_roundId` ON `ob_counts` (`roundId`)"
+                )
+            }
+        }
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `c1x_counts` (" +
+                        "`roundId` INTEGER NOT NULL, " +
+                        "`playerId` INTEGER NOT NULL, " +
+                        "`holeNumber` INTEGER NOT NULL, " +
+                        "`count` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`roundId`, `playerId`, `holeNumber`), " +
+                        "FOREIGN KEY(`roundId`) REFERENCES `rounds`(`id`) " +
+                        "ON UPDATE NO ACTION ON DELETE CASCADE)"
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_c1x_counts_roundId` ON `c1x_counts` (`roundId`)"
                 )
             }
         }
