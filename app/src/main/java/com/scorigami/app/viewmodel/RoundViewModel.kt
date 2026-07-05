@@ -275,7 +275,9 @@ class RoundViewModel @Inject constructor(
             currentHole = state.currentHole,
             holes = state.holes,
             players = state.basePlayers,
-            scores = state.scores
+            scores = state.scores,
+            obCounts = state.obCounts,
+            c1xCounts = state.c1xCounts
         )
         wearSyncManager.pushRoundState(roundState)
     }

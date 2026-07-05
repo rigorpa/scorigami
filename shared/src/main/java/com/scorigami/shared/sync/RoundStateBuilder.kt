@@ -18,7 +18,9 @@ object RoundStateBuilder {
         currentHole: Int,
         holes: List<HoleEntity>,
         players: List<PlayerEntity>,
-        scores: Map<Pair<Long, Int>, Int>
+        scores: Map<Pair<Long, Int>, Int>,
+        obCounts: Map<Pair<Long, Int>, Int> = emptyMap(),
+        c1xCounts: Map<Pair<Long, Int>, Int> = emptyMap()
     ): RoundState = RoundState(
         roundId = roundId,
         courseName = courseName,
@@ -38,7 +40,13 @@ object RoundStateBuilder {
                 name = player.name,
                 holeScores = playerHoleScores,
                 totalThrows = totalThrows,
-                totalVsPar = totalThrows - parSoFar
+                totalVsPar = totalThrows - parSoFar,
+                obCounts = obCounts.entries
+                    .filter { it.key.first == player.id }
+                    .associate { it.key.second to it.value },
+                c1xCounts = c1xCounts.entries
+                    .filter { it.key.first == player.id }
+                    .associate { it.key.second to it.value }
             )
         }
     )

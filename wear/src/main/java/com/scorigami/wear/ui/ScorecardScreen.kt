@@ -11,6 +11,7 @@ fun WearScorecardScreen(
     currentHole: Int,
     onNextHole: () -> Unit,
     onScoreChange: (playerId: Long, throws: Int) -> Unit,
+    onStatChange: (playerId: Long, stat: String, count: Int) -> Unit,
     onJumpToHole: (Int) -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -50,8 +51,23 @@ fun WearScorecardScreen(
         mutableIntStateOf(knownScore)
     }
 
+    // Stat counters stage locally like pendingScore and are sent on Enter / Next Hole,
+    // so score and stats commit together (same keying rules as pendingScore).
+    val knownOb = currentPlayer.obCounts[currentHole] ?: 0
+    var pendingOb by remember(currentPlayer.playerId, currentHole, knownOb) {
+        mutableIntStateOf(knownOb)
+    }
+    val knownC1x = currentPlayer.c1xCounts[currentHole] ?: 0
+    var pendingC1x by remember(currentPlayer.playerId, currentHole, knownC1x) {
+        mutableIntStateOf(knownC1x)
+    }
+
     fun commitAndAdvance() {
         if (pendingScore > 0) onScoreChange(currentPlayer.playerId, pendingScore)
+        // Only send stats that changed vs. what the phone already knows (0 is a valid
+        // send — it clears a previously synced count).
+        if (pendingOb != knownOb) onStatChange(currentPlayer.playerId, "ob", pendingOb)
+        if (pendingC1x != knownC1x) onStatChange(currentPlayer.playerId, "c1x", pendingC1x)
         if (isLastPlayer) {
             if (currentHole >= roundState.totalHoles) {
                 showEndRoundPrompt = true
@@ -93,7 +109,11 @@ fun WearScorecardScreen(
                 holePar = holePar,
                 isLastPlayer = isLastPlayer,
                 pendingScore = pendingScore,
+                obCount = pendingOb,
+                c1xCount = pendingC1x,
                 onPendingScoreChange = { pendingScore = it },
+                onObTap = { pendingOb = if (pendingOb >= 3) 0 else pendingOb + 1 },
+                onC1xTap = { pendingC1x = if (pendingC1x >= 3) 0 else pendingC1x + 1 },
                 onCommit = ::commitAndAdvance,
                 onShowHoleJump = { showHoleJump = true },
                 onShowTeeOrder = { showTeeOrder = true },

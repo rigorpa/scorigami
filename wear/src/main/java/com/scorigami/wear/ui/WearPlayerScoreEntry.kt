@@ -8,6 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -28,7 +29,11 @@ internal fun WearPlayerScoreEntry(
     holePar: Int,
     isLastPlayer: Boolean,
     pendingScore: Int,
+    obCount: Int,
+    c1xCount: Int,
     onPendingScoreChange: (Int) -> Unit,
+    onObTap: () -> Unit,
+    onC1xTap: () -> Unit,
     onCommit: () -> Unit,
     onShowHoleJump: () -> Unit,
     onShowTeeOrder: () -> Unit,
@@ -58,16 +63,32 @@ internal fun WearPlayerScoreEntry(
                 modifier = Modifier.clickable { onShowHoleJump() }
             )
 
-            // Current player name — tap to show tee order
-            Text(
-                playerName,
-                style = MaterialTheme.typography.title1,
-                fontWeight = FontWeight.SemiBold,
-                color = ContentWhite,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                modifier = Modifier.clickable { onShowTeeOrder() }
-            )
+            // OB (left) and C1x (right) stat counters flanking the player name;
+            // name itself still taps to show tee order
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                WearStatButton(
+                    text = if (obCount == 0) "- OB" else if (obCount >= 3) "3+ OB" else "$obCount OB",
+                    onClick = onObTap
+                )
+                Text(
+                    playerName,
+                    style = MaterialTheme.typography.title1,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ContentWhite,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onShowTeeOrder() }
+                )
+                WearStatButton(
+                    text = if (c1xCount == 0) "- C1x" else if (c1xCount >= 3) "3+ C1x" else "$c1xCount C1x",
+                    onClick = onC1xTap
+                )
+            }
 
             // − score + controls
             val scoreColor = when {
@@ -158,5 +179,28 @@ internal fun WearPlayerScoreEntry(
             //     colors = ChipDefaults.chipColors(backgroundColor = MaterialTheme.colors.error)
             // )
         }
+    }
+}
+
+/** Red per-hole stat counter; tap cycles - → 1 → 2 → 3+ → back to - (caller owns the cycle). */
+@Composable
+private fun WearStatButton(
+    text: String,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .padding(horizontal = 4.dp, vertical = 10.dp)
+            .widthIn(min = 40.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Red,
+            maxLines = 1
+        )
     }
 }

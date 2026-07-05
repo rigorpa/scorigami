@@ -118,8 +118,10 @@ c1x_counts  roundId, playerId, holeNumber, count               (composite PK, FK
 
 **Sync types** (`shared/sync/`):
 - `RoundState` — full snapshot pushed phone→watch (roundId, courseName, currentHole, totalHoles, players[], **holePars: Map<Int,Int>**). `holePars` maps every hole number to its par value so the watch can apply the first-press scoring logic for any hole it navigates to independently.
-- `PlayerState` — per-player data inside RoundState (playerId, name, **holeScores: Map<Int,Int>**, totalThrows, totalVsPar). `holeScores` maps every hole number the player has scored to their throw count, allowing the watch to display the correct score for whichever hole it is viewing independently of the phone.
+- `PlayerState` — per-player data inside RoundState (playerId, name, **holeScores: Map<Int,Int>**, totalThrows, totalVsPar, **obCounts / c1xCounts: Map<Int,Int>**). `holeScores` maps every hole number the player has scored to their throw count, allowing the watch to display the correct score for whichever hole it is viewing independently of the phone; the stat maps do the same for the OB / C1x counters.
 - `ScoreUpdateMessage` — watch→phone message (roundId, playerId, holeNumber, throws, viewingHole)
+- `StatUpdateMessage` — watch→phone message for stat counters (roundId, playerId, holeNumber, **stat: "ob" | "c1x"**, count, viewingHole), sent to `/stat/update`; `PhoneWearableListenerService` writes it to Room (count ≤ 0 deletes the row, mirroring `RoundViewModel.setOb`/`setC1x`) and re-pushes state
+- ⚠️ **Every watch→phone message path must be whitelisted** in the app manifest's `PhoneWearableListenerService` intent-filter (`<data android:pathPrefix="…">` per path) — Play Services silently drops non-matching messages before the service is invoked. `/score/update` and `/stat/update` are both registered
 
 ---
 
@@ -182,7 +184,7 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 - **PNG sharing (`ShareRoundDialog.kt`):** preview dialog showing `ShareScorecardCard` — a branded 340.dp-wide card (gradient header + `ic_logo`, course, date, per-player 9-hole vs-par grids, footer) rendered from `RoundDetailState`. Share button captures the card via `rememberGraphicsLayer()` → `toImageBitmap()` (the record modifier lives on the card, not the scroll container, so the full card is captured even when the preview viewport clips it), compresses to PNG on `Dispatchers.IO` into `cacheDir/shared_rounds/` (dir purged each share; `file_paths.xml` has a matching `cache-path`), and fires `ACTION_SEND image/png` via the existing FileProvider with `ClipData` for the share-sheet thumbnail. The old plain-text share was removed.
 - **Player order:** `HistoryViewModel.detail` sorts players best round first — lowest total vs-par, tiebreak fewest throws, no-score players last, stable within ties (tee order). Applies to both the on-screen cards and the share card.
 - **Stat display:** each player's round OB and C1x totals appear at the **bottom-left** of their scorecard block as one line (`"N OB  ·  M C1x"`, `bodyMedium` Bold, `ObColor`, each part only when > 0) — same placement in `RoundReviewScreen`'s player cards and `FullScorecardSheet`.
-- **Hole grid:** hole numbers `labelLarge`, vs-par scores `bodyMedium` + `FontWeight.Bold` (colored by par relationship)
+- **Hole grid:** hole numbers `labelLarge`, raw throw counts `bodyMedium` + `FontWeight.Bold` (colored by par relation, "—" when unplayed) — matches `FullScorecardSheet` / `RoundReviewScreen`
 
 ### HomeScreen layout
 - **Buttons:** `HomeActionButton` composable — `Brush.horizontalGradient` applied via `Modifier.background(brush, RoundedCornerShape(percent = 50))`; `containerColor = Color.Transparent` so gradient shows through; `contentColor = ContentWhite`; disabled state falls back to a dark-grey gradient; all buttons full-width 56 dp height
@@ -213,7 +215,7 @@ The watch scorecard uses a **one-player-at-a-time** flow instead of showing all 
 
 **Layout per player:**
 - Hole number (42sp, `FontWeight.ExtraBold`, `HoleNumberColor`) at top — tappable to open the hole-jump picker
-- Player's full name in white `title1` (SemiBold), centered — tappable to open the tee-order popup
+- Player's full name in white `title1` (SemiBold), centered — tappable to open the tee-order popup — flanked by **red stat counters** (`WearStatButton`, 13sp Bold `Color.Red`): **OB left** of the name, **C1x right**. Tap cycles `-` → 1 → 2 → 3+ → `-` in a local pending value keyed like `pendingScore`; the counts are **committed together with the score on Enter / Next Hole ▶** (a `StatUpdateMessage` is sent only when the pending value differs from what the phone last pushed — including back to 0, which clears the row)
 - −/+ `CompactButton` (48 dp, `#2A2A2A` dark-grey fill, 22sp) spread to screen edges via `Arrangement.SpaceBetween` on a `fillMaxWidth` row; score centered between them
 - Enter / Next Hole ▶ `Chip` centered below (36 dp height, `#2A2A2A` fill)
 - Tapping **Next Hole ▶ on the final hole** (instead of navigating) shows a centered `Dialog` with the message "End round on the phone app" — score is still committed first if `pendingScore > 0`

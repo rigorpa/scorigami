@@ -21,10 +21,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.round.formatVsPar
-import com.scorigami.app.ui.round.vsParColor
 import com.scorigami.app.ui.theme.HistoryGradientEnd
 import com.scorigami.app.ui.theme.HistoryGradientStart
 import com.scorigami.app.ui.theme.ObColor
+import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.app.viewmodel.HistoryViewModel
 import com.scorigami.shared.db.entity.HoleEntity
 import com.scorigami.shared.db.entity.PlayerEntity
@@ -156,17 +156,23 @@ private fun DetailPlayerCard(
                 Row(modifier = Modifier.fillMaxWidth()) {
                     group.forEach { hole ->
                         val throws = scores[Pair(player.id, hole.number)]
-                        val diff = throws?.minus(hole.par)
+                        // Raw throw count colored by par relation — matches FullScorecardSheet
+                        val scoreColor = when {
+                            throws == null -> ContentWhite
+                            throws < hole.par -> ScoreUnderParColor
+                            throws == hole.par -> ContentWhite
+                            else -> MaterialTheme.colorScheme.error
+                        }
                         Column(
                             modifier = Modifier.weight(1f),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text("${hole.number}", style = MaterialTheme.typography.labelLarge, color = ContentLightGrey)
                             Text(
-                                text = diff?.let { formatVsPar(it) } ?: "",
+                                text = throws?.toString() ?: "—",
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = diff?.let { vsParColor(it) } ?: MaterialTheme.colorScheme.onSurface,
+                                color = scoreColor,
                                 textAlign = TextAlign.Center
                             )
                         }

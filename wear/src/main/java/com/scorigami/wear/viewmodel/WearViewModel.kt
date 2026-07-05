@@ -8,6 +8,7 @@ import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
 import com.scorigami.shared.sync.RoundState
 import com.scorigami.shared.sync.ScoreUpdateMessage
+import com.scorigami.shared.sync.StatUpdateMessage
 import com.scorigami.shared.sync.SyncKeys
 import com.scorigami.wear.sync.RoundStateHolder
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -126,6 +127,31 @@ class WearViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 Log.w("WearViewModel", "Failed to send score update to phone", e)
+            }
+        }
+    }
+
+    /** Sends an OB / C1x count change to the phone. [stat] is "ob" or "c1x". */
+    fun sendStatUpdate(roundId: Long, playerId: Long, holeNumber: Int, stat: String, count: Int) {
+        viewModelScope.launch {
+            try {
+                val nodes = Wearable.getNodeClient(context).connectedNodes.await()
+                val msg = StatUpdateMessage(
+                    roundId = roundId,
+                    playerId = playerId,
+                    holeNumber = holeNumber,
+                    stat = stat,
+                    count = count,
+                    viewingHole = _currentHole.value
+                )
+                val bytes = Json.encodeToString(msg).toByteArray(Charsets.UTF_8)
+                nodes.forEach { node ->
+                    Wearable.getMessageClient(context)
+                        .sendMessage(node.id, SyncKeys.STAT_UPDATE_MSG, bytes)
+                        .await()
+                }
+            } catch (e: Exception) {
+                Log.w("WearViewModel", "Failed to send stat update to phone", e)
             }
         }
     }

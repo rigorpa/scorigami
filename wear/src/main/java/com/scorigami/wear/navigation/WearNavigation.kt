@@ -69,6 +69,15 @@ fun WearNavigation(viewModel: WearViewModel = hiltViewModel()) {
                         throws = throws
                     )
                 },
+                onStatChange = { playerId, stat, count ->
+                    viewModel.sendStatUpdate(
+                        roundId = roundState.roundId,
+                        playerId = playerId,
+                        holeNumber = uiState.currentHole,
+                        stat = stat,
+                        count = count
+                    )
+                },
                 onJumpToHole = { hole -> viewModel.navigateToHole(hole) }
             )
         }

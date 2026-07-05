@@ -55,6 +55,10 @@
                     android:host="*"
                     android:pathPrefix="/score/update"
                     android:scheme="wear" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/stat/update"
+                    android:scheme="wear" />
             </intent-filter>
         </service>
 

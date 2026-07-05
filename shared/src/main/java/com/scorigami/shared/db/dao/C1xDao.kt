@@ -9,6 +9,9 @@ interface C1xDao {
     @Query("SELECT * FROM c1x_counts WHERE roundId = :roundId")
     fun getC1xForRound(roundId: Long): Flow<List<C1xEntity>>
 
+    @Query("SELECT * FROM c1x_counts WHERE roundId = :roundId")
+    suspend fun getC1xForRoundSnapshot(roundId: Long): List<C1xEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertC1x(c1x: C1xEntity)
 
