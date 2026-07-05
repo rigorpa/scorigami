@@ -14,9 +14,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.scorigami.app.ui.theme.ContentWhite
-import com.scorigami.app.ui.theme.ObColor
 import com.scorigami.app.ui.theme.ScaleGrey2
 import com.scorigami.app.ui.theme.ScoreUnderParColor
+import com.scorigami.app.ui.theme.StatActiveColor
+import com.scorigami.app.ui.theme.StatUnsetColor
 import com.scorigami.shared.db.entity.HoleEntity
 import com.scorigami.shared.db.entity.PlayerEntity
 
@@ -126,7 +127,10 @@ internal fun PlayerScoreCard(
     }
 }
 
-/** Dark-yellow per-hole stat counter: tap cycles - → 1 → 2 → 3+ → -, long-press steps back. */
+/**
+ * Per-hole stat counter: tap cycles - → 1 → 2 → 3+ → -, long-press steps back.
+ * Black while unset so it stays quiet on the grey card; red once a count is entered.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun StatCycleButton(
@@ -150,13 +154,13 @@ private fun StatCycleButton(
     ) {
         Text(
             text = when {
-                count == 0 -> "- $label"
+                count == 0 -> label
                 count >= 3 -> "3+ $label"
                 else -> "$count $label"
             },
-            fontSize = 17.sp,
+            fontSize = 18.sp,
             fontWeight = FontWeight.ExtraBold,
-            color = ObColor,
+            color = if (count > 0) StatActiveColor else StatUnsetColor,
             maxLines = 1
         )
     }

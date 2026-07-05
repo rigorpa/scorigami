@@ -8,7 +8,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -19,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.*
 import com.scorigami.wear.ui.theme.ContentWhite
 import com.scorigami.wear.ui.theme.HoleNumberColor
+import com.scorigami.wear.ui.theme.ScoreOverParColor
 import com.scorigami.wear.ui.theme.ScoreUnderParColor
 import com.scorigami.wear.ui.theme.WearButtonBackground
 
@@ -70,7 +70,8 @@ internal fun WearPlayerScoreEntry(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 WearStatButton(
-                    text = if (obCount == 0) "- OB" else if (obCount >= 3) "3+ OB" else "$obCount OB",
+                    text = if (obCount == 0) "OB" else if (obCount >= 3) "3+ OB" else "$obCount OB",
+                    active = obCount > 0,
                     onClick = onObTap
                 )
                 Text(
@@ -85,7 +86,8 @@ internal fun WearPlayerScoreEntry(
                         .clickable { onShowTeeOrder() }
                 )
                 WearStatButton(
-                    text = if (c1xCount == 0) "- C1x" else if (c1xCount >= 3) "3+ C1x" else "$c1xCount C1x",
+                    text = if (c1xCount == 0) "C1x" else if (c1xCount >= 3) "3+ C1x" else "$c1xCount C1x",
+                    active = c1xCount > 0,
                     onClick = onC1xTap
                 )
             }
@@ -95,7 +97,7 @@ internal fun WearPlayerScoreEntry(
                 pendingScore == 0 -> ContentWhite
                 pendingScore < holePar -> ScoreUnderParColor
                 pendingScore == holePar -> ContentWhite
-                else -> MaterialTheme.colors.error
+                else -> ScoreOverParColor
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -182,10 +184,14 @@ internal fun WearPlayerScoreEntry(
     }
 }
 
-/** Red per-hole stat counter; tap cycles - → 1 → 2 → 3+ → back to - (caller owns the cycle). */
+/**
+ * Per-hole stat counter; tap cycles - → 1 → 2 → 3+ → back to - (caller owns the cycle).
+ * Grey while unset so it doesn't shout; turns red once a count is entered.
+ */
 @Composable
 private fun WearStatButton(
     text: String,
+    active: Boolean,
     onClick: () -> Unit
 ) {
     Box(
@@ -199,7 +205,7 @@ private fun WearStatButton(
             text = text,
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.Red,
+            color = if (active) ScoreOverParColor else WearButtonBackground,
             maxLines = 1
         )
     }

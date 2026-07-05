@@ -195,8 +195,14 @@ fun RoundSetupScreen(
                         if (players.size > 1) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.End
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
+                                Text(
+                                    "Shuffle",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = ContentLightGrey
+                                )
                                 IconButton(onClick = { players.shuffle() }) {
                                     Icon(Icons.Default.Shuffle, contentDescription = "Shuffle player order")
                                 }

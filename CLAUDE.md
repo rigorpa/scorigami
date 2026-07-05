@@ -50,7 +50,9 @@ Named color constants are centralized in `AppColors.kt` files — no inline `Col
 | `HoleJumpSelectedColor` | `#7A7A7A` | Selected hole cell highlight in hole-jump grid (phone and watch) |
 | `IncompleteHoleDotColor` | `#FFB300` | Amber dot on holes with missing scores |
 | `ScoreUnderParColor` | `#81C784` | Green — under par score display |
-| `ObColor` | `#C9A227` | Dark yellow — OB and C1x stat buttons and counts |
+| `ObColor` | `#C9A227` | Dark yellow — OB/C1x round-total lines in Review, Full-scorecard sheet, and History detail |
+| `StatUnsetColor` | `= ScaleGrey1` | OB/C1x scorecard button while no count entered (bare "OB" / "C1x" label) — darker than the `ScaleGrey2` card, reads as a subtle inset; must never equal `ScaleGrey2` or it vanishes |
+| `StatActiveColor` | `#EF5350` | OB/C1x scorecard button once a count is entered (matches theme error red) |
 | `NewRoundGradientStart` | `#1C2E42` | Deep grey-blue — left edge of New Round / Scorecard / Round Setup top bar and home button gradient |
 | `NewRoundGradientEnd` | `#474B50` | Slate grey — right edge of New Round / Scorecard / Round Setup top bar and home button gradient |
 | `CoursesGradientStart` | `#24534B` | Dark jungle green — left edge of My Courses top bar and home button gradient |
@@ -70,9 +72,10 @@ Named color constants are centralized in `AppColors.kt` files — no inline `Col
 | `WearButtonBackground` | `#2A2A2A` | Dark grey for −/+ buttons, Enter/Next Hole chip, non-current hole cells |
 | `IncompleteHoleDotColor` | `#FFB300` | Amber dot on holes with missing scores |
 | `ScoreUnderParColor` | `#81C784` | Green — under par score display |
+| `ScoreOverParColor` | `Color.Red` | Red — over par score display AND the OB/C1x stat counters (one unified red) |
 | `ContentWhite` | `Color.White` | Primary text/icon color on dark surfaces (mirrors phone) |
 
-At-par and unscored use `ContentWhite`. Over-par uses `MaterialTheme.colorScheme.error` (phone) / `MaterialTheme.colors.error` (wear).
+At-par and unscored use `ContentWhite`. Over-par uses `MaterialTheme.colorScheme.error` (phone) / `ScoreOverParColor` (wear).
 
 ---
 
@@ -157,7 +160,7 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 - **Top bar:** blue gradient (`NewRoundGradientStart` → `NewRoundGradientEnd`) wrapping a transparent `TopAppBar`; course name in `FontFamily.Cursive`; `TableChart` icon button (opens full scorecard sheet); "End Round" button; ⋮ overflow menu
 - **Full scorecard sheet:** `ModalBottomSheet` with `skipPartiallyExpanded = true` (opens full height) — per-player 18-hole breakdown with hole numbers (`labelMedium`) and vs-par scores (`bodyMedium`, bold, colored)
 - **Hole card** (`HoleInfoCard`): `ScaleGrey1` background; `Box` overlay hosts four corner icons — `Info` at `TopStart` (notes, only when `hole.notes` non-null), `Group` at `TopEnd` (add/remove players), `Visibility`/`VisibilityOff` at `BottomStart` (score hide toggle); ◀/▶ arrow buttons; hole label is stacked — small "Hole" (`titleMedium`, 20sp, `FontWeight.Normal`) above a large bold tappable hole number (`displayMedium`, 124sp, `FontWeight.ExtraBold`), both yellow (`HoleNumberColor`); the spring-bounce scale animates the number; tapping the number opens the hole-jump grid dialog (subtle ripple via `clip` + `clickable` on a `RoundedCornerShape(12.dp)` `Box`)
-- **Player cards:** left `Column` (`weight(1f)`) stacks player name (28sp, `FontWeight.Bold`, `ContentWhite`) above round vs-par score (`titleSmall`, `ContentWhite`, hidden as `"•••"` when scores hidden); on the right, two **stat counters** (`StatCycleButton` in `PlayerScoreCard.kt`) — **OB** (out of bounds) then **C1x** (missed circle-1 putts) — sit **left of** the plain `IconButton` −/+ score controls. Both are `ObColor` dark yellow, `ExtraBold` 17sp; tap cycles `"- X"` → `"1 X"` → `"2 X"` → `"3+ X"` → back to `"- X"` (stored count caps at 3), long-press steps one back, via `combinedClickable`; they write through `RoundViewModel.setOb`/`setC1x`. Cards are full screen width (no horizontal padding on the `LazyColumn`). Round stat totals are intentionally not shown on the card — they appear in Review/Full-scorecard/Detail only
+- **Player cards:** left `Column` (`weight(1f)`) stacks player name (28sp, `FontWeight.Bold`, `ContentWhite`) above round vs-par score (`titleSmall`, `ContentWhite`, hidden as `"•••"` when scores hidden); on the right, two **stat counters** (`StatCycleButton` in `PlayerScoreCard.kt`) — **OB** (out of bounds) then **C1x** (missed circle-1 putts) — sit **left of** the plain `IconButton` −/+ score controls. Both are `ExtraBold` 17sp, **`StatUnsetColor` (quiet grey) while unset** (bare `"OB"`/`"C1x"` label, no count) and **`StatActiveColor` (red) once a count is entered** (mirrors the wear grey→red behavior); tap cycles `"X"` → `"1 X"` → `"2 X"` → `"3+ X"` → back to `"X"` (stored count caps at 3), long-press steps one back, via `combinedClickable`; they write through `RoundViewModel.setOb`/`setC1x`. Cards are full screen width (no horizontal padding on the `LazyColumn`). Round stat totals are intentionally not shown on the card — they appear in Review/Full-scorecard/Detail only
 - **Hole transitions:** `AnimatedContent` slides player cards left/right matching navigation direction (250 ms); hole number springs from 82 % → 100 % with `Spring.DampingRatioMediumBouncy` on each navigation (`Animatable` + `LaunchedEffect`)
 - **Hole jump dialog** (inlined in `HoleInfoCard`): opened by tapping the hole number; `Dialog` (`usePlatformDefaultWidth = false`) positioned in the lower screen half; `Surface` with `RoundedCornerShape(16.dp)` and `tonalElevation = 8.dp` contains the grid; 3-column grid of `Box` cells (`60 dp` tall, `RoundedCornerShape(8.dp)`); current hole `HoleJumpSelectedColor`, others `CardBackground`; amber `IncompleteHoleDotColor` dot (6 dp, `CircleShape`) top-right on cells with missing scores; tap outside to dismiss. `HoleJumpGrid.kt` (the old standalone composable with its own `OutlinedButton` trigger) is **kept in the codebase as a revert fallback** but is no longer used in any screen.
 
@@ -215,7 +218,7 @@ The watch scorecard uses a **one-player-at-a-time** flow instead of showing all 
 
 **Layout per player:**
 - Hole number (42sp, `FontWeight.ExtraBold`, `HoleNumberColor`) at top — tappable to open the hole-jump picker
-- Player's full name in white `title1` (SemiBold), centered — tappable to open the tee-order popup — flanked by **red stat counters** (`WearStatButton`, 13sp Bold `Color.Red`): **OB left** of the name, **C1x right**. Tap cycles `-` → 1 → 2 → 3+ → `-` in a local pending value keyed like `pendingScore`; the counts are **committed together with the score on Enter / Next Hole ▶** (a `StatUpdateMessage` is sent only when the pending value differs from what the phone last pushed — including back to 0, which clears the row)
+- Player's full name in white `title1` (SemiBold), centered — tappable to open the tee-order popup — flanked by **stat counters** (`WearStatButton`, 13sp Bold): **OB left** of the name, **C1x right** — `WearButtonBackground` grey while unset (bare `"OB"`/`"C1x"` label), `ScoreOverParColor` red once a count is entered. Tap cycles bare label → 1 → 2 → 3+ → bare label in a local pending value keyed like `pendingScore`; the counts are **committed together with the score on Enter / Next Hole ▶** (a `StatUpdateMessage` is sent only when the pending value differs from what the phone last pushed — including back to 0, which clears the row)
 - −/+ `CompactButton` (48 dp, `#2A2A2A` dark-grey fill, 22sp) spread to screen edges via `Arrangement.SpaceBetween` on a `fillMaxWidth` row; score centered between them
 - Enter / Next Hole ▶ `Chip` centered below (36 dp height, `#2A2A2A` fill)
 - Tapping **Next Hole ▶ on the final hole** (instead of navigating) shows a centered `Dialog` with the message "End round on the phone app" — score is still committed first if `pendingScore > 0`

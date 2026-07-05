@@ -23,6 +23,7 @@ import com.scorigami.wear.R
 import com.scorigami.shared.sync.PlayerState
 import com.scorigami.wear.ui.theme.ContentWhite
 import com.scorigami.wear.ui.theme.HoleNumberColor
+import com.scorigami.wear.ui.theme.ScoreOverParColor
 import com.scorigami.wear.ui.theme.ScoreUnderParColor
 
 /**
@@ -112,5 +113,5 @@ private fun formatVsPar(vsPar: Int): String = when {
 private fun vsParColor(vsPar: Int) = when {
     vsPar < 0 -> ScoreUnderParColor
     vsPar == 0 -> ContentWhite
-    else -> MaterialTheme.colors.error
+    else -> ScoreOverParColor
 }
