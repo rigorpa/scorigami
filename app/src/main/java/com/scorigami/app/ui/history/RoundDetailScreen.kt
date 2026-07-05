@@ -24,6 +24,7 @@ import com.scorigami.app.ui.round.formatVsPar
 import com.scorigami.app.ui.round.vsParColor
 import com.scorigami.app.ui.theme.HistoryGradientEnd
 import com.scorigami.app.ui.theme.HistoryGradientStart
+import com.scorigami.app.ui.theme.ObColor
 import com.scorigami.app.viewmodel.HistoryViewModel
 import com.scorigami.shared.db.entity.HoleEntity
 import com.scorigami.shared.db.entity.PlayerEntity
@@ -100,7 +101,12 @@ fun RoundDetailScreen(
                 )
             }
             items(detail.players) { player ->
-                DetailPlayerCard(player = player, holes = detail.holes, scores = detail.scores)
+                DetailPlayerCard(
+                    player = player,
+                    holes = detail.holes,
+                    scores = detail.scores,
+                    obCounts = detail.obCounts
+                )
             }
             item { Spacer(Modifier.height(8.dp)) }
         }
@@ -118,11 +124,13 @@ fun RoundDetailScreen(
 private fun DetailPlayerCard(
     player: PlayerEntity,
     holes: List<HoleEntity>,
-    scores: Map<Pair<Long, Int>, Int>
+    scores: Map<Pair<Long, Int>, Int>,
+    obCounts: Map<Pair<Long, Int>, Int>
 ) {
     val totalThrows = scores.entries.filter { it.key.first == player.id }.sumOf { it.value }
     val totalPar = holes.filter { scores[Pair(player.id, it.number)] != null }.sumOf { it.par }
     val vsPar = totalThrows - totalPar
+    val totalOb = obCounts.entries.filter { it.key.first == player.id }.sumOf { it.value }
 
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp)) {
@@ -162,6 +170,14 @@ private fun DetailPlayerCard(
                     }
                 }
                 Spacer(Modifier.height(4.dp))
+            }
+            if (totalOb > 0) {
+                Text(
+                    text = "$totalOb OB",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = ObColor
+                )
             }
         }
     }

@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.scorigami.shared.db.dao.CourseDao
+import com.scorigami.shared.db.dao.ObDao
 import com.scorigami.shared.db.dao.PlayerDao
 import com.scorigami.shared.db.dao.RoundDao
 import com.scorigami.shared.db.dao.ScoreDao
@@ -28,7 +29,8 @@ data class RoundDetailState(
     val date: String = "",
     val holes: List<HoleEntity> = emptyList(),
     val players: List<PlayerEntity> = emptyList(),
-    val scores: Map<Pair<Long, Int>, Int> = emptyMap()
+    val scores: Map<Pair<Long, Int>, Int> = emptyMap(),
+    val obCounts: Map<Pair<Long, Int>, Int> = emptyMap()
 )
 
 @HiltViewModel
@@ -37,6 +39,7 @@ class HistoryViewModel @Inject constructor(
     private val courseDao: CourseDao,
     private val playerDao: PlayerDao,
     private val scoreDao: ScoreDao,
+    private val obDao: ObDao,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -83,8 +86,9 @@ class HistoryViewModel @Inject constructor(
     } else {
         combine(
             scoreDao.getScoresForRound(detailRoundId),
-            playerDao.getPlayersForRoundFlow(detailRoundId)
-        ) { scores, players ->
+            playerDao.getPlayersForRoundFlow(detailRoundId),
+            obDao.getObForRound(detailRoundId)
+        ) { scores, players, obEntries ->
             val round = roundDao.getRoundById(detailRoundId)
                 ?: return@combine RoundDetailState()
             val courseWithHoles = courseDao.getCourseWithHoles(round.courseId)
@@ -109,7 +113,8 @@ class HistoryViewModel @Inject constructor(
                 date = formatOrdinalDate(round.startedAt),
                 holes = holes,
                 players = sortedPlayers,
-                scores = scoreMap
+                scores = scoreMap,
+                obCounts = obEntries.associate { Pair(it.playerId, it.holeNumber) to it.count }
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RoundDetailState())
     }

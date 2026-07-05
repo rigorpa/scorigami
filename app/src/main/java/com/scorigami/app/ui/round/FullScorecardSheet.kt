@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.ObColor
 import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.shared.db.entity.HoleEntity
 import com.scorigami.shared.db.entity.PlayerEntity
@@ -19,7 +20,8 @@ import com.scorigami.shared.db.entity.PlayerEntity
 internal fun FullScorecardSheet(
     players: List<PlayerEntity>,
     holes: List<HoleEntity>,
-    scores: Map<Pair<Long, Int>, Int>
+    scores: Map<Pair<Long, Int>, Int>,
+    obCounts: Map<Pair<Long, Int>, Int>
 ) {
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -31,6 +33,7 @@ internal fun FullScorecardSheet(
             val totalThrows = playerScores.sumOf { it.value }
             val parSoFar = holes.filter { scores[Pair(player.id, it.number)] != null }.sumOf { it.par }
             val totalVsPar = totalThrows - parSoFar
+            val totalOb = obCounts.entries.filter { it.key.first == player.id }.sumOf { it.value }
 
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
                 Row(
@@ -79,6 +82,14 @@ internal fun FullScorecardSheet(
                         }
                     }
                     Spacer(Modifier.height(4.dp))
+                }
+                if (totalOb > 0) {
+                    Text(
+                        text = "$totalOb OB",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = ObColor
+                    )
                 }
                 Spacer(Modifier.height(8.dp))
             }

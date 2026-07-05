@@ -18,6 +18,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
 import com.scorigami.app.ui.theme.NewRoundGradientStart
+import com.scorigami.app.ui.theme.ObColor
 import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.app.viewmodel.RoundViewModel
 import com.scorigami.shared.db.entity.HoleEntity
@@ -97,7 +98,8 @@ fun RoundReviewScreen(
                 PlayerReviewCard(
                     player = player,
                     holes = state.holes,
-                    scores = state.scores
+                    scores = state.scores,
+                    obCounts = state.obCounts
                 )
             }
 
@@ -139,11 +141,13 @@ fun RoundReviewScreen(
 private fun PlayerReviewCard(
     player: PlayerEntity,
     holes: List<HoleEntity>,
-    scores: Map<Pair<Long, Int>, Int>
+    scores: Map<Pair<Long, Int>, Int>,
+    obCounts: Map<Pair<Long, Int>, Int>
 ) {
     val totalThrows = scores.entries.filter { it.key.first == player.id }.sumOf { it.value }
     val parSoFar = holes.filter { scores[Pair(player.id, it.number)] != null }.sumOf { it.par }
     val totalVsPar = totalThrows - parSoFar
+    val totalOb = obCounts.entries.filter { it.key.first == player.id }.sumOf { it.value }
 
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
         Row(
@@ -192,6 +196,14 @@ private fun PlayerReviewCard(
                 }
             }
             Spacer(Modifier.height(4.dp))
+        }
+        if (totalOb > 0) {
+            Text(
+                text = "$totalOb OB",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = ObColor
+            )
         }
         Spacer(Modifier.height(8.dp))
     }

@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.scorigami.shared.db.dao.CourseDao
+import com.scorigami.shared.db.dao.ObDao
 import com.scorigami.shared.db.dao.PlayerDao
 import com.scorigami.shared.db.dao.RoundDao
 import com.scorigami.shared.db.dao.ScoreDao
@@ -17,9 +18,10 @@ import com.scorigami.shared.db.entity.*
         PlayerEntity::class,
         RoundEntity::class,
         RoundPlayerEntity::class,
-        ScoreEntity::class
+        ScoreEntity::class,
+        ObEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -27,6 +29,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun playerDao(): PlayerDao
     abstract fun roundDao(): RoundDao
     abstract fun scoreDao(): ScoreDao
+    abstract fun obDao(): ObDao
 
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -47,6 +50,25 @@ abstract class AppDatabase : RoomDatabase() {
         val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE players ADD COLUMN isArchived INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+        // The DDL must match Room's generated schema for ObEntity exactly (column types,
+        // NOT NULL, PK order, FK actions, index name) or Room fails schema validation on open.
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `ob_counts` (" +
+                        "`roundId` INTEGER NOT NULL, " +
+                        "`playerId` INTEGER NOT NULL, " +
+                        "`holeNumber` INTEGER NOT NULL, " +
+                        "`count` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`roundId`, `playerId`, `holeNumber`), " +
+                        "FOREIGN KEY(`roundId`) REFERENCES `rounds`(`id`) " +
+                        "ON UPDATE NO ACTION ON DELETE CASCADE)"
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_ob_counts_roundId` ON `ob_counts` (`roundId`)"
+                )
             }
         }
     }

@@ -94,8 +94,7 @@ fun HistoryScreen(
         }
     }
 
-    // Share hint — a bottom sheet matching AddRemovePlayersSheet; the actual share lives on
-    // the round detail screen, so this just tells the user to pick a round first.
+    // Share hint
     if (showShareHint) {
         ModalBottomSheet(onDismissRequest = { showShareHint = false }) {
             Column(

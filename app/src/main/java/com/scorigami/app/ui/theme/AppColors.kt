@@ -29,6 +29,9 @@ val ScreenBackground = Color.Black
 
 // Score colors vs par
 val ScoreUnderParColor = Color(0xFF81C784)   // green  — under par
+
+// Dark yellow — OB (out of bounds) button and counts
+val ObColor = Color(0xFFC9A227)
 // at par and unscored use ContentWhite; over par uses MaterialTheme.colorScheme.error from the theme
 
 // Home screen button gradients (start → end, left to right)
