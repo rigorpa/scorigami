@@ -152,7 +152,7 @@ fun RoundSetupScreen(
                         onValueChange = {},
                         readOnly = true,
                         label = {
-                            Text("Course", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            Text("Course", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = courseDropdownExpanded) },
                         colors = OutlinedTextFieldDefaults.colors(
