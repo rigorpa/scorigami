@@ -40,6 +40,9 @@ val StatUnsetColor = ScaleGrey1             // quiet dark grey while no count is
 val StatActiveColor = Color(0xFFEF5350)     // once a count is entered (matches the theme error red)
 // at par and unscored use ContentWhite; over par uses MaterialTheme.colorScheme.error from the theme
 
+// −/+ score buttons on the scorecard player card — matches the wear app's WearButtonBackground
+val ScoreButtonBackground = Color(0xFF2A2A2A)
+
 // Home screen button gradients (start → end, left to right)
 // val NewRoundGradientStart   = Color(0xFF0A2472)   // deep navy
 // val NewRoundGradientEnd     = Color(0xFF1976D2)   // sky blue

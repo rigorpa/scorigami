@@ -124,6 +124,7 @@ c1x_counts  roundId, playerId, holeNumber, count               (composite PK, FK
 - `PlayerState` — per-player data inside RoundState (playerId, name, **holeScores: Map<Int,Int>**, totalThrows, totalVsPar, **obCounts / c1xCounts: Map<Int,Int>**). `holeScores` maps every hole number the player has scored to their throw count, allowing the watch to display the correct score for whichever hole it is viewing independently of the phone; the stat maps do the same for the OB / C1x counters.
 - `ScoreUpdateMessage` — watch→phone message (roundId, playerId, holeNumber, throws, viewingHole)
 - `StatUpdateMessage` — watch→phone message for stat counters (roundId, playerId, holeNumber, **stat: "ob" | "c1x"**, count, viewingHole), sent to `/stat/update`; `PhoneWearableListenerService` writes it to Room (count ≤ 0 deletes the row, mirroring `RoundViewModel.setOb`/`setC1x`) and re-pushes state
+- `SgCourse` / `SgHole` — `@Serializable` file format for course sharing (`.sgcourse` JSON files), not a phone↔watch sync type despite living in `shared/sync/`. `SgCourse(version, name, holeCount, holes[])`; `SgHole(number, par, distanceFeet?, notes?)`. See "Course Sharing" section
 - ⚠️ **Every watch→phone message path must be whitelisted** in the app manifest's `PhoneWearableListenerService` intent-filter (`<data android:pathPrefix="…">` per path) — Play Services silently drops non-matching messages before the service is invoked. `/score/update` and `/stat/update` are both registered
 
 ---
@@ -138,6 +139,22 @@ Inserted once when the DB file is first created, via `DatabaseSeeder.seedIfEmpty
 | El Centinela | 18 | 54 | All holes Par 3 |
 
 Both courses include per-hole `distanceFeet` values. Displayed on the scorecard as "xxx ft / xxx m".
+
+---
+
+## Course Sharing (.sgcourse files)
+
+Users can share a course to other Scorigami users as a `.sgcourse` file (JSON, `SgCourse`/`SgHole` in `shared/sync/`).
+
+**Export** (`CourseListScreen`): Share icon in the top-bar `actions` (disabled/dimmed when no courses) → "Share a Course" `AlertDialog` picker listing all courses → `shareCourse()` (private `suspend fun` in the screen file, launched via `rememberCoroutineScope`). Serializes on `Dispatchers.IO` to `cacheDir/shared_courses/<name>.sgcourse` — the filename strips filesystem-unsafe characters (`/ \ : * ? " < > |` → `_`; a raw `/` would create a missing subdirectory and crash) — then fires `ACTION_SEND` (`application/octet-stream`) through the `FileProvider` declared in the manifest (`${applicationId}.fileprovider`; `file_paths.xml` has `cache-path` entries for both `shared_courses` and `shared_rounds`).
+
+**Import** (ACTION_VIEW intent): Two intent-filters on `MainActivity` (which is `launchMode="singleTop"`): `content://` + `application/octet-stream` (the common case — email/Drive attachments; deliberately NOT `*/*`, which made the app a handler for every file type) and `file://` + `.sgcourse` path pattern.
+- `MainActivity.handleIncomingIntent()` (called from `onCreate` and `onNewIntent`) reads the URI on `lifecycleScope` + `Dispatchers.IO` — never the main thread — with a **1 MB size guard** (`openAssetFileDescriptor` length check) before `readText()`, protecting against OOM if a large binary is opened; invalid JSON is logged and dropped
+- The parsed `SgCourse` lands in `MainActivity.pendingImport` (a `MutableState<SgCourse?>` passed into `AppNavigation`); a `LaunchedEffect` navigates to `course_list` with `popUpTo(home)` + **`launchSingleTop = true`** (without it, importing while already on the course list stacked a second `CourseListScreen` and ran the import twice)
+- `CourseListScreen` consumes the value (sets it back to null) and calls `CourseViewModel.importCourse(sgCourse)`, which: de-duplicates the name against `CourseDao.getAllCourseNames()` (appends " (2)", " (3)", …), stores `holeCount = holes.size` (NOT the file's declared `holeCount` — a malformed file could disagree), clamps `par = maxOf(2, par)` (the editor's minimum, not enforced by the file format), then emits `(finalName, holeCount)` on the `importedCourse` `SharedFlow` (`extraBufferCapacity = 1`, `tryEmit`)
+- The screen collects `importedCourse` in a `LaunchedEffect(Unit)` and shows an "Imported …" snackbar — a SharedFlow rather than a callback so the event survives the IO delay even if composition is churning
+
+**Format versioning:** `SgCourse.version` (currently 1) is written but not yet checked on import — a future breaking format change should add a version guard in `importCourse`.
 
 ---
 
@@ -165,8 +182,9 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 - **Hole jump dialog** (inlined in `HoleInfoCard`): opened by tapping the hole number; `Dialog` (`usePlatformDefaultWidth = false`) positioned in the lower screen half; `Surface` with `RoundedCornerShape(16.dp)` and `tonalElevation = 8.dp` contains the grid; 3-column grid of `Box` cells (`60 dp` tall, `RoundedCornerShape(8.dp)`); current hole `HoleJumpSelectedColor`, others `CardBackground`; amber `IncompleteHoleDotColor` dot (6 dp, `CircleShape`) top-right on cells with missing scores; tap outside to dismiss. `HoleJumpGrid.kt` (the old standalone composable with its own `OutlinedButton` trigger) is **kept in the codebase as a revert fallback** but is no longer used in any screen.
 
 ### CourseListScreen layout
-- **Top bar:** green gradient (`CoursesGradientStart` → `CoursesGradientEnd`) wrapping a transparent `TopAppBar`; title and nav icon use `ContentWhite`
+- **Top bar:** green gradient (`CoursesGradientStart` → `CoursesGradientEnd`) wrapping a transparent `TopAppBar`; title and nav icon use `ContentWhite`; **Share icon** (`Icons.Default.Share`) in `actions` — opens the course share picker (see Course Sharing section), dimmed to 40 % alpha and disabled when no courses exist
 - **List items:** `ListItem` with `containerColor = ScreenBackground`; `HorizontalDivider` between entries; `LazyColumn` background is `ScreenBackground`
+- **Import handling:** hosts the `pendingImport` consumer `LaunchedEffect` + the `importedCourse` snackbar collector (`Scaffold` has a `SnackbarHost`)
 
 ### HistoryScreen layout
 - **Top bar:** amber/brown gradient (`HistoryGradientStart` → `HistoryGradientEnd`) wrapping a transparent `TopAppBar`; title and nav icon use `ContentWhite`

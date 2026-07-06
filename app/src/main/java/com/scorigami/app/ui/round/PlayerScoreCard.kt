@@ -14,7 +14,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.scorigami.app.ui.theme.ContentWhite
-import com.scorigami.app.ui.theme.ScaleGrey2
+import com.scorigami.app.ui.theme.ScoreButtonBackground
+import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.app.ui.theme.StatActiveColor
 import com.scorigami.app.ui.theme.StatUnsetColor
@@ -53,7 +54,7 @@ internal fun PlayerScoreCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = ScaleGrey2)
+        colors = CardDefaults.cardColors(containerColor = ScreenBackground)
     ) {
         // name and round score
         Row(
@@ -97,12 +98,17 @@ internal fun PlayerScoreCard(
                     onCountChange = onC1xChange
                 )
 
-                // − score + controls
-                IconButton(
+                // − score + controls — filled dark-grey circles matching the wear app
+                FilledIconButton(
                     onClick = {
                         val next = if (throwsThisHole == 0) maxOf(1, holePar - 1) else throwsThisHole - 1
                         onScoreChange(next)
-                    }
+                    },
+                    modifier = Modifier.size(48.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = ScoreButtonBackground,
+                        contentColor = ContentWhite
+                    )
                 ) {
                     Text("−", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = ContentWhite)
                 }
@@ -114,11 +120,16 @@ internal fun PlayerScoreCard(
                     modifier = Modifier.widthIn(min = 40.dp),
                     textAlign = TextAlign.Center
                 )
-                IconButton(
+                FilledIconButton(
                     onClick = {
                         val next = if (throwsThisHole == 0) holePar else throwsThisHole + 1
                         onScoreChange(next)
-                    }
+                    },
+                    modifier = Modifier.size(48.dp),
+                    colors = IconButtonDefaults.filledIconButtonColors(
+                        containerColor = ScoreButtonBackground,
+                        contentColor = ContentWhite
+                    )
                 ) {
                     Text("+", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = ContentWhite)
                 }
