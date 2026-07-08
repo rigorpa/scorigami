@@ -72,7 +72,8 @@ Named color constants are centralized in `AppColors.kt` files — no inline `Col
 | `WearButtonBackground` | `#2A2A2A` | Dark grey for −/+ buttons, Enter/Next Hole chip, non-current hole cells |
 | `IncompleteHoleDotColor` | `#FFB300` | Amber dot on holes with missing scores |
 | `ScoreUnderParColor` | `#81C784` | Green — under par score display |
-| `ScoreOverParColor` | `Color.Red` | Red — over par score display AND the OB/C1x stat counters (one unified red) |
+| `ScoreOverParColor` | `Color.Red` | Red — over par score display AND active OB/C1x stat counters (one unified red) |
+| `StatUnsetColor` | `#9E9E9E` | OB/C1x stat counter while no count entered — light grey, readable on black OLED (`WearButtonBackground` was near-invisible as text) |
 | `ContentWhite` | `Color.White` | Primary text/icon color on dark surfaces (mirrors phone) |
 
 At-par and unscored use `ContentWhite`. Over-par uses `MaterialTheme.colorScheme.error` (phone) / `ScoreOverParColor` (wear).
@@ -236,7 +237,7 @@ The watch scorecard uses a **one-player-at-a-time** flow instead of showing all 
 
 **Layout per player:**
 - Hole number (42sp, `FontWeight.ExtraBold`, `HoleNumberColor`) at top — tappable to open the hole-jump picker
-- Player's full name in white `title1` (SemiBold), centered — tappable to open the tee-order popup — flanked by **stat counters** (`WearStatButton`, 13sp Bold): **OB left** of the name, **C1x right** — `WearButtonBackground` grey while unset (bare `"OB"`/`"C1x"` label), `ScoreOverParColor` red once a count is entered. Tap cycles bare label → 1 → 2 → 3+ → bare label in a local pending value keyed like `pendingScore`; the counts are **committed together with the score on Enter / Next Hole ▶** (a `StatUpdateMessage` is sent only when the pending value differs from what the phone last pushed — including back to 0, which clears the row)
+- Player's full name in white `title1` (SemiBold), centered — tappable to open the tee-order popup — flanked by **stat counters** (`WearStatButton`, 13sp Bold): **OB left** of the name, **C1x right** — `StatUnsetColor` light grey while unset (bare `"OB"`/`"C1x"` label), `ScoreOverParColor` red once a count is entered. Tap cycles bare label → 1 → 2 → 3+ → bare label in a local pending value keyed like `pendingScore`; the counts are **committed together with the score on Enter / Next Hole ▶** (a `StatUpdateMessage` is sent only when the pending value differs from what the phone last pushed — including back to 0, which clears the row)
 - −/+ `CompactButton` (48 dp, `#2A2A2A` dark-grey fill, 22sp) spread to screen edges via `Arrangement.SpaceBetween` on a `fillMaxWidth` row; score centered between them
 - Enter / Next Hole ▶ `Chip` centered below (36 dp height, `#2A2A2A` fill)
 - Tapping **Next Hole ▶ on the final hole** (instead of navigating) shows a centered `Dialog` with the message "End round on the phone app" — score is still committed first if `pendingScore > 0`

@@ -20,6 +20,7 @@ import com.scorigami.wear.ui.theme.ContentWhite
 import com.scorigami.wear.ui.theme.HoleNumberColor
 import com.scorigami.wear.ui.theme.ScoreOverParColor
 import com.scorigami.wear.ui.theme.ScoreUnderParColor
+import com.scorigami.wear.ui.theme.StatUnsetColor
 import com.scorigami.wear.ui.theme.WearButtonBackground
 
 @Composable
@@ -205,7 +206,7 @@ private fun WearStatButton(
             text = text,
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
-            color = if (active) ScoreOverParColor else WearButtonBackground,
+            color = if (active) ScoreOverParColor else StatUnsetColor,
             maxLines = 1
         )
     }

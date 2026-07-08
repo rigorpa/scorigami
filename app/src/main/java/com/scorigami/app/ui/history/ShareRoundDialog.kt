@@ -31,12 +31,11 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.FileProvider
 import com.scorigami.app.R
 import com.scorigami.app.ui.round.formatVsPar
-import com.scorigami.app.ui.round.vsParColor
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.HistoryGradientEnd
 import com.scorigami.app.ui.theme.HistoryGradientStart
-import com.scorigami.app.ui.theme.HoleNumberColor
+import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.app.ui.theme.ScaleGrey1
 import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.app.viewmodel.RoundDetailState
@@ -262,20 +261,12 @@ private fun SharePlayerBlock(
                 color = ContentWhite,
                 maxLines = 1
             )
-            Row {
-                Text(
-                    "$totalThrows ",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = ContentWhite
-                )
-                Text(
-                    "(${formatVsPar(vsPar)})",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = vsParColor(vsPar)
-                )
-            }
+            Text(
+                formatVsPar(vsPar),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = shareVsParColor(vsPar)
+            )
         }
         Spacer(Modifier.height(6.dp))
         holes.chunked(9).forEach { group ->
@@ -290,13 +281,13 @@ private fun SharePlayerBlock(
                         Text(
                             "${hole.number}",
                             style = MaterialTheme.typography.labelSmall,
-                            color = HoleNumberColor
+                            color = ContentWhite
                         )
                         Text(
                             text = diff?.let { formatVsPar(it) } ?: "—",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
-                            color = diff?.let { vsParColor(it) } ?: ContentLightGrey,
+                            color = diff?.let { shareVsParColor(it) } ?: ContentLightGrey,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -309,4 +300,15 @@ private fun SharePlayerBlock(
             Spacer(Modifier.height(3.dp))
         }
     }
+}
+
+/**
+ * Share-card vs-par colors: green under par (the theme's primary — which ScoreFormat's
+ * vsParColor uses — is a light blue, wrong for the exported image).
+ */
+@Composable
+private fun shareVsParColor(vsPar: Int) = when {
+    vsPar < 0 -> ScoreUnderParColor
+    vsPar == 0 -> ContentWhite
+    else -> MaterialTheme.colorScheme.error
 }
