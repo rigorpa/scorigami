@@ -18,6 +18,10 @@ val IncompleteHoleDotColor = Color(0xFFFFB300)
 val ContentWhite = Color.White
 
 // Score colors vs par
-val ScoreUnderParColor = Color(0xFF81C784)   // green  — under par
+val ScoreUnderParColor = Color(0xFF81C784)   // green — under par
+val ScoreOverParColor = Color.Red            // red — over par, and active OB/C1x stat counters
 // at par and unscored use ContentWhite
-// over par uses MaterialTheme.colors.error from the theme
+
+// OB / C1x stat counter while no count is entered — light grey so it stays readable on the
+// black OLED background (WearButtonBackground was near-invisible as text)
+val StatUnsetColor = Color(0xFF9E9E9E)

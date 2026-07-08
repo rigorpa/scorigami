@@ -29,7 +29,7 @@ import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.HoleJumpSelectedColor
 import com.scorigami.app.ui.theme.HoleNumberColor
 import com.scorigami.app.ui.theme.IncompleteHoleDotColor
-import com.scorigami.app.ui.theme.ScaleGrey1
+import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.shared.db.entity.HoleEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -158,7 +158,7 @@ internal fun HoleInfoCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = ScaleGrey1)
+        colors = CardDefaults.cardColors(containerColor = ScreenBackground)
     ) {
         Box {
             Row(

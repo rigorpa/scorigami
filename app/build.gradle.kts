@@ -15,8 +15,8 @@ android {
         applicationId = "com.scorigami.app"
         minSdk = 30
         targetSdk = 35
-        versionCode = 25
-        versionName = "0.5.5"
+        versionCode = 31
+        versionName = "0.6.1"
     }
 
     buildTypes {
@@ -46,7 +46,6 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
 

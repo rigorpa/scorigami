@@ -2,7 +2,9 @@ package com.scorigami.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.scorigami.shared.db.dao.C1xDao
 import com.scorigami.shared.db.dao.CourseDao
+import com.scorigami.shared.db.dao.ObDao
 import com.scorigami.shared.db.dao.PlayerDao
 import com.scorigami.shared.db.dao.RoundDao
 import com.scorigami.shared.db.dao.ScoreDao
@@ -24,6 +26,8 @@ data class RoundUiState(
     val basePlayers: List<PlayerEntity> = emptyList(),
     val players: List<PlayerEntity> = emptyList(),
     val scores: Map<Pair<Long, Int>, Int> = emptyMap(),
+    val obCounts: Map<Pair<Long, Int>, Int> = emptyMap(),
+    val c1xCounts: Map<Pair<Long, Int>, Int> = emptyMap(),
     val currentHole: Int = 1,
     val isActive: Boolean = false
 )
@@ -34,6 +38,8 @@ class RoundViewModel @Inject constructor(
     private val scoreDao: ScoreDao,
     private val courseDao: CourseDao,
     private val playerDao: PlayerDao,
+    private val obDao: ObDao,
+    private val c1xDao: C1xDao,
     private val wearSyncManager: WearSyncManager
 ) : ViewModel() {
 
@@ -53,7 +59,9 @@ class RoundViewModel @Inject constructor(
         val round: RoundEntity,
         val courseWithHoles: com.scorigami.shared.db.dao.CourseWithHoles,
         val players: List<PlayerEntity>,
-        val scores: List<ScoreEntity>
+        val scores: List<ScoreEntity>,
+        val obCounts: List<ObEntity>,
+        val c1xCounts: List<C1xEntity>
     )
 
     init {
@@ -65,15 +73,19 @@ class RoundViewModel @Inject constructor(
                     } else {
                         combine(
                             scoreDao.getScoresForRound(round.id),
-                            playerDao.getPlayersForRoundFlow(round.id)
-                        ) { scores, players ->
+                            playerDao.getPlayersForRoundFlow(round.id),
+                            obDao.getObForRound(round.id),
+                            c1xDao.getC1xForRound(round.id)
+                        ) { scores, players, obCounts, c1xCounts ->
                             val course = courseDao.getCourseWithHoles(round.courseId)
                                 ?: return@combine null
                             RoundData(
                                 round = round,
                                 courseWithHoles = course,
                                 players = players,
-                                scores = scores
+                                scores = scores,
+                                obCounts = obCounts,
+                                c1xCounts = c1xCounts
                             )
                         }
                     }
@@ -92,6 +104,8 @@ class RoundViewModel @Inject constructor(
                             basePlayers = data.players,
                             players = sortPlayersForHole(data.players, scoreMap, current.currentHole),
                             scores = scoreMap,
+                            obCounts = data.obCounts.associate { Pair(it.playerId, it.holeNumber) to it.count },
+                            c1xCounts = data.c1xCounts.associate { Pair(it.playerId, it.holeNumber) to it.count },
                             isActive = true
                         )
                     }
@@ -129,6 +143,32 @@ class RoundViewModel @Inject constructor(
                 scoreDao.deleteScore(roundId, playerId, holeNumber)
             } else {
                 scoreDao.upsertScore(ScoreEntity(roundId = roundId, playerId = playerId, holeNumber = holeNumber, throws = throws))
+            }
+        }
+    }
+
+    /** Sets a player's OB count for a hole; count <= 0 clears the row (no stored zeros). */
+    fun setOb(playerId: Long, holeNumber: Int, count: Int) {
+        val roundId = _uiState.value.roundId
+        if (roundId == -1L) return
+        viewModelScope.launch(Dispatchers.IO) {
+            if (count <= 0) {
+                obDao.deleteOb(roundId, playerId, holeNumber)
+            } else {
+                obDao.upsertOb(ObEntity(roundId = roundId, playerId = playerId, holeNumber = holeNumber, count = count))
+            }
+        }
+    }
+
+    /** Sets a player's missed-C1-putt count for a hole; count <= 0 clears the row. */
+    fun setC1x(playerId: Long, holeNumber: Int, count: Int) {
+        val roundId = _uiState.value.roundId
+        if (roundId == -1L) return
+        viewModelScope.launch(Dispatchers.IO) {
+            if (count <= 0) {
+                c1xDao.deleteC1x(roundId, playerId, holeNumber)
+            } else {
+                c1xDao.upsertC1x(C1xEntity(roundId = roundId, playerId = playerId, holeNumber = holeNumber, count = count))
             }
         }
     }
@@ -187,6 +227,8 @@ class RoundViewModel @Inject constructor(
         if (roundId == -1L || _uiState.value.players.size <= 1) return
         viewModelScope.launch(Dispatchers.IO) {
             scoreDao.deleteScoresForPlayer(roundId, playerId)
+            obDao.deleteObForPlayer(roundId, playerId)
+            c1xDao.deleteC1xForPlayer(roundId, playerId)
             roundDao.removeRoundPlayer(roundId, playerId)
         }
     }
@@ -233,7 +275,9 @@ class RoundViewModel @Inject constructor(
             currentHole = state.currentHole,
             holes = state.holes,
             players = state.basePlayers,
-            scores = state.scores
+            scores = state.scores,
+            obCounts = state.obCounts,
+            c1xCounts = state.c1xCounts
         )
         wearSyncManager.pushRoundState(roundState)
     }

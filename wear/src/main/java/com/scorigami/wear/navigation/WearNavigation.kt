@@ -60,15 +60,22 @@ fun WearNavigation(viewModel: WearViewModel = hiltViewModel()) {
             WearScorecardScreen(
                 roundState = roundState,
                 currentHole = uiState.currentHole,
-                onPrevHole = { viewModel.navigateToHole((uiState.currentHole - 1).coerceAtLeast(1)) },
                 onNextHole = { viewModel.navigateToHole((uiState.currentHole + 1).coerceAtMost(roundState.totalHoles)) },
-                onEndRound = { navController.navigate(WearScreen.EndRoundPrompt.route) },
                 onScoreChange = { playerId, throws ->
                     viewModel.sendScoreUpdate(
                         roundId = roundState.roundId,
                         playerId = playerId,
                         holeNumber = uiState.currentHole,
                         throws = throws
+                    )
+                },
+                onStatChange = { playerId, stat, count ->
+                    viewModel.sendStatUpdate(
+                        roundId = roundState.roundId,
+                        playerId = playerId,
+                        holeNumber = uiState.currentHole,
+                        stat = stat,
+                        count = count
                     )
                 },
                 onJumpToHole = { hole -> viewModel.navigateToHole(hole) }

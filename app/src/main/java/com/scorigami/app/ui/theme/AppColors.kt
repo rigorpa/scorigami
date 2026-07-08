@@ -7,7 +7,6 @@ val CardBackground = Color(0xFF37474F)
 val ScaleGrey2 = Color(0xFF5A6164)
 
 // Hole info card background
-val CardGrey = Color(0xFF42413C)
 val ScaleGrey1 = Color(0xFF354045)
 
 // Yellow hole number on the scorecard and hole-jump grid
@@ -30,7 +29,19 @@ val ScreenBackground = Color.Black
 
 // Score colors vs par
 val ScoreUnderParColor = Color(0xFF81C784)   // green  — under par
+
+// Dark yellow — OB/C1x round-total lines (Review, Full-scorecard sheet, History detail)
+val ObColor = Color(0xFFC9A227)
+
+// OB / C1x stat counter buttons on the scorecard player card. The unset shade must differ
+// from ScaleGrey2 — the card background — or the label disappears into it; ScaleGrey1 is
+// darker than the card, so the label reads as a subtle inset.
+val StatUnsetColor = ScaleGrey1             // quiet dark grey while no count is entered (bare "OB")
+val StatActiveColor = Color(0xFFEF5350)     // once a count is entered (matches the theme error red)
 // at par and unscored use ContentWhite; over par uses MaterialTheme.colorScheme.error from the theme
+
+// −/+ score buttons on the scorecard player card — matches the wear app's WearButtonBackground
+val ScoreButtonBackground = Color(0xFF2A2A2A)
 
 // Home screen button gradients (start → end, left to right)
 // val NewRoundGradientStart   = Color(0xFF0A2472)   // deep navy

@@ -18,18 +18,23 @@ import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.*
 import com.scorigami.wear.ui.theme.ContentWhite
 import com.scorigami.wear.ui.theme.HoleNumberColor
+import com.scorigami.wear.ui.theme.ScoreOverParColor
 import com.scorigami.wear.ui.theme.ScoreUnderParColor
+import com.scorigami.wear.ui.theme.StatUnsetColor
 import com.scorigami.wear.ui.theme.WearButtonBackground
 
 @Composable
 internal fun WearPlayerScoreEntry(
     currentHole: Int,
-    totalHoles: Int,
     playerName: String,
     holePar: Int,
     isLastPlayer: Boolean,
     pendingScore: Int,
+    obCount: Int,
+    c1xCount: Int,
     onPendingScoreChange: (Int) -> Unit,
+    onObTap: () -> Unit,
+    onC1xTap: () -> Unit,
     onCommit: () -> Unit,
     onShowHoleJump: () -> Unit,
     onShowTeeOrder: () -> Unit,
@@ -59,23 +64,41 @@ internal fun WearPlayerScoreEntry(
                 modifier = Modifier.clickable { onShowHoleJump() }
             )
 
-            // Current player name — tap to show tee order
-            Text(
-                playerName,
-                style = MaterialTheme.typography.title1,
-                fontWeight = FontWeight.SemiBold,
-                color = ContentWhite,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                modifier = Modifier.clickable { onShowTeeOrder() }
-            )
+            // OB (left) and C1x (right) stat counters flanking the player name;
+            // name itself still taps to show tee order
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                WearStatButton(
+                    text = if (obCount == 0) "OB" else if (obCount >= 3) "3+ OB" else "$obCount OB",
+                    active = obCount > 0,
+                    onClick = onObTap
+                )
+                Text(
+                    playerName,
+                    style = MaterialTheme.typography.title1,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ContentWhite,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { onShowTeeOrder() }
+                )
+                WearStatButton(
+                    text = if (c1xCount == 0) "C1x" else if (c1xCount >= 3) "3+ C1x" else "$c1xCount C1x",
+                    active = c1xCount > 0,
+                    onClick = onC1xTap
+                )
+            }
 
             // − score + controls
             val scoreColor = when {
                 pendingScore == 0 -> ContentWhite
                 pendingScore < holePar -> ScoreUnderParColor
                 pendingScore == holePar -> ContentWhite
-                else -> MaterialTheme.colors.error
+                else -> ScoreOverParColor
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -148,7 +171,10 @@ internal fun WearPlayerScoreEntry(
                 )
             )
 
-            // End Round button — hidden for now, re-enable by uncommenting
+            // End Round button — hidden for now. To re-enable: uncomment, add an
+            // `onEndRound: () -> Unit` param back to this composable and to
+            // WearScorecardScreen, and wire it in WearNavigation (navigate to
+            // WearScreen.EndRoundPrompt.route).
             // Chip(
             //     onClick = onEndRound,
             //     label = { Text("End Round", fontSize = 12.sp) },
@@ -156,5 +182,32 @@ internal fun WearPlayerScoreEntry(
             //     colors = ChipDefaults.chipColors(backgroundColor = MaterialTheme.colors.error)
             // )
         }
+    }
+}
+
+/**
+ * Per-hole stat counter; tap cycles - → 1 → 2 → 3+ → back to - (caller owns the cycle).
+ * Grey while unset so it doesn't shout; turns red once a count is entered.
+ */
+@Composable
+private fun WearStatButton(
+    text: String,
+    active: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .padding(horizontal = 4.dp, vertical = 10.dp)
+            .widthIn(min = 40.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (active) ScoreOverParColor else StatUnsetColor,
+            maxLines = 1
+        )
     }
 }

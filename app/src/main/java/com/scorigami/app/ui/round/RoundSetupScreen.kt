@@ -1,11 +1,13 @@
 package com.scorigami.app.ui.round
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -17,6 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ContentWhite
 import androidx.compose.ui.unit.dp
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
@@ -139,8 +143,6 @@ fun RoundSetupScreen(
             item { Spacer(Modifier.height(8.dp)) }
 
             item {
-                Text("Select Course", style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(8.dp))
                 ExposedDropdownMenuBox(
                     expanded = courseDropdownExpanded,
                     onExpandedChange = { courseDropdownExpanded = it }
@@ -149,7 +151,16 @@ fun RoundSetupScreen(
                         value = selectedCourse?.let { "${it.course.name} (Par ${it.holes.sumOf { h -> h.par }})" } ?: "Choose a course",
                         onValueChange = {},
                         readOnly = true,
+                        label = {
+                            Text("Course", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = courseDropdownExpanded) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedLabelColor = ContentWhite,
+                            focusedLabelColor = ContentWhite,
+                            unfocusedTextColor = ContentWhite,
+                            focusedTextColor = ContentWhite
+                        ),
                         modifier = Modifier.fillMaxWidth().menuAnchor()
                     )
                     ExposedDropdownMenu(
@@ -169,97 +180,116 @@ fun RoundSetupScreen(
                 }
             }
 
+            // Players area — outlined box with a floating border label, matching the
+            // OutlinedTextField look of the Course and Add Player fields
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Players", style = MaterialTheme.typography.titleMedium)
-                    IconButton(
-                        onClick = { players.shuffle() },
-                        enabled = players.size > 1
-                    ) {
-                        Icon(Icons.Default.Shuffle, contentDescription = "Shuffle player order")
-                    }
-                }
-                Spacer(Modifier.height(8.dp))
-
-                if (players.isNotEmpty()) {
-                    Column {
-                        players.forEach { name ->
+                LabeledOutlineBox(label = "Players") {
+                    if (players.isEmpty()) {
+                        Text(
+                            "No players yet — add below or tap a previous golfer",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = ContentLightGrey
+                        )
+                    } else {
+                        // Shuffle sits at the top-right of the box, above the player list
+                        if (players.size > 1) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(name, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
-                                IconButton(onClick = { players.remove(name) }) {
-                                    Icon(Icons.Default.Close, "Remove $name", tint = MaterialTheme.colorScheme.error)
+                                Text(
+                                    "Shuffle",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = ContentLightGrey
+                                )
+                                IconButton(onClick = { players.shuffle() }) {
+                                    Icon(Icons.Default.Shuffle, contentDescription = "Shuffle player order")
                                 }
                             }
-                            HorizontalDivider()
+                        }
+                        Column {
+                            players.forEachIndexed { index, name ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(name, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+                                    IconButton(onClick = { players.remove(name) }) {
+                                        Icon(Icons.Default.Close, "Remove $name", tint = MaterialTheme.colorScheme.error)
+                                    }
+                                }
+                                if (index < players.lastIndex) HorizontalDivider()
+                            }
                         }
                     }
-                    Spacer(Modifier.height(8.dp))
                 }
+            }
 
-                if (suggestions.isNotEmpty()) {
-                    Text(
-                        "Previous",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        suggestions.forEach { player ->
-                            Surface(
-                                shape = CircleShape,
-                                color = MaterialTheme.colorScheme.surfaceVariant,
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .clickable { players.add(player.name) }
-                                        .padding(start = 12.dp, end = 6.dp, top = 6.dp, bottom = 6.dp)
+            // Previous golfers — bottom portion of the screen, below the players box
+            if (suggestions.isNotEmpty()) {
+                item {
+                    LabeledOutlineBox(label = "Previous Golfers") {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            suggestions.forEach { player ->
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.surfaceVariant,
+                                    modifier = Modifier.padding(vertical = 4.dp)
                                 ) {
-                                    Text(
-                                        text = player.name,
-                                        color = ContentWhite,
-                                        style = MaterialTheme.typography.labelLarge
-                                    )
-                                    Spacer(Modifier.width(6.dp))
-                                    Box(
-                                        modifier = Modifier
-                                            .size(20.dp)
-                                            .clickable(
-                                                onClick = { playerToDelete = player },
-                                                onClickLabel = "Remove ${player.name}"
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Close,
-                                            contentDescription = null,
-                                            tint = Color.Red,
-                                            modifier = Modifier.size(14.dp)
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        // Name area — tap to add
+                                        Text(
+                                            text = player.name,
+                                            color = ContentWhite,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            modifier = Modifier
+                                                .clickable { players.add(player.name) }
+                                                .padding(start = 18.dp, end = 10.dp, top = 12.dp, bottom = 12.dp)
                                         )
+                                        // Remove target
+                                        Box(
+                                            modifier = Modifier
+                                                .size(width = 40.dp, height = 48.dp)
+                                                .clickable(
+                                                    onClick = { playerToDelete = player },
+                                                    onClickLabel = "Remove ${player.name}"
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Close,
+                                                contentDescription = null,
+                                                tint = Color.Red,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                    Spacer(Modifier.height(8.dp))
                 }
+            }
 
+            // Add Player — below the previous-golfer pills
+            item {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
                         value = playerNameInput,
                         onValueChange = { playerNameInput = it },
-                        label = { Text("Add Player") },
+                        label = {
+                            Text("Add Player", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedLabelColor = ContentWhite,
+                            focusedLabelColor = ContentWhite,
+                            unfocusedTextColor = ContentWhite,
+                            focusedTextColor = ContentWhite
+                        ),
                         modifier = Modifier.weight(1f),
                         singleLine = true
                     )
@@ -281,5 +311,41 @@ fun RoundSetupScreen(
 
             item { Spacer(Modifier.height(16.dp)) }
         }
+    }
+}
+
+/**
+ * Outlined container with a small label floating on the top border — mimics the
+ * OutlinedTextField look so custom sections (Players, Previous Golfers) match the
+ * Course and Add Player fields on this screen.
+ */
+@Composable
+private fun LabeledOutlineBox(
+    label: String,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 14.dp) // room for the label to straddle the border
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline,
+                    shape = RoundedCornerShape(4.dp)
+                )
+                .padding(horizontal = 12.dp, vertical = 12.dp),
+            content = content
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = ContentWhite,
+            modifier = Modifier
+                .padding(start = 12.dp)
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 4.dp)
+        )
     }
 }

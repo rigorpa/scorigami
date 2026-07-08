@@ -3,7 +3,9 @@ package com.scorigami.app.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.scorigami.shared.db.dao.C1xDao
 import com.scorigami.shared.db.dao.CourseDao
+import com.scorigami.shared.db.dao.ObDao
 import com.scorigami.shared.db.dao.PlayerDao
 import com.scorigami.shared.db.dao.RoundDao
 import com.scorigami.shared.db.dao.ScoreDao
@@ -28,7 +30,9 @@ data class RoundDetailState(
     val date: String = "",
     val holes: List<HoleEntity> = emptyList(),
     val players: List<PlayerEntity> = emptyList(),
-    val scores: Map<Pair<Long, Int>, Int> = emptyMap()
+    val scores: Map<Pair<Long, Int>, Int> = emptyMap(),
+    val obCounts: Map<Pair<Long, Int>, Int> = emptyMap(),
+    val c1xCounts: Map<Pair<Long, Int>, Int> = emptyMap()
 )
 
 @HiltViewModel
@@ -37,6 +41,8 @@ class HistoryViewModel @Inject constructor(
     private val courseDao: CourseDao,
     private val playerDao: PlayerDao,
     private val scoreDao: ScoreDao,
+    private val obDao: ObDao,
+    private val c1xDao: C1xDao,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -83,18 +89,37 @@ class HistoryViewModel @Inject constructor(
     } else {
         combine(
             scoreDao.getScoresForRound(detailRoundId),
-            playerDao.getPlayersForRoundFlow(detailRoundId)
-        ) { scores, players ->
+            playerDao.getPlayersForRoundFlow(detailRoundId),
+            obDao.getObForRound(detailRoundId),
+            c1xDao.getC1xForRound(detailRoundId)
+        ) { scores, players, obEntries, c1xEntries ->
             val round = roundDao.getRoundById(detailRoundId)
                 ?: return@combine RoundDetailState()
             val courseWithHoles = courseDao.getCourseWithHoles(round.courseId)
                 ?: return@combine RoundDetailState()
+            val holes = courseWithHoles.holes.sortedBy { it.number }
+            val scoreMap = scores.associate { Pair(it.playerId, it.holeNumber) to it.throws }
+            // Best round first: lowest vs-par, then fewest throws; players with no
+            // scores sort last. Stable sort keeps tee order among exact ties.
+            val sortedPlayers = players.sortedWith(
+                compareBy(
+                    { player -> if (scores.none { it.playerId == player.id }) 1 else 0 },
+                    { player ->
+                        val throws = scores.filter { it.playerId == player.id }.sumOf { it.throws }
+                        val par = holes.filter { scoreMap[Pair(player.id, it.number)] != null }.sumOf { it.par }
+                        throws - par
+                    },
+                    { player -> scores.filter { it.playerId == player.id }.sumOf { it.throws } }
+                )
+            )
             RoundDetailState(
                 courseName = courseWithHoles.course.name,
                 date = formatOrdinalDate(round.startedAt),
-                holes = courseWithHoles.holes.sortedBy { it.number },
-                players = players,
-                scores = scores.associate { Pair(it.playerId, it.holeNumber) to it.throws }
+                holes = holes,
+                players = sortedPlayers,
+                scores = scoreMap,
+                obCounts = obEntries.associate { Pair(it.playerId, it.holeNumber) to it.count },
+                c1xCounts = c1xEntries.associate { Pair(it.playerId, it.holeNumber) to it.count }
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RoundDetailState())
     }

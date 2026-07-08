@@ -32,4 +32,7 @@ interface CourseDao {
 
     @Query("SELECT COUNT(*) FROM courses")
     suspend fun getCourseCount(): Int
+
+    @Query("SELECT name FROM courses")
+    suspend fun getAllCourseNames(): List<String>
 }
