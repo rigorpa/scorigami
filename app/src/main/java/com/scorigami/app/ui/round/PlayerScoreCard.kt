@@ -171,7 +171,7 @@ private fun StatCycleButton(
             },
             fontSize = 18.sp,
             fontWeight = FontWeight.ExtraBold,
-            color = if (count > 0) StatActiveColor else StatUnsetColor,
+            color = if (count > 0) StatActiveColor else ContentWhite,
             maxLines = 1
         )
     }

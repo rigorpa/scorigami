@@ -22,6 +22,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.app.viewmodel.RoundViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -115,7 +116,10 @@ fun ScorecardScreen(
     }
 
     if (showPlayersSheet) {
-        ModalBottomSheet(onDismissRequest = { showPlayersSheet = false }) {
+        ModalBottomSheet(
+            onDismissRequest = { showPlayersSheet = false },
+            containerColor = ScreenBackground
+        ) {
             AddRemovePlayersSheet(
                 currentPlayers = state.players,
                 allPlayers = allPlayers,

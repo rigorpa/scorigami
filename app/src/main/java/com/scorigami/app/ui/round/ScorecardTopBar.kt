@@ -8,9 +8,11 @@ import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
@@ -34,10 +36,26 @@ internal fun ScorecardTopBar(
     ) {
         TopAppBar(
             title = {
+                // Auto-shrink: start at 32sp and step down until the name fits on one line
+                // (18sp floor, then ellipsis as a last resort). Drawing is suppressed until
+                // the size settles so the oversized first pass never flashes on screen.
+                var titleSize by remember(courseName) { mutableStateOf(32.sp) }
+                var sizeSettled by remember(courseName) { mutableStateOf(false) }
                 Text(
                     text = courseName,
                     fontFamily = FontFamily.Cursive,
-                    fontSize = 32.sp
+                    fontSize = titleSize,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                    onTextLayout = { result ->
+                        if (result.hasVisualOverflow && titleSize.value > 18f) {
+                            titleSize = (titleSize.value * 0.9f).coerceAtLeast(18f).sp
+                        } else {
+                            sizeSettled = true
+                        }
+                    },
+                    modifier = Modifier.drawWithContent { if (sizeSettled) drawContent() }
                 )
             },
             actions = {

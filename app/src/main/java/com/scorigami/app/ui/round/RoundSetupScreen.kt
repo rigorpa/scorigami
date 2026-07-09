@@ -1,13 +1,11 @@
 package com.scorigami.app.ui.round
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -311,41 +309,5 @@ fun RoundSetupScreen(
 
             item { Spacer(Modifier.height(16.dp)) }
         }
-    }
-}
-
-/**
- * Outlined container with a small label floating on the top border — mimics the
- * OutlinedTextField look so custom sections (Players, Previous Golfers) match the
- * Course and Add Player fields on this screen.
- */
-@Composable
-private fun LabeledOutlineBox(
-    label: String,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Box(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 14.dp) // room for the label to straddle the border
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outline,
-                    shape = RoundedCornerShape(4.dp)
-                )
-                .padding(horizontal = 12.dp, vertical = 12.dp),
-            content = content
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = ContentWhite,
-            modifier = Modifier
-                .padding(start = 12.dp)
-                .background(MaterialTheme.colorScheme.background)
-                .padding(horizontal = 4.dp)
-        )
     }
 }
