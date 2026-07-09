@@ -2,7 +2,6 @@ package com.scorigami.app.ui.round
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,8 +21,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.scorigami.app.ui.theme.CardBackground
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.HoleJumpSelectedColor
@@ -72,81 +69,60 @@ internal fun HoleInfoCard(
     }
 
     if (showHoleJumpDialog) {
-        Dialog(
-            onDismissRequest = { showHoleJumpDialog = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            Box(
+        // Default container (surfaceContainerLow grey) — consistent with the app's other sheets
+        ModalBottomSheet(onDismissRequest = { showHoleJumpDialog = false }) {
+            Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    ) { showHoleJumpDialog = false }
-                    .padding(top = 320.dp, start = 12.dp, end = 12.dp),
-                contentAlignment = Alignment.TopCenter
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 32.dp)
             ) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() }
-                        ) {},
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.background,
-                    tonalElevation = 8.dp
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            "Jump to Hole",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Normal,
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        )
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            holes.chunked(3).forEach { rowHoles ->
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    modifier = Modifier.fillMaxWidth()
+                Text(
+                    "Jump to Hole",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Normal,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    holes.chunked(3).forEach { rowHoles ->
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            rowHoles.forEach { h ->
+                                val isCurrent = h.number == hole
+                                val incomplete = h.number in incompleteHoles
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(60.dp)
+                                        .background(
+                                            if (isCurrent) HoleJumpSelectedColor else CardBackground,
+                                            RoundedCornerShape(8.dp)
+                                        )
+                                        .clickable {
+                                            onHoleSelected(h.number)
+                                            showHoleJumpDialog = false
+                                        },
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    rowHoles.forEach { h ->
-                                        val isCurrent = h.number == hole
-                                        val incomplete = h.number in incompleteHoles
+                                    Text(
+                                        text = "${h.number}",
+                                        fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Normal,
+                                        color = ContentWhite,
+                                        fontSize = 20.sp
+                                    )
+                                    if (incomplete) {
                                         Box(
                                             modifier = Modifier
-                                                .weight(1f)
-                                                .height(60.dp)
-                                                .background(
-                                                    if (isCurrent) HoleJumpSelectedColor else CardBackground,
-                                                    RoundedCornerShape(8.dp)
-                                                )
-                                                .clickable {
-                                                    onHoleSelected(h.number)
-                                                    showHoleJumpDialog = false
-                                                },
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(
-                                                text = "${h.number}",
-                                                fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Normal,
-                                                color = ContentWhite,
-                                                fontSize = 20.sp
-                                            )
-                                            if (incomplete) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .align(Alignment.TopEnd)
-                                                        .padding(top = 4.dp, end = 4.dp)
-                                                        .size(6.dp)
-                                                        .background(IncompleteHoleDotColor, CircleShape)
-                                                )
-                                            }
-                                        }
+                                                .align(Alignment.TopEnd)
+                                                .padding(top = 4.dp, end = 4.dp)
+                                                .size(6.dp)
+                                                .background(IncompleteHoleDotColor, CircleShape)
+                                        )
                                     }
-                                    repeat(3 - rowHoles.size) { Spacer(Modifier.weight(1f)) }
                                 }
                             }
+                            repeat(3 - rowHoles.size) { Spacer(Modifier.weight(1f)) }
                         }
                     }
                 }

@@ -13,13 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.scorigami.app.ui.theme.ContentWhite
-import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.shared.db.entity.PlayerEntity
 
 /**
  * Add/remove-players sheet body — styled to match RoundSetupScreen's outlined-box
  * language (LabeledOutlineBox sections, pill chips, bold white field labels).
- * The hosting ModalBottomSheet uses [ScreenBackground] so the box label patches blend.
+ * The hosting ModalBottomSheet uses the default container (surfaceContainerLow grey,
+ * same as the hole-notes sheet), so the box label patches use that token too.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -39,7 +39,7 @@ internal fun AddRemovePlayersSheet(
             .padding(bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        LabeledOutlineBox(label = "Players", labelPatchColor = ScreenBackground) {
+        LabeledOutlineBox(label = "Players", labelPatchColor = BottomSheetDefaults.ContainerColor) {
             currentPlayers.forEachIndexed { index, player ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -68,7 +68,7 @@ internal fun AddRemovePlayersSheet(
         }
 
         if (suggestions.isNotEmpty()) {
-            LabeledOutlineBox(label = "Previous Golfers", labelPatchColor = ScreenBackground) {
+            LabeledOutlineBox(label = "Previous Golfers", labelPatchColor = BottomSheetDefaults.ContainerColor) {
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
