@@ -37,7 +37,8 @@ val ObColor = Color(0xFFC9A227)
 // from ScaleGrey2 — the card background — or the label disappears into it; ScaleGrey1 is
 // darker than the card, so the label reads as a subtle inset.
 val StatUnsetColor = ScaleGrey1             // quiet dark grey while no count is entered (bare "OB")
-val StatActiveColor = Color(0xFFEF5350)     // once a count is entered (matches the theme error red)
+val StatActiveColor = Color(0xFFEF5350)     // OB once a count is entered (matches the theme error red)
+val C1xActiveColor = Color(0xFFFF9800)      // C1x once a count is entered — orange, distinct from OB red
 // at par and unscored use ContentWhite; over par uses MaterialTheme.colorScheme.error from the theme
 
 // −/+ score buttons on the scorecard player card — matches the wear app's WearButtonBackground

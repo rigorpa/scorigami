@@ -15,7 +15,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
 import androidx.wear.compose.material.*
+import com.scorigami.wear.ui.theme.C1xActiveColor
 import com.scorigami.wear.ui.theme.ContentWhite
 import com.scorigami.wear.ui.theme.HoleNumberColor
 import com.scorigami.wear.ui.theme.ScoreOverParColor
@@ -73,6 +75,7 @@ internal fun WearPlayerScoreEntry(
                 WearStatButton(
                     text = if (obCount == 0) "OB" else if (obCount >= 3) "3+ OB" else "$obCount OB",
                     active = obCount > 0,
+                    activeColor = ScoreOverParColor,
                     onClick = onObTap
                 )
                 Text(
@@ -89,6 +92,7 @@ internal fun WearPlayerScoreEntry(
                 WearStatButton(
                     text = if (c1xCount == 0) "C1x" else if (c1xCount >= 3) "3+ C1x" else "$c1xCount C1x",
                     active = c1xCount > 0,
+                    activeColor = C1xActiveColor,
                     onClick = onC1xTap
                 )
             }
@@ -187,12 +191,13 @@ internal fun WearPlayerScoreEntry(
 
 /**
  * Per-hole stat counter; tap cycles - → 1 → 2 → 3+ → back to - (caller owns the cycle).
- * Grey while unset so it doesn't shout; turns red once a count is entered.
+ * Grey while unset so it doesn't shout; [activeColor] (OB red / C1x orange) once a count is entered.
  */
 @Composable
 private fun WearStatButton(
     text: String,
     active: Boolean,
+    activeColor: Color,
     onClick: () -> Unit
 ) {
     Box(
@@ -206,7 +211,7 @@ private fun WearStatButton(
             text = text,
             fontSize = 13.sp,
             fontWeight = FontWeight.Bold,
-            color = if (active) ScoreOverParColor else StatUnsetColor,
+            color = if (active) activeColor else StatUnsetColor,
             maxLines = 1
         )
     }

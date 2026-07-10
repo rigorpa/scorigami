@@ -18,7 +18,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
 import com.scorigami.app.ui.theme.NewRoundGradientStart
-import com.scorigami.app.ui.theme.ObColor
 import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.app.viewmodel.RoundViewModel
 import com.scorigami.shared.db.entity.HoleEntity
@@ -195,23 +194,16 @@ private fun PlayerReviewCard(
                             color = scoreColor,
                             textAlign = TextAlign.Center
                         )
+                        StatUnderlines(
+                            hasOb = (obCounts[Pair(player.id, hole.number)] ?: 0) > 0,
+                            hasC1x = (c1xCounts[Pair(player.id, hole.number)] ?: 0) > 0
+                        )
                     }
                 }
             }
             Spacer(Modifier.height(4.dp))
         }
-        val statLine = listOfNotNull(
-            "$totalOb OB".takeIf { totalOb > 0 },
-            "$totalC1x C1x".takeIf { totalC1x > 0 }
-        ).joinToString("  ·  ")
-        if (statLine.isNotEmpty()) {
-            Text(
-                text = statLine,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = ObColor
-            )
-        }
+        StatTotalsLine(totalOb, totalC1x)
         Spacer(Modifier.height(8.dp))
     }
 }

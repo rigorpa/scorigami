@@ -13,12 +13,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
+import com.scorigami.app.ui.theme.C1xActiveColor
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.ScoreButtonBackground
 import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.app.ui.theme.StatActiveColor
-import com.scorigami.app.ui.theme.StatUnsetColor
 import com.scorigami.shared.db.entity.HoleEntity
 import com.scorigami.shared.db.entity.PlayerEntity
 
@@ -89,12 +90,14 @@ internal fun PlayerScoreCard(
                     label = "OB",
                     count = obThisHole,
                     playerName = player.name,
+                    activeColor = StatActiveColor,
                     onCountChange = onObChange
                 )
                 StatCycleButton(
                     label = "C1x",
                     count = c1xThisHole,
                     playerName = player.name,
+                    activeColor = C1xActiveColor,
                     onCountChange = onC1xChange
                 )
 
@@ -140,7 +143,7 @@ internal fun PlayerScoreCard(
 
 /**
  * Per-hole stat counter: tap cycles - → 1 → 2 → 3+ → -, long-press steps back.
- * Black while unset so it stays quiet on the grey card; red once a count is entered.
+ * White while unset; [activeColor] (OB red / C1x orange) once a count is entered.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -148,6 +151,7 @@ private fun StatCycleButton(
     label: String,
     count: Int,
     playerName: String,
+    activeColor: Color,
     onCountChange: (Int) -> Unit
 ) {
     Box(
@@ -171,7 +175,7 @@ private fun StatCycleButton(
             },
             fontSize = 18.sp,
             fontWeight = FontWeight.ExtraBold,
-            color = if (count > 0) StatActiveColor else ContentWhite,
+            color = if (count > 0) activeColor else ContentWhite,
             maxLines = 1
         )
     }
