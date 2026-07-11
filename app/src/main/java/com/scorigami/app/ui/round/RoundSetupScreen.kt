@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -20,6 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.DisabledButtonGradientEnd
+import com.scorigami.app.ui.theme.DisabledButtonGradientStart
 import androidx.compose.ui.unit.dp
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
 import com.scorigami.app.ui.theme.NewRoundGradientStart
@@ -115,6 +118,13 @@ fun RoundSetupScreen(
                     .navigationBarsPadding()
                     .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
             ) {
+                // Gradient pill matching HomeScreen's HomeActionButton style
+                val startEnabled = selectedCourseId != null && players.isNotEmpty()
+                val startGradient = if (startEnabled) {
+                    Brush.horizontalGradient(listOf(NewRoundGradientStart, NewRoundGradientEnd))
+                } else {
+                    Brush.horizontalGradient(listOf(DisabledButtonGradientStart, DisabledButtonGradientEnd))
+                }
                 Button(
                     onClick = {
                         selectedCourseId?.let { courseId ->
@@ -124,8 +134,22 @@ fun RoundSetupScreen(
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    enabled = selectedCourseId != null && players.isNotEmpty()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .background(startGradient, RoundedCornerShape(percent = 50)),
+                    enabled = startEnabled,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = ContentWhite,
+                        disabledContainerColor = Color.Transparent,
+                        disabledContentColor = ContentWhite.copy(alpha = 0.5f)
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 0.dp,
+                        pressedElevation = 0.dp,
+                        disabledElevation = 0.dp
+                    )
                 ) {
                     Text("Start Round")
                 }
@@ -141,6 +165,7 @@ fun RoundSetupScreen(
             item { Spacer(Modifier.height(8.dp)) }
 
             item {
+                SectionTitle("Course")
                 ExposedDropdownMenuBox(
                     expanded = courseDropdownExpanded,
                     onExpandedChange = { courseDropdownExpanded = it }
@@ -149,17 +174,13 @@ fun RoundSetupScreen(
                         value = selectedCourse?.let { "${it.course.name} (Par ${it.holes.sumOf { h -> h.par }})" } ?: "Choose a course",
                         onValueChange = {},
                         readOnly = true,
-                        label = {
-                            Text("Course", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = courseDropdownExpanded) },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedLabelColor = ContentWhite,
-                            focusedLabelColor = ContentWhite,
-                            unfocusedTextColor = ContentWhite,
-                            focusedTextColor = ContentWhite
-                        ),
-                        modifier = Modifier.fillMaxWidth().menuAnchor()
+                        shape = RoundedCornerShape(12.dp),
+                        colors = sectionFieldColors(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(SectionCardGradient, RoundedCornerShape(12.dp))
+                            .menuAnchor()
                     )
                     ExposedDropdownMenu(
                         expanded = courseDropdownExpanded,
@@ -178,10 +199,9 @@ fun RoundSetupScreen(
                 }
             }
 
-            // Players area — outlined box with a floating border label, matching the
-            // OutlinedTextField look of the Course and Add Player fields
+            // Players area — filled section card (matches the scorecard's card language)
             item {
-                LabeledOutlineBox(label = "Players") {
+                SectionCard(label = "Players") {
                     if (players.isEmpty()) {
                         Text(
                             "No players yet — add below or tap a previous golfer",
@@ -227,7 +247,7 @@ fun RoundSetupScreen(
             // Previous golfers — bottom portion of the screen, below the players box
             if (suggestions.isNotEmpty()) {
                 item {
-                    LabeledOutlineBox(label = "Previous Golfers") {
+                    SectionCard(label = "Previous Golfers") {
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -275,20 +295,17 @@ fun RoundSetupScreen(
 
             // Add Player — below the previous-golfer pills
             item {
+                SectionTitle("Add Player")
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
                         value = playerNameInput,
                         onValueChange = { playerNameInput = it },
-                        label = {
-                            Text("Add Player", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedLabelColor = ContentWhite,
-                            focusedLabelColor = ContentWhite,
-                            unfocusedTextColor = ContentWhite,
-                            focusedTextColor = ContentWhite
-                        ),
-                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("Player name", color = ContentLightGrey) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = sectionFieldColors(),
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(SectionCardGradient, RoundedCornerShape(12.dp)),
                         singleLine = true
                     )
                     Spacer(Modifier.width(8.dp))

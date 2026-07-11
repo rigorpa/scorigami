@@ -197,8 +197,9 @@ fun ScorecardScreen(
                         onToggleScoresVisible = { scoresVisible = !scoresVisible }
                     )
                     LazyColumn(
-                        contentPadding = PaddingValues(vertical = 4.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        // Extra top padding separates the player cards from the hole card above
+                        contentPadding = PaddingValues(top = 20.dp, bottom = 4.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier.weight(1f)
                     ) {
                         items(state.players, key = { it.id }) { player ->
