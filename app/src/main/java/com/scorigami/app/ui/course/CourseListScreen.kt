@@ -163,12 +163,10 @@ fun CourseListScreen(
         )
     }
 
-    // Share course picker — a bottom sheet matching the app's dark list styling
+    // Share course picker — default container (surfaceContainerLow grey), matching the
+    // hole-notes and add/remove-players sheets
     if (showSharePicker) {
-        ModalBottomSheet(
-            onDismissRequest = { showSharePicker = false },
-            containerColor = ScreenBackground
-        ) {
+        ModalBottomSheet(onDismissRequest = { showSharePicker = false }) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -196,7 +194,7 @@ fun CourseListScreen(
                             scope.launch { shareCourse(context, courseWithHoles) }
                         },
                         colors = ListItemDefaults.colors(
-                            containerColor = ScreenBackground,
+                            containerColor = Color.Transparent,
                             headlineColor = ContentWhite,
                             supportingColor = ContentLightGrey,
                             trailingIconColor = ContentWhite

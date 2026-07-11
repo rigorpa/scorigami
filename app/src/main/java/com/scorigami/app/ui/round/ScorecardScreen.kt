@@ -115,6 +115,7 @@ fun ScorecardScreen(
     }
 
     if (showPlayersSheet) {
+        // Default container (surfaceContainerLow grey) — matches the hole-notes sheet
         ModalBottomSheet(onDismissRequest = { showPlayersSheet = false }) {
             AddRemovePlayersSheet(
                 currentPlayers = state.players,
