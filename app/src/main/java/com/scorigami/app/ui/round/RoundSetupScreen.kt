@@ -36,6 +36,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.viewmodel.CourseViewModel
 import com.scorigami.app.viewmodel.RoundViewModel
 import com.scorigami.shared.db.entity.PlayerEntity
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -52,6 +54,8 @@ fun RoundSetupScreen(
     var playerNameInput by remember { mutableStateOf("") }
     val players = remember { mutableStateListOf<String>() }
     var showCoursePicker by remember { mutableStateOf(false) }
+    var isShuffling by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     // Last played course first, remainder alphabetical
     val sortedCourses = remember(courses, lastPlayedCourseId) {
@@ -218,7 +222,23 @@ fun RoundSetupScreen(
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = ContentLightGrey
                                 )
-                                IconButton(onClick = { players.shuffle() }) {
+                                // One tap runs 4 quick shuffles (~2s) so the reorder reads
+                                // as a visible randomization rather than a single snap
+                                IconButton(
+                                    onClick = {
+                                        if (!isShuffling) {
+                                            scope.launch {
+                                                isShuffling = true
+                                                repeat(4) { pass ->
+                                                    players.shuffle()
+                                                    if (pass < 3) delay(650)
+                                                }
+                                                isShuffling = false
+                                            }
+                                        }
+                                    },
+                                    enabled = !isShuffling
+                                ) {
                                     Icon(Icons.Default.Shuffle, contentDescription = "Shuffle player order")
                                 }
                             }
