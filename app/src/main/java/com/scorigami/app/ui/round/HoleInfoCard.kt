@@ -18,14 +18,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.scorigami.app.ui.theme.CardBackground
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.HoleJumpSelectedColor
-import com.scorigami.app.ui.theme.HoleNumberColor
 import com.scorigami.app.ui.theme.IncompleteHoleDotColor
+import com.scorigami.app.ui.theme.NewRoundGradientEnd
+import com.scorigami.app.ui.theme.NewRoundGradientStart
 import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.shared.db.entity.HoleEntity
 
@@ -151,12 +156,22 @@ internal fun HoleInfoCard(
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, "Previous hole", modifier = Modifier.size(48.dp))
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    // Number painted with the top bar's blue gradient. The gradient starts
+                    // near-black, so it's drawn twice: a white stroked pass underneath for an
+                    // outline, then the gradient fill on top. The "Hole" label stays plain
+                    // white — the outline read badly at small text sizes.
+                    val holeGradient = Brush.horizontalGradient(
+                        listOf(NewRoundGradientStart, NewRoundGradientEnd)
+                    )
+                    val numberStroke = with(LocalDensity.current) {
+                        Stroke(width = 3.dp.toPx(), join = StrokeJoin.Round)
+                    }
                     Text(
                         text = "Hole",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Normal,
                         fontSize = 20.sp,
-                        color = HoleNumberColor
+                        color = ContentWhite
                     )
                     Box(
                         modifier = Modifier
@@ -165,14 +180,25 @@ internal fun HoleInfoCard(
                             .padding(horizontal = 12.dp, vertical = 2.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "$hole",
-                            style = MaterialTheme.typography.displayMedium,
-                            fontSize = 124.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = HoleNumberColor,
+                        Box(
+                            contentAlignment = Alignment.Center,
                             modifier = Modifier.scale(holeScale)
-                        )
+                        ) {
+                            Text(
+                                text = "$hole",
+                                style = MaterialTheme.typography.displayMedium.copy(
+                                    color = ContentWhite, drawStyle = numberStroke
+                                ),
+                                fontSize = 124.sp,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                            Text(
+                                text = "$hole",
+                                style = MaterialTheme.typography.displayMedium.copy(brush = holeGradient),
+                                fontSize = 124.sp,
+                                fontWeight = FontWeight.ExtraBold
+                            )
+                        }
                     }
                     holeEntity?.let {
                         Spacer(Modifier.height(8.dp))

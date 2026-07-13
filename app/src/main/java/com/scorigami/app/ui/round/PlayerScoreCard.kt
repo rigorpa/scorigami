@@ -101,6 +101,9 @@ internal fun PlayerScoreCard(
                     onCountChange = onC1xChange
                 )
 
+                // Gap pulls the stat counters toward the card's center, away from the − control
+                Spacer(Modifier.width(16.dp))
+
                 // − score + controls — filled dark-grey circles matching the wear app
                 FilledIconButton(
                     onClick = {

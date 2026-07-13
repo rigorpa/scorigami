@@ -5,21 +5,29 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.DisabledButtonGradientEnd
+import com.scorigami.app.ui.theme.DisabledButtonGradientStart
 import androidx.compose.ui.unit.dp
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
 import com.scorigami.app.ui.theme.NewRoundGradientStart
@@ -28,6 +36,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.viewmodel.CourseViewModel
 import com.scorigami.app.viewmodel.RoundViewModel
 import com.scorigami.shared.db.entity.PlayerEntity
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -43,7 +53,9 @@ fun RoundSetupScreen(
     var selectedCourseId by remember { mutableStateOf<Long?>(null) }
     var playerNameInput by remember { mutableStateOf("") }
     val players = remember { mutableStateListOf<String>() }
-    var courseDropdownExpanded by remember { mutableStateOf(false) }
+    var showCoursePicker by remember { mutableStateOf(false) }
+    var isShuffling by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     // Last played course first, remainder alphabetical
     val sortedCourses = remember(courses, lastPlayedCourseId) {
@@ -115,6 +127,13 @@ fun RoundSetupScreen(
                     .navigationBarsPadding()
                     .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
             ) {
+                // Gradient pill matching HomeScreen's HomeActionButton style
+                val startEnabled = selectedCourseId != null && players.isNotEmpty()
+                val startGradient = if (startEnabled) {
+                    Brush.horizontalGradient(listOf(NewRoundGradientStart, NewRoundGradientEnd))
+                } else {
+                    Brush.horizontalGradient(listOf(DisabledButtonGradientStart, DisabledButtonGradientEnd))
+                }
                 Button(
                     onClick = {
                         selectedCourseId?.let { courseId ->
@@ -124,8 +143,22 @@ fun RoundSetupScreen(
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    enabled = selectedCourseId != null && players.isNotEmpty()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .background(startGradient, RoundedCornerShape(percent = 50)),
+                    enabled = startEnabled,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = ContentWhite,
+                        disabledContainerColor = Color.Transparent,
+                        disabledContentColor = ContentWhite.copy(alpha = 0.5f)
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 0.dp,
+                        pressedElevation = 0.dp,
+                        disabledElevation = 0.dp
+                    )
                 ) {
                     Text("Start Round")
                 }
@@ -141,47 +174,35 @@ fun RoundSetupScreen(
             item { Spacer(Modifier.height(8.dp)) }
 
             item {
-                ExposedDropdownMenuBox(
-                    expanded = courseDropdownExpanded,
-                    onExpandedChange = { courseDropdownExpanded = it }
-                ) {
+                SectionTitle("Course")
+                // Gradient bubble matching the Add Player field; a transparent overlay
+                // intercepts the tap (a readOnly OutlinedTextField consumes clicks itself)
+                Box(modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
                         value = selectedCourse?.let { "${it.course.name} (Par ${it.holes.sumOf { h -> h.par }})" } ?: "Choose a course",
                         onValueChange = {},
                         readOnly = true,
-                        label = {
-                            Text("Course", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        trailingIcon = {
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = ContentWhite)
                         },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = courseDropdownExpanded) },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedLabelColor = ContentWhite,
-                            focusedLabelColor = ContentWhite,
-                            unfocusedTextColor = ContentWhite,
-                            focusedTextColor = ContentWhite
-                        ),
-                        modifier = Modifier.fillMaxWidth().menuAnchor()
+                        shape = RoundedCornerShape(12.dp),
+                        colors = sectionFieldColors(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(SectionCardGradient, RoundedCornerShape(12.dp))
                     )
-                    ExposedDropdownMenu(
-                        expanded = courseDropdownExpanded,
-                        onDismissRequest = { courseDropdownExpanded = false }
-                    ) {
-                        sortedCourses.forEach { cwh ->
-                            DropdownMenuItem(
-                                text = { Text("${cwh.course.name} · Par ${cwh.holes.sumOf { it.par }}") },
-                                onClick = {
-                                    selectedCourseId = cwh.course.id
-                                    courseDropdownExpanded = false
-                                }
-                            )
-                        }
-                    }
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable(onClickLabel = "Choose a course") { showCoursePicker = true }
+                    )
                 }
             }
 
-            // Players area — outlined box with a floating border label, matching the
-            // OutlinedTextField look of the Course and Add Player fields
+            // Players area — filled section card (matches the scorecard's card language)
             item {
-                LabeledOutlineBox(label = "Players") {
+                SectionCard(label = "Players") {
                     if (players.isEmpty()) {
                         Text(
                             "No players yet — add below or tap a previous golfer",
@@ -201,7 +222,23 @@ fun RoundSetupScreen(
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = ContentLightGrey
                                 )
-                                IconButton(onClick = { players.shuffle() }) {
+                                // One tap runs 4 quick shuffles (~2s) so the reorder reads
+                                // as a visible randomization rather than a single snap
+                                IconButton(
+                                    onClick = {
+                                        if (!isShuffling) {
+                                            scope.launch {
+                                                isShuffling = true
+                                                repeat(4) { pass ->
+                                                    players.shuffle()
+                                                    if (pass < 3) delay(650)
+                                                }
+                                                isShuffling = false
+                                            }
+                                        }
+                                    },
+                                    enabled = !isShuffling
+                                ) {
                                     Icon(Icons.Default.Shuffle, contentDescription = "Shuffle player order")
                                 }
                             }
@@ -227,7 +264,7 @@ fun RoundSetupScreen(
             // Previous golfers — bottom portion of the screen, below the players box
             if (suggestions.isNotEmpty()) {
                 item {
-                    LabeledOutlineBox(label = "Previous Golfers") {
+                    SectionCard(label = "Previous Golfers") {
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -275,20 +312,17 @@ fun RoundSetupScreen(
 
             // Add Player — below the previous-golfer pills
             item {
+                SectionTitle("Add Player")
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     OutlinedTextField(
                         value = playerNameInput,
                         onValueChange = { playerNameInput = it },
-                        label = {
-                            Text("Add Player", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                        },
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedLabelColor = ContentWhite,
-                            focusedLabelColor = ContentWhite,
-                            unfocusedTextColor = ContentWhite,
-                            focusedTextColor = ContentWhite
-                        ),
-                        modifier = Modifier.weight(1f),
+                        placeholder = { Text("Player name", color = ContentLightGrey) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = sectionFieldColors(),
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(SectionCardGradient, RoundedCornerShape(12.dp)),
                         singleLine = true
                     )
                     Spacer(Modifier.width(8.dp))
@@ -308,6 +342,50 @@ fun RoundSetupScreen(
             }
 
             item { Spacer(Modifier.height(16.dp)) }
+        }
+    }
+
+    // Course picker — default container (surfaceContainerLow grey), matching the app's
+    // other sheets (share picker, hole notes, add/remove players)
+    if (showCoursePicker) {
+        ModalBottomSheet(onDismissRequest = { showCoursePicker = false }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 32.dp)
+            ) {
+                Text(
+                    "Choose a Course",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ContentWhite,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+                sortedCourses.forEach { cwh ->
+                    val isSelected = cwh.course.id == selectedCourseId
+                    ListItem(
+                        headlineContent = { Text(cwh.course.name, fontWeight = FontWeight.Bold) },
+                        supportingContent = { Text("${cwh.course.holeCount} holes · Par ${cwh.holes.sumOf { it.par }}") },
+                        trailingContent = {
+                            if (isSelected) {
+                                Icon(Icons.Default.Check, contentDescription = "Selected", tint = ContentWhite)
+                            }
+                        },
+                        modifier = Modifier.clickable {
+                            selectedCourseId = cwh.course.id
+                            showCoursePicker = false
+                        },
+                        colors = ListItemDefaults.colors(
+                            containerColor = Color.Transparent,
+                            headlineColor = ContentWhite,
+                            supportingColor = ContentLightGrey,
+                            trailingIconColor = ContentWhite
+                        )
+                    )
+                    HorizontalDivider()
+                }
+            }
         }
     }
 }

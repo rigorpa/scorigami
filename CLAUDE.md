@@ -174,6 +174,8 @@ Users can share a course to other Scorigami users as a `.sgcourse` file (JSON, `
 
 Navigation is in `app/navigation/AppNavigation.kt`.
 
+⚠️ **All zero-arg navigation callbacks in `AppNavigation` must stay wrapped in `dropUnlessResumed { … }`** (`lifecycle-runtime-compose`). During a pop transition the departing screen is still composed and its back arrow still tappable — an unguarded quick double-tap fired `popBackStack()` twice, the second pop removed the `home` start destination, and the app showed only the navy `windowBackground` with no UI (fixed 2026-07-13). The wrapper drops any tap that arrives once the entry has left `RESUMED`. Known gap: the parameterized callbacks (`onEditCourse`, `onRoundDetail`) can't use it (zero-arg only); a double-tap there can stack a duplicate screen — benign, back once recovers.
+
 ### ScorecardScreen layout
 - **Top bar:** blue gradient (`NewRoundGradientStart` → `NewRoundGradientEnd`) wrapping a transparent `TopAppBar`; course name in `FontFamily.Cursive`, **auto-shrinking** from 32sp to an 18sp floor to fit one line (`onTextLayout` + `hasVisualOverflow` loop, draw suppressed until settled, ellipsis as last resort); `TableChart` icon button (opens full scorecard sheet); "End Round" button; ⋮ overflow menu
 - **Full scorecard sheet:** `ModalBottomSheet` with `skipPartiallyExpanded = true` (opens full height) — per-player 18-hole breakdown with hole numbers (`labelMedium`) and vs-par scores (`bodyMedium`, bold, colored)
@@ -193,8 +195,9 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 
 ### RoundSetupScreen layout
 - **Top bar:** blue gradient (`NewRoundGradientStart` → `NewRoundGradientEnd`) matching ScorecardScreen; title and nav icon use `ContentWhite`
-- **Unified outlined-box language:** every section mimics the `OutlinedTextField` look — a 1.dp `colorScheme.outline` border with 4.dp corners and a **bold white `titleSmall` label** floating on the top border. The Course dropdown and Add Player field are real `OutlinedTextField`s (labels "Course" / "Add Player" styled `titleSmall` Bold via the label lambda, `ContentWhite` label + text colors); the custom sections use the private `LabeledOutlineBox` composable (label `Text` with a `background(colorScheme.background)` patch straddling the border)
-- **Screen order:** (1) Course dropdown; (2) `LabeledOutlineBox("Players")` — an end-aligned shuffle `IconButton` at the top-right of the box (when `players.size > 1`) above the player rows with × remove + dividers, or a grey "No players yet…" hint when empty; (3) `LabeledOutlineBox("Previous Golfers")` — pill chips (`Surface` + `CircleShape`, ~48dp tall; name area taps to add, separate 40×48dp red × zone archives via confirm dialog); (4) Add Player `OutlinedTextField` + add `IconButton` at the bottom of the scrollable content
+- **Gradient-card language (no borders):** sections are rounded cards painted with the top bar's blue gradient (`SectionCard` — `SectionCardGradient` = `NewRoundGradientStart → End`, `RoundedCornerShape(12.dp)`) with their bold white `titleSmall` titles sitting **above** the bubbles (`SectionTitle`). The Course dropdown and Add Player field are label-less `OutlinedTextField`s (Add Player uses a grey "Player name" placeholder) with transparent containers (`sectionFieldColors()`) over the same gradient painted via `Modifier.background(SectionCardGradient, shape)`, so all four bubbles match the top bar
+- **Screen order:** (1) Course dropdown; (2) `SectionCard("Players")` — an end-aligned shuffle `IconButton` at the top-right (when `players.size > 1`) above the player rows with × remove + dividers, or a grey "No players yet…" hint when empty; (3) `SectionCard("Previous Golfers")` — pill chips (`Surface` + `CircleShape`, ~48dp tall; name area taps to add, separate 40×48dp red × zone archives via confirm dialog); (4) Add Player field + add `IconButton` at the bottom of the scrollable content
+- **Start Round button:** gradient pill matching `HomeActionButton` — transparent `Button` over `Brush.horizontalGradient(NewRoundGradientStart → End)` (`RoundedCornerShape(percent = 50)`), disabled state falls back to the `DisabledButtonGradient` pair
 - **Start Round button:** in `Scaffold` `bottomBar` — full-width, 56 dp height, 16 dp horizontal padding, matching `RoundReviewScreen` bottom bar style
 
 ### CourseEditorScreen layout
@@ -506,8 +509,8 @@ Dead code audit and removal. All changes are deletions only — no behavior chan
 | `HoleInfoCard.kt` | Hole card: ◀/▶ nav, animated yellow hole number, par/distance, the three corner icons (Info / Group / Visibility) **and** its own hole-notes `ModalBottomSheet` (visibility state internal, keyed on `hole`) |
 | `HoleJumpGrid.kt` | Hole-jump button + 3-column grid `Dialog` |
 | `FullScorecardSheet.kt` | Per-player 18-hole breakdown shown in the table-icon `ModalBottomSheet` |
-| `AddRemovePlayersSheet.kt` | Add/remove-players `ModalBottomSheet` body — styled like RoundSetupScreen (`LabeledOutlineBox` "Players" / "Previous Golfers" sections, pill chips, bold white field label); host sheet uses the **default container** (`surfaceContainerLow` grey, matching the hole-notes sheet), and the box label patches use `BottomSheetDefaults.ContainerColor` to blend |
-| `LabeledOutlineBox.kt` | Shared outlined-box-with-floating-label composable (`labelPatchColor` must match the surface behind it); used by RoundSetupScreen and AddRemovePlayersSheet |
+| `AddRemovePlayersSheet.kt` | Add/remove-players `ModalBottomSheet` body — styled like RoundSetupScreen (`SectionCard` "Players" / "Previous Golfers" sections, pill chips, bold white field label); host sheet uses the **default container** (`surfaceContainerLow` grey, matching the hole-notes sheet) |
+| `SectionCard.kt` | Shared gradient section card (`SectionCardGradient` top-bar blue, 12.dp corners, bold white title inside) + `sectionFieldColors()` transparent-container field style; used by RoundSetupScreen and AddRemovePlayersSheet |
 | `ScorecardTopBar.kt` | Gradient top bar — scorecard/end-round actions + ⋮ overflow menu (`menuExpanded` state internal) |
 | `ScoreFormat.kt` | Shared `formatVsPar()` / `vsParColor()` helpers for the `ui.round` package |
 
