@@ -174,6 +174,8 @@ Users can share a course to other Scorigami users as a `.sgcourse` file (JSON, `
 
 Navigation is in `app/navigation/AppNavigation.kt`.
 
+⚠️ **All zero-arg navigation callbacks in `AppNavigation` must stay wrapped in `dropUnlessResumed { … }`** (`lifecycle-runtime-compose`). During a pop transition the departing screen is still composed and its back arrow still tappable — an unguarded quick double-tap fired `popBackStack()` twice, the second pop removed the `home` start destination, and the app showed only the navy `windowBackground` with no UI (fixed 2026-07-13). The wrapper drops any tap that arrives once the entry has left `RESUMED`. Known gap: the parameterized callbacks (`onEditCourse`, `onRoundDetail`) can't use it (zero-arg only); a double-tap there can stack a duplicate screen — benign, back once recovers.
+
 ### ScorecardScreen layout
 - **Top bar:** blue gradient (`NewRoundGradientStart` → `NewRoundGradientEnd`) wrapping a transparent `TopAppBar`; course name in `FontFamily.Cursive`, **auto-shrinking** from 32sp to an 18sp floor to fit one line (`onTextLayout` + `hasVisualOverflow` loop, draw suppressed until settled, ellipsis as last resort); `TableChart` icon button (opens full scorecard sheet); "End Round" button; ⋮ overflow menu
 - **Full scorecard sheet:** `ModalBottomSheet` with `skipPartiallyExpanded = true` (opens full height) — per-player 18-hole breakdown with hole numbers (`labelMedium`) and vs-par scores (`bodyMedium`, bold, colored)

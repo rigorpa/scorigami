@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -52,19 +53,24 @@ fun AppNavigation(
 
     NavHost(navController = navController, startDestination = Screen.Home.route) {
 
+        // All navigation callbacks are wrapped in dropUnlessResumed: once a transition starts,
+        // the departing screen's entry leaves RESUMED, so a second tap that lands on the
+        // still-composed (fading) screen is dropped. Without this, a quick double-tap on a back
+        // arrow fired popBackStack() twice — the second pop removed the Home start destination,
+        // leaving an empty NavHost (blank navy windowBackground, no UI to interact with).
         composable(Screen.Home.route) {
             HomeScreen(
-                onStartRound = { navController.navigate(Screen.RoundSetup.route) },
-                onResume = { navController.navigate(Screen.Scorecard.route) },
-                onCourses = { navController.navigate(Screen.CourseList.route) },
-                onHistory = { navController.navigate(Screen.History.route) }
+                onStartRound = dropUnlessResumed { navController.navigate(Screen.RoundSetup.route) },
+                onResume = dropUnlessResumed { navController.navigate(Screen.Scorecard.route) },
+                onCourses = dropUnlessResumed { navController.navigate(Screen.CourseList.route) },
+                onHistory = dropUnlessResumed { navController.navigate(Screen.History.route) }
             )
         }
 
         composable(Screen.CourseList.route) {
             CourseListScreen(
-                onBack = { navController.popBackStack() },
-                onCreateCourse = { navController.navigate(Screen.CourseEditor.createRoute()) },
+                onBack = dropUnlessResumed { navController.popBackStack() },
+                onCreateCourse = dropUnlessResumed { navController.navigate(Screen.CourseEditor.createRoute()) },
                 onEditCourse = { id -> navController.navigate(Screen.CourseEditor.createRoute(id)) },
                 pendingImport = pendingImport
             )
@@ -76,13 +82,13 @@ fun AppNavigation(
                 type = NavType.LongType; defaultValue = -1L
             })
         ) {
-            CourseEditorScreen(onBack = { navController.popBackStack() })
+            CourseEditorScreen(onBack = dropUnlessResumed { navController.popBackStack() })
         }
 
         composable(Screen.RoundSetup.route) {
             RoundSetupScreen(
-                onBack = { navController.popBackStack() },
-                onRoundStarted = {
+                onBack = dropUnlessResumed { navController.popBackStack() },
+                onRoundStarted = dropUnlessResumed {
                     navController.navigate(Screen.Scorecard.route) {
                         popUpTo(Screen.Home.route)
                     }
@@ -92,9 +98,9 @@ fun AppNavigation(
 
         composable(Screen.Scorecard.route) {
             ScorecardScreen(
-                onEndRound = { navController.navigate(Screen.RoundReview.route) },
-                onBack = { navController.popBackStack() },
-                onCancelRound = {
+                onEndRound = dropUnlessResumed { navController.navigate(Screen.RoundReview.route) },
+                onBack = dropUnlessResumed { navController.popBackStack() },
+                onCancelRound = dropUnlessResumed {
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Home.route) { inclusive = false }
                     }
@@ -104,18 +110,18 @@ fun AppNavigation(
 
         composable(Screen.RoundReview.route) {
             RoundReviewScreen(
-                onConfirm = {
+                onConfirm = dropUnlessResumed {
                     navController.navigate(Screen.History.route) {
                         popUpTo(Screen.Home.route)
                     }
                 },
-                onBack = { navController.popBackStack() }
+                onBack = dropUnlessResumed { navController.popBackStack() }
             )
         }
 
         composable(Screen.History.route) {
             HistoryScreen(
-                onBack = { navController.popBackStack() },
+                onBack = dropUnlessResumed { navController.popBackStack() },
                 onRoundDetail = { id -> navController.navigate(Screen.RoundDetail.createRoute(id)) }
             )
         }
@@ -124,7 +130,7 @@ fun AppNavigation(
             route = Screen.RoundDetail.route,
             arguments = listOf(navArgument("roundId") { type = NavType.LongType })
         ) {
-            RoundDetailScreen(onBack = { navController.popBackStack() })
+            RoundDetailScreen(onBack = dropUnlessResumed { navController.popBackStack() })
         }
     }
 }

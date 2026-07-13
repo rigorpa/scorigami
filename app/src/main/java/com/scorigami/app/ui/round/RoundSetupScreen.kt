@@ -5,17 +5,22 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -46,7 +51,7 @@ fun RoundSetupScreen(
     var selectedCourseId by remember { mutableStateOf<Long?>(null) }
     var playerNameInput by remember { mutableStateOf("") }
     val players = remember { mutableStateListOf<String>() }
-    var courseDropdownExpanded by remember { mutableStateOf(false) }
+    var showCoursePicker by remember { mutableStateOf(false) }
 
     // Last played course first, remainder alphabetical
     val sortedCourses = remember(courses, lastPlayedCourseId) {
@@ -166,36 +171,28 @@ fun RoundSetupScreen(
 
             item {
                 SectionTitle("Course")
-                ExposedDropdownMenuBox(
-                    expanded = courseDropdownExpanded,
-                    onExpandedChange = { courseDropdownExpanded = it }
-                ) {
+                // Gradient bubble matching the Add Player field; a transparent overlay
+                // intercepts the tap (a readOnly OutlinedTextField consumes clicks itself)
+                Box(modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
                         value = selectedCourse?.let { "${it.course.name} (Par ${it.holes.sumOf { h -> h.par }})" } ?: "Choose a course",
                         onValueChange = {},
                         readOnly = true,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = courseDropdownExpanded) },
+                        trailingIcon = {
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = ContentWhite)
+                        },
                         shape = RoundedCornerShape(12.dp),
                         colors = sectionFieldColors(),
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(SectionCardGradient, RoundedCornerShape(12.dp))
-                            .menuAnchor()
                     )
-                    ExposedDropdownMenu(
-                        expanded = courseDropdownExpanded,
-                        onDismissRequest = { courseDropdownExpanded = false }
-                    ) {
-                        sortedCourses.forEach { cwh ->
-                            DropdownMenuItem(
-                                text = { Text("${cwh.course.name} · Par ${cwh.holes.sumOf { it.par }}") },
-                                onClick = {
-                                    selectedCourseId = cwh.course.id
-                                    courseDropdownExpanded = false
-                                }
-                            )
-                        }
-                    }
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable(onClickLabel = "Choose a course") { showCoursePicker = true }
+                    )
                 }
             }
 
@@ -325,6 +322,50 @@ fun RoundSetupScreen(
             }
 
             item { Spacer(Modifier.height(16.dp)) }
+        }
+    }
+
+    // Course picker — default container (surfaceContainerLow grey), matching the app's
+    // other sheets (share picker, hole notes, add/remove players)
+    if (showCoursePicker) {
+        ModalBottomSheet(onDismissRequest = { showCoursePicker = false }) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(bottom = 32.dp)
+            ) {
+                Text(
+                    "Choose a Course",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = ContentWhite,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+                sortedCourses.forEach { cwh ->
+                    val isSelected = cwh.course.id == selectedCourseId
+                    ListItem(
+                        headlineContent = { Text(cwh.course.name, fontWeight = FontWeight.Bold) },
+                        supportingContent = { Text("${cwh.course.holeCount} holes · Par ${cwh.holes.sumOf { it.par }}") },
+                        trailingContent = {
+                            if (isSelected) {
+                                Icon(Icons.Default.Check, contentDescription = "Selected", tint = ContentWhite)
+                            }
+                        },
+                        modifier = Modifier.clickable {
+                            selectedCourseId = cwh.course.id
+                            showCoursePicker = false
+                        },
+                        colors = ListItemDefaults.colors(
+                            containerColor = Color.Transparent,
+                            headlineColor = ContentWhite,
+                            supportingColor = ContentLightGrey,
+                            trailingIconColor = ContentWhite
+                        )
+                    )
+                    HorizontalDivider()
+                }
+            }
         }
     }
 }
