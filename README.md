@@ -15,21 +15,24 @@ The app also runs on other Android devices (min Android 11 / API 30). A Pixel 4a
 
 ## Features
 
-- Create and manage courses with per-hole par values, distances, and rules/notes
-- Add players before a round — previously used names are suggested automatically; shuffle button randomises the tee order
+- Create and manage courses with per-hole par values, distances, and rules/notes — courses can have any number of holes (add/remove hole lines in the editor)
+- **Share courses between users** as `.sgcourse` files — export from the My Courses share icon, import by opening the file from email, Drive, or a file manager (names are de-duplicated automatically)
+- Add players before a round — previously used names are suggested automatically (long-unused names can be removed from suggestions); animated shuffle button randomises the tee order
 - Add or remove players mid-round via the scorecard overflow menu
 - Enter scores on the phone or the watch in real time, kept in sync via the Wearable Data Layer
 - **Smart first-press scoring:** tapping `−` from 0 enters birdie (par − 1); tapping `+` enters par — no need to tap up from zero every hole
-- Navigate between holes by swiping left/right on the phone, or via the hole-jump grid picker on both phone and watch
-- The hole-jump picker shows all 18 holes as a 3-column grid — tap any cell to jump instantly; the current hole is highlighted yellow
+- **OB and C1x stat tracking:** per-hole out-of-bounds (red) and missed circle-1-putt (orange) counters on both phone and watch — tap to cycle 1 → 2 → 3+, long-press to step back; round totals and per-hole color-coded indicators appear on every scorecard view
+- Navigate between holes via the ◀/▶ arrows, or tap the big hole number to open the hole-jump grid picker (phone and watch)
 - Holes with missing scores are flagged with an amber dot in the hole-jump grid (phone and watch)
 - Per-hole rules and notes — tap the info icon on the hole card to see OB lines, mandos, or any rule the course editor stored for that hole
+- Hide player scores mid-round with the eye toggle (shows `•••`) — on the phone hole card and the watch tee-order view
 - Animated slide transition and hole-number spring bounce on the phone when changing holes
 - View the full live scorecard mid-round via the table icon in the phone top bar
 - Player order on each hole reflects the honor system (lowest score on the previous hole goes first; ties broken by the hole before that, cascading)
 - Cancel an in-progress round without saving it to history
 - Review the full scorecard before finalizing a round
 - Browse round history with per-hole breakdowns and standings
+- **Share a finished round as a PNG** — branded scorecard image with per-player hole grids and OB/C1x stats, from the round-detail share icon
 
 ---
 
@@ -74,13 +77,14 @@ Both courses include per-hole distances (meters and feet) and example hole rules
 |---|---|
 | Jetpack Compose BOM 2024.12.01 | Phone UI |
 | Wear Compose 1.4.0 | Watch UI |
-| Room 2.6.1 | Local database (phone only) |
-| Hilt 2.51.1 | Dependency injection |
+| Room 2.8.4 | Local database (phone only) |
+| Hilt 2.59.2 | Dependency injection |
 | play-services-wearable 18.2.0 | Phone ↔ Watch Data Layer |
 | kotlinx.serialization 1.7.3 | JSON for sync messages |
 | Navigation Compose 2.8.5 | Phone navigation |
+| Wear Compose Navigation 1.4.0 | Watch navigation |
 
-Min SDK: 30 · Compile SDK: 35 · Kotlin: 2.0.21 · AGP: 8.7.0
+Min SDK: 30 · Compile SDK: 35 · Kotlin: 2.2.10 · AGP: 9.2.1
 
 ---
 
@@ -109,6 +113,20 @@ The `:wear` APK is embedded in the `:app` build and installs to the paired watch
 
 | Version | Notes |
 |---|---|
+| Unreleased | Shuffle button animates through 4 passes (~2 s) so the reorder reads as a visible randomization. Scorecard hole number painted with the top-bar blue gradient plus a white outline. C1x metric changed from red to orange (OB stays red) across phone, watch, and all scorecard views; per-hole red/orange underline indicators added beneath the throw count wherever scorecards are shown, including the shared PNG. |
+| 0.6.3 | Major bug fix: navigation callbacks are now guarded with `dropUnlessResumed` — an unguarded quick double-tap on a back arrow fired `popBackStack()` twice, popped the start destination, and left a blank navy screen. Round Setup course selection changed from a dropdown to a `ModalBottomSheet` for consistency with the app's other pickers. |
+| 0.6.2 | UI updates on OB/C1x metrics. Shared round PNG shows total throws per hole instead of the over/under par score, matching the in-app scorecards. |
+| 0.6.1 | UI color changes. Removed " - " separator in OB and C1x metric labels. |
+| 0.6.0 | **OB / C1x stat tracking:** out-of-bounds and missed circle-1-putt counter buttons on the player card (phone) and score entry screen (watch), synced both ways; round totals shown in Review, Full-scorecard sheet, and History detail. Two new Room tables (`ob_counts`, `c1x_counts`, DB migrations 5→7). |
+| 0.5.9 | Watch tee-order view rebuilt as an inline Scaffold branch instead of a `Dialog` — big performance gain (no second platform window or entrance animation). |
+| 0.5.8 | Round sharing is now a branded PNG scorecard image (gradient header, logo, per-player hole grids) instead of plain text. |
+| 0.5.7 | Player archiving: remove a name from the "Previous Golfers" suggestions with a confirm dialog; re-adding the name restores it. |
+| 0.5.6 | **Course sharing:** export any course as a `.sgcourse` file via the share sheet, import by opening the file (names de-duplicated, malformed files validated). Course editor gained add/remove hole lines — courses are no longer fixed at 18 holes. |
+| 0.5.5 | Cold-start fix on the watch: blank loading route until the Data Layer resolves, so `NoRoundScreen` no longer flashes when a round is active. |
+| 0.5.4 | Score visibility (eye) toggle added to the watch tee-order view, mirroring the phone. |
+| 0.5.3 | Audit fixes: foreign-key enforcement enabled (course edits no longer duplicate hole rows), decrement-to-zero deletes the score row instead of storing 0, seeding moved to DB creation. Screen orientation locked to portrait. |
+| 0.5.2 | UI scorecard changes on the phone app; minor watch UI changes. |
+| 0.5.1 | Hole jump moved from a bottom-bar icon to tapping the hole number itself; "Hole X" typography enlarged for visibility. |
 | 0.5.0 | Internal refactor: the phone scorecard screen was split from one ~420-line file into focused composables (`PlayerScoreCard`, `HoleInfoCard`, `HoleJumpGrid`, `FullScorecardSheet`, `AddRemovePlayersSheet`, `ScorecardTopBar`) plus a shared `ScoreFormat` helper. No behavior change. |
 | 0.4.9 | UI color cleanup on the phone app. Added a "hide score" (eye) icon on the hole card to toggle player round scores between visible and `•••`. |
 | 0.4.8 | Gradient home screen buttons (each button has its own color scheme). Matching gradient top bars on New Round, Scorecard, My Courses, and Round History screens. Player full name shown on scorecard cards (was 4-letter abbreviation). Player cards stretch full screen width. Shuffle player order button on round setup. |
