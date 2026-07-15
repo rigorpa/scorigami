@@ -38,7 +38,9 @@ iThrow/
 
 Named color constants are centralized in `AppColors.kt` files — no inline `Color(0xFF…)` literals in screen files.
 
-**`app/ui/theme/AppColors.kt`** (phone):
+**Theme system (phone):** the app has a user-selectable light/dark theme (sun/moon toggle top-right on HomeScreen; persisted in Preferences DataStore via `ThemeRepository`, default dark). `AppColors.kt` defines an `@Immutable AppPalette` data class with `DarkPalette`/`LightPalette` instances provided through `LocalAppPalette` (a `staticCompositionLocalOf`) by `ScorigamiTheme(darkTheme)`. The historical constant names (`ContentWhite`, `ScreenBackground`, …) survive as **top-level `@Composable` getter vals** resolving against the active palette — screen files keep the same imports and identifiers. ⚠️ Two rules this creates: (1) the getters can only be read in composable contexts — NOT inside non-composable lambdas like `buildAnnotatedString {}` or `remember {}` calculation blocks (hoist to a local first — see `StatTotalsLine` in `ScoreFormat.kt`); (2) content sitting ON the five identity gradients (which stay dark in both themes) must use the fixed `GradientContentWhite`, never `ContentWhite` (which flips to near-black in light mode) — this applies to all gradient top bars and `HomeActionButton`/Start Round button content. `MainActivity` does a blocking one-boolean DataStore read before `setContent` (correct first frame) and re-applies `enableEdgeToEdge` per theme; `ForcedDarkTheme` (in `Theme.kt`) pins `ShareScorecardCard` to dark so shared PNGs stay branded. The dark palette values below are unchanged; each varying slot has a light counterpart in `LightPalette`.
+
+**`app/ui/theme/AppColors.kt`** (phone, dark-palette values):
 | Constant | Value | Usage |
 |---|---|---|
 | `CardBackground` | `#37474F` | Hole-jump grid non-selected cell background |

@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Adjust
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Park
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
@@ -27,6 +29,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.BuildConfig
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.GradientContentWhite
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.CoursesGradientEnd
 import com.scorigami.app.ui.theme.CoursesGradientStart
@@ -39,6 +42,7 @@ import com.scorigami.app.ui.theme.NewRoundGradientStart
 import com.scorigami.app.ui.theme.ResumeGradientEnd
 import com.scorigami.app.ui.theme.ResumeGradientStart
 import com.scorigami.app.viewmodel.RoundViewModel
+import com.scorigami.app.viewmodel.ThemeViewModel
 
 @Composable
 fun HomeScreen(
@@ -46,9 +50,11 @@ fun HomeScreen(
     onResume: () -> Unit,
     onCourses: () -> Unit,
     onHistory: () -> Unit,
-    viewModel: RoundViewModel = hiltViewModel()
+    viewModel: RoundViewModel = hiltViewModel(),
+    themeViewModel: ThemeViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val isDark by themeViewModel.isDark.collectAsStateWithLifecycle()
 
     Scaffold { padding ->
         Box(
@@ -56,6 +62,19 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            // Theme toggle — icon shows the theme you'd switch TO
+            IconButton(
+                onClick = { themeViewModel.toggle() },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 8.dp, end = 8.dp)
+            ) {
+                Icon(
+                    imageVector = if (isDark) Icons.Filled.LightMode else Icons.Filled.DarkMode,
+                    contentDescription = if (isDark) "Switch to light theme" else "Switch to dark theme",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -148,9 +167,9 @@ private fun HomeActionButton(
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(
             containerColor = Color.Transparent,
-            contentColor = ContentWhite,
+            contentColor = GradientContentWhite,
             disabledContainerColor = Color.Transparent,
-            disabledContentColor = ContentWhite.copy(alpha = 0.5f)
+            disabledContentColor = GradientContentWhite.copy(alpha = 0.5f)
         ),
         elevation = ButtonDefaults.buttonElevation(
             defaultElevation = 0.dp,

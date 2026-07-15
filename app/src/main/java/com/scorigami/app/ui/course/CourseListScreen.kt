@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.GradientContentWhite
 import com.scorigami.app.ui.theme.ScreenBackground
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -94,15 +95,15 @@ fun CourseListScreen(
                             Icon(
                                 Icons.Default.Share,
                                 contentDescription = "Share course",
-                                tint = if (courses.isNotEmpty()) ContentWhite
-                                       else ContentWhite.copy(alpha = 0.4f)
+                                tint = if (courses.isNotEmpty()) GradientContentWhite
+                                       else GradientContentWhite.copy(alpha = 0.4f)
                             )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
-                        titleContentColor = ContentWhite,
-                        navigationIconContentColor = ContentWhite
+                        titleContentColor = GradientContentWhite,
+                        navigationIconContentColor = GradientContentWhite
                     )
                 )
             }

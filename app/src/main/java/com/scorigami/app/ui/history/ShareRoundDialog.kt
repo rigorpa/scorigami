@@ -35,6 +35,7 @@ import com.scorigami.app.ui.round.StatUnderlines
 import com.scorigami.app.ui.round.formatVsPar
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.ForcedDarkTheme
 import com.scorigami.app.ui.theme.HistoryGradientEnd
 import com.scorigami.app.ui.theme.HistoryGradientStart
 import com.scorigami.app.ui.theme.ScoreUnderParColor
@@ -162,12 +163,15 @@ private suspend fun sharePng(
 /**
  * The branded scorecard rendered to the shared PNG. Fixed 340.dp width for consistent output
  * across devices; the root paints [ScreenBackground] edge to edge so the PNG is fully opaque.
+ * Wrapped in [ForcedDarkTheme] so the exported image keeps the branded dark look even when
+ * the user has the light theme selected.
  */
 @Composable
 internal fun ShareScorecardCard(
     detail: RoundDetailState,
     modifier: Modifier = Modifier
 ) {
+    ForcedDarkTheme {
     Column(
         modifier = modifier
             .width(340.dp)
@@ -233,6 +237,7 @@ internal fun ShareScorecardCard(
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
     }
 }
 

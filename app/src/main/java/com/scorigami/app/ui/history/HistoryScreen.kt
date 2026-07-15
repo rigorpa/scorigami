@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.GradientContentWhite
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ScreenBackground
 import androidx.compose.ui.text.font.FontWeight
@@ -51,13 +52,13 @@ fun HistoryScreen(
                     },
                     actions = {
                         IconButton(onClick = { showShareHint = true }) {
-                            Icon(Icons.Default.Share, contentDescription = "Share round", tint = ContentWhite)
+                            Icon(Icons.Default.Share, contentDescription = "Share round", tint = GradientContentWhite)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
-                        titleContentColor = ContentWhite,
-                        navigationIconContentColor = ContentWhite
+                        titleContentColor = GradientContentWhite,
+                        navigationIconContentColor = GradientContentWhite
                     )
                 )
             }

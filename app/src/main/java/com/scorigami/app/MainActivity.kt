@@ -8,8 +8,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import com.scorigami.app.data.ThemeRepository
 import com.scorigami.app.navigation.AppNavigation
 import com.scorigami.app.ui.theme.ScorigamiTheme
 import com.scorigami.shared.sync.SgCourse
@@ -18,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -25,15 +30,32 @@ class MainActivity : ComponentActivity() {
     /** Pending course import from an ACTION_VIEW intent. Consumed once by AppNavigation. */
     val pendingImport = mutableStateOf<SgCourse?>(null)
 
+    @Inject
+    lateinit var themeRepository: ThemeRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
-        )
+        // Blocking one-boolean read so the first frame renders in the right theme
+        val initialDark = themeRepository.isDarkBlocking()
         handleIncomingIntent(intent)
         setContent {
-            ScorigamiTheme {
+            val isDark by themeRepository.isDark.collectAsStateWithLifecycle(initialValue = initialDark)
+            // Re-apply edge-to-edge on theme change so status/nav bar icon contrast flips
+            LaunchedEffect(isDark) {
+                val transparent = android.graphics.Color.TRANSPARENT
+                if (isDark) {
+                    enableEdgeToEdge(
+                        statusBarStyle = SystemBarStyle.dark(transparent),
+                        navigationBarStyle = SystemBarStyle.dark(transparent)
+                    )
+                } else {
+                    enableEdgeToEdge(
+                        statusBarStyle = SystemBarStyle.light(transparent, transparent),
+                        navigationBarStyle = SystemBarStyle.light(transparent, transparent)
+                    )
+                }
+            }
+            ScorigamiTheme(darkTheme = isDark) {
                 AppNavigation(pendingImport = pendingImport)
             }
         }
