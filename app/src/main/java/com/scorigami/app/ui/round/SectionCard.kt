@@ -19,12 +19,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.scorigami.app.ui.theme.ContentWhite
-import com.scorigami.app.ui.theme.NewRoundGradientEnd
-import com.scorigami.app.ui.theme.NewRoundGradientStart
+import com.scorigami.app.ui.theme.DarkGradientEnd
+import com.scorigami.app.ui.theme.DarkGradientStart
 
-/** Blue gradient shared by the setup-screen section cards and fields — matches the top bar. */
+/** Dark gradient shared by the setup-screen section cards and fields (top bar stays blue). */
 internal val SectionCardGradient = Brush.horizontalGradient(
-    listOf(NewRoundGradientStart, NewRoundGradientEnd)
+    listOf(DarkGradientStart, DarkGradientEnd)
 )
 
 /** Bold white section title shown above a bubble (SectionCard or a gradient field). */
