@@ -33,7 +33,6 @@ The app also runs on other Android devices (min Android 11 / API 30). A Pixel 4a
 - Review the full scorecard before finalizing a round
 - Browse round history with per-hole breakdowns and standings
 - **Share a finished round as a PNG** — branded scorecard image with per-player hole grids and OB/C1x stats, from the round-detail share icon
-- **Light and dark themes** — sun/moon toggle on the home screen; the choice is remembered across restarts (shared PNGs keep the branded dark look either way)
 
 ---
 
@@ -86,7 +85,6 @@ Creating your own course is quick — it takes about **2 minutes** to get a cour
 | kotlinx.serialization 1.7.3 | JSON for sync messages |
 | Navigation Compose 2.8.5 | Phone navigation |
 | Wear Compose Navigation 1.4.0 | Watch navigation |
-| DataStore Preferences 1.1.7 | Theme choice persistence |
 
 Min SDK: 30 · Compile SDK: 35 · Kotlin: 2.2.10 · AGP: 9.2.1
 
@@ -117,7 +115,7 @@ The `:wear` APK is embedded in the `:app` build and installs to the paired watch
 
 | Version | Notes |
 |---|---|
-| Unreleased | **Light/dark theme toggle** — full theme system (`AppPalette` + CompositionLocal), sun/moon button on the home screen, choice persisted in DataStore; shared PNGs stay dark. Shuffle button animates through 4 passes (~2 s) so the reorder reads as a visible randomization. Scorecard hole number painted with the top-bar blue gradient plus a white outline. C1x metric changed from red to orange (OB stays red) across phone, watch, and all scorecard views; per-hole red/orange underline indicators added beneath the throw count wherever scorecards are shown, including the shared PNG. |
+| Unreleased | Shuffle button animates through 4 passes (~2 s) so the reorder reads as a visible randomization. Scorecard hole number painted with the top-bar blue gradient plus a white outline. C1x metric changed from red to orange (OB stays red) across phone, watch, and all scorecard views; per-hole red/orange underline indicators added beneath the throw count wherever scorecards are shown, including the shared PNG. (A light/dark theme toggle is parked on the `Light-Dark-Theme-Toggle` branch.) |
 | 0.6.3 | Major bug fix: navigation callbacks are now guarded with `dropUnlessResumed` — an unguarded quick double-tap on a back arrow fired `popBackStack()` twice, popped the start destination, and left a blank navy screen. Round Setup course selection changed from a dropdown to a `ModalBottomSheet` for consistency with the app's other pickers. |
 | 0.6.2 | UI updates on OB/C1x metrics. Shared round PNG shows total throws per hole instead of the over/under par score, matching the in-app scorecards. |
 | 0.6.1 | UI color changes. Removed " - " separator in OB and C1x metric labels. |
