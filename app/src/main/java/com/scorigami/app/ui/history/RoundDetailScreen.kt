@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.ui.theme.ContentWhite
-import com.scorigami.app.ui.theme.GradientContentWhite
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.round.formatVsPar
 import com.scorigami.app.ui.theme.HistoryGradientEnd
@@ -55,7 +54,7 @@ fun RoundDetailScreen(
                                 Text(
                                     text = "Played on ${detail.date}",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = GradientContentWhite.copy(alpha = 0.75f)
+                                    color = ContentWhite.copy(alpha = 0.75f)
                                 )
                             }
                         }
@@ -75,9 +74,9 @@ fun RoundDetailScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
-                        titleContentColor = GradientContentWhite,
-                        navigationIconContentColor = GradientContentWhite,
-                        actionIconContentColor = GradientContentWhite
+                        titleContentColor = ContentWhite,
+                        navigationIconContentColor = ContentWhite,
+                        actionIconContentColor = ContentWhite
                     )
                 )
             }

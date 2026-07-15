@@ -70,21 +70,16 @@ internal fun StatTotalsLine(
     style: TextStyle = MaterialTheme.typography.bodyMedium
 ) {
     if (totalOb <= 0 && totalC1x <= 0) return
-    // Hoisted: the palette getters are @Composable and can't be read inside
-    // buildAnnotatedString's non-composable builder lambda
-    val obColor = StatActiveColor
-    val c1xColor = C1xActiveColor
-    val separatorColor = ContentLightGrey
     Text(
         text = buildAnnotatedString {
             if (totalOb > 0) {
-                withStyle(SpanStyle(color = obColor)) { append("$totalOb OB") }
+                withStyle(SpanStyle(color = StatActiveColor)) { append("$totalOb OB") }
             }
             if (totalOb > 0 && totalC1x > 0) {
-                withStyle(SpanStyle(color = separatorColor)) { append("  ·  ") }
+                withStyle(SpanStyle(color = ContentLightGrey)) { append("  ·  ") }
             }
             if (totalC1x > 0) {
-                withStyle(SpanStyle(color = c1xColor)) { append("$totalC1x C1x") }
+                withStyle(SpanStyle(color = C1xActiveColor)) { append("$totalC1x C1x") }
             }
         },
         style = style,

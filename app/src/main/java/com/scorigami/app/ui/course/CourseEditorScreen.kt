@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.ui.theme.ContentWhite
-import com.scorigami.app.ui.theme.GradientContentWhite
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.CoursesGradientEnd
 import com.scorigami.app.ui.theme.CoursesGradientStart
@@ -73,8 +72,8 @@ fun CourseEditorScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
-                        titleContentColor = GradientContentWhite,
-                        navigationIconContentColor = GradientContentWhite
+                        titleContentColor = ContentWhite,
+                        navigationIconContentColor = ContentWhite
                     )
                 )
             }

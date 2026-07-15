@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
-import com.scorigami.app.ui.theme.GradientContentWhite
+import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
 import com.scorigami.app.ui.theme.NewRoundGradientStart
 
@@ -92,9 +92,9 @@ internal fun ScorecardTopBar(
             },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = Color.Transparent,
-                titleContentColor = GradientContentWhite,
-                navigationIconContentColor = GradientContentWhite,
-                actionIconContentColor = GradientContentWhite
+                titleContentColor = ContentWhite,
+                navigationIconContentColor = ContentWhite,
+                actionIconContentColor = ContentWhite
             )
         )
     }

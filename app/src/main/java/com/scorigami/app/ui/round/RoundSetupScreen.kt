@@ -26,7 +26,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ContentWhite
-import com.scorigami.app.ui.theme.GradientContentWhite
 import com.scorigami.app.ui.theme.DisabledButtonGradientEnd
 import com.scorigami.app.ui.theme.DisabledButtonGradientStart
 import androidx.compose.ui.unit.dp
@@ -115,8 +114,8 @@ fun RoundSetupScreen(
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
-                        titleContentColor = GradientContentWhite,
-                        navigationIconContentColor = GradientContentWhite
+                        titleContentColor = ContentWhite,
+                        navigationIconContentColor = ContentWhite
                     )
                 )
             }
@@ -151,9 +150,9 @@ fun RoundSetupScreen(
                     enabled = startEnabled,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent,
-                        contentColor = GradientContentWhite,
+                        contentColor = ContentWhite,
                         disabledContainerColor = Color.Transparent,
-                        disabledContentColor = GradientContentWhite.copy(alpha = 0.5f)
+                        disabledContentColor = ContentWhite.copy(alpha = 0.5f)
                     ),
                     elevation = ButtonDefaults.buttonElevation(
                         defaultElevation = 0.dp,

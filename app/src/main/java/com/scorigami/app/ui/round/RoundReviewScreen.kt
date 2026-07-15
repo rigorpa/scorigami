@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.ui.theme.ContentWhite
-import com.scorigami.app.ui.theme.GradientContentWhite
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
 import com.scorigami.app.ui.theme.NewRoundGradientStart
 import com.scorigami.app.ui.theme.ScoreUnderParColor
@@ -45,7 +44,7 @@ fun RoundReviewScreen(
                     title = { Text("Review Scores") },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = Color.Transparent,
-                        titleContentColor = GradientContentWhite
+                        titleContentColor = ContentWhite
                     )
                 )
             }

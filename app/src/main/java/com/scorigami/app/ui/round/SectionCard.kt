@@ -22,15 +22,10 @@ import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.DarkGradientEnd
 import com.scorigami.app.ui.theme.DarkGradientStart
 
-/**
- * Theme-aware gradient shared by the setup-screen section cards and fields (dark bubbles
- * in dark mode, light grey in light mode; the top bar keeps its fixed blue gradient).
- * A @Composable getter because the palette colors resolve from [LocalAppPalette].
- */
-internal val SectionCardGradient: Brush
-    @Composable get() = Brush.horizontalGradient(
-        listOf(DarkGradientStart, DarkGradientEnd)
-    )
+/** Dark gradient shared by the setup-screen section cards and fields (top bar stays blue). */
+internal val SectionCardGradient = Brush.horizontalGradient(
+    listOf(DarkGradientStart, DarkGradientEnd)
+)
 
 /** Bold white section title shown above a bubble (SectionCard or a gradient field). */
 @Composable
