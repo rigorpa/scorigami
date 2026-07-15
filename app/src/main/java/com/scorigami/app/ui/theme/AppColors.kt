@@ -9,6 +9,8 @@ val ScaleGrey2 = Color(0xFF5A6164)
 // Hole info card background
 val ScaleGrey1 = Color(0xFF354045)
 
+val ScaleGrey0 = Color(0xFFA1A1A1)
+
 // Yellow hole number on the scorecard and hole-jump grid
 val HoleNumberColor = Color(0xFFFFD60A)
 
@@ -36,8 +38,10 @@ val ObColor = Color(0xFFC9A227)
 // OB / C1x stat counter buttons on the scorecard player card. The unset shade must differ
 // from ScaleGrey2 — the card background — or the label disappears into it; ScaleGrey1 is
 // darker than the card, so the label reads as a subtle inset.
-val StatUnsetColor = ScaleGrey1             // quiet dark grey while no count is entered (bare "OB")
+val StatUnsetColor = ScaleGrey0             // quiet dark grey while no count is entered (bare "OB")
+
 val StatActiveColor = Color(0xFFEF5350)     // OB once a count is entered (matches the theme error red)
+
 val C1xActiveColor = Color(0xFFFF9800)      // C1x once a count is entered — orange, distinct from OB red
 // at par and unscored use ContentWhite; over par uses MaterialTheme.colorScheme.error from the theme
 
@@ -45,8 +49,6 @@ val C1xActiveColor = Color(0xFFFF9800)      // C1x once a count is entered — o
 val ScoreButtonBackground = Color(0xFF2A2A2A)
 
 // Home screen button gradients (start → end, left to right)
-// val NewRoundGradientStart   = Color(0xFF0A2472)   // deep navy
-// val NewRoundGradientEnd     = Color(0xFF1976D2)   // sky blue
 
 val NewRoundGradientStart   = Color(0xFF1C2E42)   // deep grey
 val NewRoundGradientEnd     = Color(0xFF474B50)   // sky grey

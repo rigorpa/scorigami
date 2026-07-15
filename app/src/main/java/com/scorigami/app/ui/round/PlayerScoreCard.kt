@@ -20,6 +20,7 @@ import com.scorigami.app.ui.theme.ScoreButtonBackground
 import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.app.ui.theme.StatActiveColor
+import com.scorigami.app.ui.theme.StatUnsetColor
 import com.scorigami.shared.db.entity.HoleEntity
 import com.scorigami.shared.db.entity.PlayerEntity
 
@@ -178,7 +179,7 @@ private fun StatCycleButton(
             },
             fontSize = 18.sp,
             fontWeight = FontWeight.ExtraBold,
-            color = if (count > 0) activeColor else ContentWhite,
+            color = if (count > 0) activeColor else StatUnsetColor,
             maxLines = 1
         )
     }
