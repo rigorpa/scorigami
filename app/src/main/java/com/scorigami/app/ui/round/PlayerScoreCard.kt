@@ -117,12 +117,12 @@ internal fun PlayerScoreCard(
                         contentColor = ContentWhite
                     )
                 ) {
-                    Text("−", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = ContentWhite)
+                    Text("−", fontSize = 24.sp, color = ContentWhite)
                 }
                 Text(
                     text = if (throwsThisHole == 0) "—" else "$throwsThisHole",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 26.sp,
+                    //fontWeight = FontWeight.Bold,
                     color = scoreColor,
                     modifier = Modifier.widthIn(min = 40.dp),
                     textAlign = TextAlign.Center
@@ -138,7 +138,7 @@ internal fun PlayerScoreCard(
                         contentColor = ContentWhite
                     )
                 ) {
-                    Text("+", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = ContentWhite)
+                    Text("+", fontSize = 24.sp, color = ContentWhite)
                 }
             }
         }
@@ -178,7 +178,7 @@ private fun StatCycleButton(
                 else -> "$count $label"
             },
             fontSize = 18.sp,
-            fontWeight = FontWeight.ExtraBold,
+            //fontWeight = FontWeight.ExtraBold,
             color = if (count > 0) activeColor else StatUnsetColor,
             maxLines = 1
         )

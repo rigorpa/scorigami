@@ -28,6 +28,7 @@ val ContentLightGrey = Color(0xFFBDBDBD)
 
 // App background color — list screens, list items, scorecard Round label
 val ScreenBackground = Color.Black
+//val ScreenBackground = Color(0xFF151A1D)
 
 // Score colors vs par
 val ScoreUnderParColor = Color(0xFF81C784)   // green  — under par
@@ -62,8 +63,8 @@ val HistoryGradientEnd      = Color(0xFFCC6B0A)   // warm amber
 val ResumeGradientStart     = Color(0xFF4527A0)   // deep violet
 val ResumeGradientEnd       = Color(0xFF7E57C2)   // soft lavender
 
-val DarkGradientStart       = Color(0xFF171717)   // deep black
-val DarkGradientEnd         = Color(0xFF292929)   // soft black
+val DarkGradientStart       = Color(0xFF272727)   // deep black
+val DarkGradientEnd         = Color(0xFF5D5D5D)   // soft black
 
 // Disabled home-screen button gradient (start → end)
 val DisabledButtonGradientStart = Color(0xFF3A3A3A)
