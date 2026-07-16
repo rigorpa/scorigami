@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Color
 import com.scorigami.app.ui.theme.C1xActiveColor
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.ScoreButtonBackground
-import com.scorigami.app.ui.theme.PlayerCardScreenBackground
+import com.scorigami.app.ui.theme.DefaultCardBackground
 import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.app.ui.theme.StatActiveColor
 import com.scorigami.app.ui.theme.StatUnsetColor
@@ -56,7 +56,7 @@ internal fun PlayerScoreCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = PlayerCardScreenBackground)
+        colors = CardDefaults.cardColors(containerColor = DefaultCardBackground)
     ) {
         // name and round score
         Row(

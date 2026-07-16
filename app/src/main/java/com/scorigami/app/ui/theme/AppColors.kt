@@ -35,7 +35,7 @@ val ContentLightGrey = Color(0xFFBDBDBD)
 // App background color — list screens, list items, scorecard Round label
 val ScreenBackground = Color.Black
 //val ScreenBackground = Color(0xFF151A1D)
-val PlayerCardScreenBackground = Color(0xFF151A1D)
+val DefaultCardBackground = Color(0xFF151A1D)
 
 // Score colors vs par
 val ScoreUnderParColor = Color(0xFF81C784)   // green  — under par

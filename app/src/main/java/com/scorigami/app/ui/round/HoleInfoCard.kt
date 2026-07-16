@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.scorigami.app.ui.theme.CardBackground
 import com.scorigami.app.ui.theme.ContentWhite
-import com.scorigami.app.ui.theme.PlayerCardScreenBackground
+import com.scorigami.app.ui.theme.DefaultCardBackground
 import com.scorigami.app.ui.theme.HoleJumpSelectedColor
 import com.scorigami.app.ui.theme.IncompleteHoleDotColor
 import com.scorigami.app.ui.theme.ScorecardHoleNumberColor
@@ -134,7 +134,7 @@ internal fun HoleInfoCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = PlayerCardScreenBackground)
+        colors = CardDefaults.cardColors(containerColor = DefaultCardBackground)
     ) {
         Box {
             Row(
