@@ -189,7 +189,7 @@ fun RoundSetupScreen(
                         colors = sectionFieldColors(),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(SectionCardGradient, RoundedCornerShape(12.dp))
+                            .background(SectionCardColor, RoundedCornerShape(12.dp))
                     )
                     Box(
                         modifier = Modifier
@@ -322,7 +322,7 @@ fun RoundSetupScreen(
                         colors = sectionFieldColors(),
                         modifier = Modifier
                             .weight(1f)
-                            .background(SectionCardGradient, RoundedCornerShape(12.dp)),
+                            .background(SectionCardColor, RoundedCornerShape(12.dp)),
                         singleLine = true
                     )
                     Spacer(Modifier.width(8.dp))
@@ -358,14 +358,14 @@ fun RoundSetupScreen(
                 Text(
                     "Choose a Course",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Normal,
                     color = ContentWhite,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
                 sortedCourses.forEach { cwh ->
                     val isSelected = cwh.course.id == selectedCourseId
                     ListItem(
-                        headlineContent = { Text(cwh.course.name, fontWeight = FontWeight.Bold) },
+                        headlineContent = { Text(cwh.course.name, fontWeight = FontWeight.SemiBold) },
                         supportingContent = { Text("${cwh.course.holeCount} holes · Par ${cwh.holes.sumOf { it.par }}") },
                         trailingContent = {
                             if (isSelected) {

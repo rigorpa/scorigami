@@ -15,8 +15,8 @@ android {
         applicationId = "com.scorigami.app"
         minSdk = 30
         targetSdk = 35
-        versionCode = 33
-        versionName = "0.6.3"
+        versionCode = 34
+        versionName = "0.6.4"
     }
 
     buildTypes {

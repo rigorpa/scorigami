@@ -17,9 +17,10 @@ import androidx.compose.ui.graphics.Color
 import com.scorigami.app.ui.theme.C1xActiveColor
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.ScoreButtonBackground
-import com.scorigami.app.ui.theme.ScreenBackground
+import com.scorigami.app.ui.theme.DefaultCardBackground
 import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.app.ui.theme.StatActiveColor
+import com.scorigami.app.ui.theme.StatUnsetColor
 import com.scorigami.shared.db.entity.HoleEntity
 import com.scorigami.shared.db.entity.PlayerEntity
 
@@ -55,13 +56,17 @@ internal fun PlayerScoreCard(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = ScreenBackground)
+        colors = CardDefaults.cardColors(containerColor = DefaultCardBackground)
     ) {
         // name and round score
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+                .padding(start = 16.dp,
+                         end = 4.dp,
+                         top = 8.dp,
+                         bottom = 8.dp
+                         ),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(
@@ -71,7 +76,7 @@ internal fun PlayerScoreCard(
             ) {
                 Text(
                     text = player.name,
-                    fontSize = 28.sp,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = ContentWhite,
                     maxLines = 1
@@ -116,12 +121,12 @@ internal fun PlayerScoreCard(
                         contentColor = ContentWhite
                     )
                 ) {
-                    Text("−", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = ContentWhite)
+                    Text("−", fontSize = 24.sp, color = ContentWhite)
                 }
                 Text(
                     text = if (throwsThisHole == 0) "—" else "$throwsThisHole",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 26.sp,
+                    //fontWeight = FontWeight.Bold,
                     color = scoreColor,
                     modifier = Modifier.widthIn(min = 40.dp),
                     textAlign = TextAlign.Center
@@ -137,7 +142,7 @@ internal fun PlayerScoreCard(
                         contentColor = ContentWhite
                     )
                 ) {
-                    Text("+", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = ContentWhite)
+                    Text("+", fontSize = 24.sp, color = ContentWhite)
                 }
             }
         }
@@ -177,8 +182,8 @@ private fun StatCycleButton(
                 else -> "$count $label"
             },
             fontSize = 18.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = if (count > 0) activeColor else ContentWhite,
+            //fontWeight = FontWeight.ExtraBold,
+            color = if (count > 0) activeColor else StatUnsetColor,
             maxLines = 1
         )
     }

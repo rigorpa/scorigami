@@ -106,7 +106,7 @@ internal fun AddRemovePlayersSheet(
                     colors = sectionFieldColors(),
                     modifier = Modifier
                         .weight(1f)
-                        .background(SectionCardGradient, RoundedCornerShape(12.dp)),
+                        .background(SectionCardColor, RoundedCornerShape(12.dp)),
                     singleLine = true
                 )
                 Spacer(Modifier.width(8.dp))
