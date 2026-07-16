@@ -35,7 +35,7 @@ val ContentLightGrey = Color(0xFFBDBDBD)
 // App background color — list screens, list items, scorecard Round label
 val ScreenBackground = Color.Black
 //val ScreenBackground = Color(0xFF151A1D)
-val DefaultCardBackground = Color(0xFF151A1D)
+val DefaultCardBackground = Color(0xFF1A1A1B)
 
 // Score colors vs par
 val ScoreUnderParColor = Color(0xFF81C784)   // green  — under par
@@ -44,8 +44,6 @@ val ScoreUnderParColor = Color(0xFF81C784)   // green  — under par
 val ObColor = Color(0xFFC9A227)
 
 // OB / C1x stat counter buttons on the scorecard player card. The unset shade must differ
-// from ScaleGrey2 — the card background — or the label disappears into it; ScaleGrey1 is
-// darker than the card, so the label reads as a subtle inset.
 val StatUnsetColor = ScaleGrey0             // quiet dark grey while no count is entered (bare "OB")
 
 val StatActiveColor = Color(0xFFEF5350)     // OB once a count is entered (matches the theme error red)

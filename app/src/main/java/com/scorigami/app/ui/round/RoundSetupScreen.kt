@@ -358,14 +358,14 @@ fun RoundSetupScreen(
                 Text(
                     "Choose a Course",
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Normal,
                     color = ContentWhite,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
                 sortedCourses.forEach { cwh ->
                     val isSelected = cwh.course.id == selectedCourseId
                     ListItem(
-                        headlineContent = { Text(cwh.course.name, fontWeight = FontWeight.Bold) },
+                        headlineContent = { Text(cwh.course.name, fontWeight = FontWeight.SemiBold) },
                         supportingContent = { Text("${cwh.course.holeCount} holes · Par ${cwh.holes.sumOf { it.par }}") },
                         trailingContent = {
                             if (isSelected) {

@@ -56,13 +56,13 @@ internal fun HoleInfoCard(
             ) {
                 Text(
                     "Hole $hole Notes",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
                 )
                 Spacer(Modifier.height(12.dp))
                 Text(
                     text = holeEntity?.notes ?: "",
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
