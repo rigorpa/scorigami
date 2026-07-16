@@ -2,6 +2,9 @@ package com.scorigami.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+// Scorigami font main color
+val ScorigamiFont = Color.White
+
 // Player score card and hole navigation card background
 val CardBackground = Color(0xFF37474F)
 val ScaleGrey2 = Color(0xFF5A6164)
@@ -13,6 +16,9 @@ val ScaleGrey0 = Color(0xFFA1A1A1)
 
 // Yellow hole number on the scorecard and hole-jump grid
 val HoleNumberColor = Color(0xFFFFD60A)
+
+// Light Grey — the large hole number on the scorecard hole card
+val ScorecardHoleNumberColor = Color(0xFFE0E0E0)
 
 // Grey highlight for the currently selected hole in the Jump to Hole grid (phone and watch)
 val HoleJumpSelectedColor = Color(0xFF7A7A7A)
@@ -29,6 +35,7 @@ val ContentLightGrey = Color(0xFFBDBDBD)
 // App background color — list screens, list items, scorecard Round label
 val ScreenBackground = Color.Black
 //val ScreenBackground = Color(0xFF151A1D)
+val PlayerCardScreenBackground = Color(0xFF151A1D)
 
 // Score colors vs par
 val ScoreUnderParColor = Color(0xFF81C784)   // green  — under par

@@ -26,6 +26,7 @@ import com.scorigami.app.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.BuildConfig
+import com.scorigami.app.ui.theme.ScorigamiFont
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.app.ui.theme.ContentLightGrey
@@ -77,7 +78,8 @@ fun HomeScreen(
                     text = "SCORIGAMI",
                     fontSize = 42.sp,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    //color = MaterialTheme.colorScheme.primary
+                    color = ScorigamiFont
                 )
                 Text(
                     text = "A Frolf Scorecard",
