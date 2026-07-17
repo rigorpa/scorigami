@@ -21,6 +21,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.scorigami.app.ui.theme.C1xActiveColor
 import com.scorigami.app.ui.theme.ContentLightGrey
+import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.app.ui.theme.StatActiveColor
 
 internal fun formatVsPar(vsPar: Int): String = when {
@@ -31,7 +32,10 @@ internal fun formatVsPar(vsPar: Int): String = when {
 
 @Composable
 internal fun vsParColor(vsPar: Int): Color = when {
-    vsPar < 0 -> MaterialTheme.colorScheme.primary
+    // Green rather than colorScheme.primary: primary is a warm neutral in this
+    // theme, and under-par must stay visually distinct (matches PlayerScoreCard
+    // and the per-hole grids, which already use ScoreUnderParColor)
+    vsPar < 0 -> ScoreUnderParColor
     vsPar == 0 -> MaterialTheme.colorScheme.onSurface
     else -> MaterialTheme.colorScheme.error
 }

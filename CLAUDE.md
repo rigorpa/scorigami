@@ -38,32 +38,20 @@ iThrow/
 
 Named color constants are centralized in `AppColors.kt` files — no inline `Color(0xFF…)` literals in screen files.
 
-**`app/ui/theme/AppColors.kt`** (phone):
-| Constant | Value | Usage |
+**`app/ui/theme/AppColors.kt`** (phone) — built on a **Material neutral tonal palette** (Google Material Theme Builder, warm dark khaki). Eight tokens are the single source of truth; everything else is a role alias resolving to a token, so the whole app re-themes from the token block:
+
+| Token | Value | Role |
 |---|---|---|
-| `CardBackground` | `#37474F` | Hole-jump grid non-selected cell background |
-| `ScaleGrey1` | `#354045` | `HoleInfoCard` card background |
-| `ScaleGrey2` | `#5A6164` | `PlayerScoreCard` card background |
-| `ContentWhite` | `Color.White` | Primary text/icon color on dark surfaces — text, icons, top bar chrome |
-| `ScreenBackground` | `Color.Black` | App background — list `LazyColumn`, `ListItem` containers |
-| `HoleNumberColor` | `#FFD60A` | Yellow hole number accents (hole-jump grid; watch scorecard) |
-| `ScorecardHoleNumberColor` | `#827717` | Dark olive — the large hole number on the scorecard hole card |
-| `HoleJumpSelectedColor` | `#7A7A7A` | Selected hole cell highlight in hole-jump grid (phone and watch) |
-| `IncompleteHoleDotColor` | `#FFB300` | Amber dot on holes with missing scores |
-| `ScoreUnderParColor` | `#81C784` | Green — under par score display |
-| `ObColor` | `#C9A227` | Dark yellow — OB/C1x round-total lines in Review, Full-scorecard sheet, and History detail |
-| `StatUnsetColor` | `= ScaleGrey1` | OB/C1x scorecard button while no count entered (bare "OB" / "C1x" label) — darker than the `ScaleGrey2` card, reads as a subtle inset; must never equal `ScaleGrey2` or it vanishes |
-| `StatActiveColor` | `#EF5350` | OB/C1x scorecard button once a count is entered (matches theme error red) |
-| `NewRoundGradientStart` | `#1C2E42` | Deep grey-blue — left edge of New Round / Scorecard / Round Setup top bar and home button gradient |
-| `NewRoundGradientEnd` | `#474B50` | Slate grey — right edge of New Round / Scorecard / Round Setup top bar and home button gradient |
-| `CoursesGradientStart` | `#24534B` | Dark jungle green — left edge of My Courses top bar and home button gradient |
-| `CoursesGradientEnd` | `#506B67` | Muted green — right edge of My Courses top bar and home button gradient |
-| `HistoryGradientStart` | `#2D0C00` | Espresso brown — left edge of Round History top bar and home button gradient |
-| `HistoryGradientEnd` | `#CC6B0A` | Warm amber — right edge of Round History top bar and home button gradient |
-| `ResumeGradientStart` | `#4527A0` | Deep violet — left edge of Resume Round home button gradient |
-| `ResumeGradientEnd` | `#7E57C2` | Soft lavender — right edge of Resume Round home button gradient |
-| `DisabledButtonGradientStart` | `#3A3A3A` | Dark grey — left edge of a disabled `HomeActionButton` |
-| `DisabledButtonGradientEnd` | `#5A5A5A` | Mid grey — right edge of a disabled `HomeActionButton` |
+| `SurfaceDim` | `#15130B` | Darkest — screen background (also the plain "Surface" value; no `Surface` val exists to avoid clashing with material3's `Surface` composable) |
+| `SurfaceContainer` | `#222017` | Cards, section bubbles (`DefaultCardBackground`) |
+| `SurfaceContainerHigh` | `#2D2A21` | Elevated cells, dialogs (`CardBackground`, `ScaleGrey1`) |
+| `SurfaceBright` | `#3C3930` | Highest-emphasis fills (`ScoreButtonBackground`, `HoleJumpSelectedColor`) |
+| `OutlineVariant` | `#4B4739` | Dividers; disabled-gradient end |
+| `Outline` | `#969080` | Muted labels (`StatUnsetColor`) |
+| `OnSurfaceVariant` | `#CDC6B4` | Secondary text (`ContentLightGrey`, `ScorecardHoleNumberColor`) |
+| `OnSurface` | `#E8E2D4` | Primary text (`ContentWhite`, `ScorigamiFont`) |
+
+Kept **outside** the neutral palette (semantic/brand accents, per Material's separation of neutral vs accent tonal palettes): `ScoreUnderParColor` green `#81C784`, `StatActiveColor` OB red `#EF5350`, `C1xActiveColor` orange `#FF9800`, `IncompleteHoleDotColor` amber `#FFB300`, and the four identity gradients (NewRound `#1C2E42→#474B50`, Courses `#24534B→#506B67`, History `#2D0C00→#CC6B0A`, Resume `#4527A0→#7E57C2`). `Theme.kt`'s `DarkColors` maps all neutral colorScheme slots (surface family, outline, on-colors) to the same tokens; **primary/secondary are neutralized to warm monochrome** (`OnSurface`/`OnSurfaceVariant`) since the palette defines no accent hue — because of this, `vsParColor()` under-par uses `ScoreUnderParColor` green, NOT `colorScheme.primary`. Error stays red `#EF5350`. `themes.xml` (both variants) uses `#15130B` for window/status/nav/splash.
 
 **`wear/ui/theme/AppColors.kt`** (watch):
 | Constant | Value | Usage |
@@ -214,7 +202,7 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 
 ### HomeScreen layout
 - **Buttons:** `HomeActionButton` composable — `Brush.horizontalGradient` applied via `Modifier.background(brush, RoundedCornerShape(percent = 50))`; `containerColor = Color.Transparent` so gradient shows through; `contentColor = ContentWhite`; disabled state falls back to a dark-grey gradient; all buttons full-width 56 dp height
-- **Themes:** `app/res/values/themes.xml` sets `windowBackground`, `statusBarColor`, `navigationBarColor` to `#002451` (dark navy) for pre-API 31 devices. `app/res/values-v31/themes.xml` inherits the same three and additionally sets `windowSplashScreenBackground="#FF000000"` (black) — forces Android 12+ system splash to use black instead of the navy windowBackground
+- **Themes:** `app/res/values/themes.xml` sets `windowBackground`, `statusBarColor`, `navigationBarColor` to `#15130B` (`SurfaceDim`) for pre-API 31 devices. `app/res/values-v31/themes.xml` inherits the same three and additionally sets `windowSplashScreenBackground="#FF15130B"` — Android 12+ system splash matches the app background
 
 ---
 
