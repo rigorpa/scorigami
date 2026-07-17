@@ -77,7 +77,7 @@ fun HomeScreen(
                 Text(
                     text = "SCORIGAMI",
                     fontSize = 42.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Normal,
                     color = ScorigamiFont
                 )
                 Text(
@@ -93,7 +93,7 @@ fun HomeScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(28.dp))
                         .background(DefaultCardBackground)
-                        .padding(12.dp),
+                        .padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     if (state.isActive) {
