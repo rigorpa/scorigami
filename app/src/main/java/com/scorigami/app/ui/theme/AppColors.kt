@@ -74,8 +74,8 @@ val ScoreButtonBackground = SurfaceBright
 val NewRoundGradientStart   = Color(0xFF1C2E42)   // deep grey
 val NewRoundGradientEnd     = Color(0xFF474B50)   // sky grey
 
-val CoursesGradientStart    = Color(0xFF24534B)   // dark jungle green
-val CoursesGradientEnd      = Color(0xFF506B67)   // fresh green
+val CoursesGradientStart    = Color(0xFF10443F)   // dark jungle green
+val CoursesGradientEnd      = Color(0xFF5A9791)   // fresh green
 
 val HistoryGradientStart    = Color(0xFF2D0C00)   // espresso brown
 val HistoryGradientEnd      = Color(0xFFCC6B0A)   // warm amber
@@ -86,3 +86,22 @@ val ResumeGradientEnd       = Color(0xFF7E57C2)   // soft lavender
 // Disabled home-screen button gradient — muted warm neutrals from the palette
 val DisabledButtonGradientStart = SurfaceContainerHigh
 val DisabledButtonGradientEnd   = OutlineVariant
+
+
+val NewRoundGradientTop     = Color(0xFF101222)
+val NewRoundGradientBottom  = Color(0xFF1F2344)
+val CoursesGradientTop      = Color(0xFF3E4489)
+val CoursesGradientBottom   = Color(0xFF64294)
+val HistoryGradientTop      = Color(0xFF92442B)
+val HistoryGradientBottom   = Color(0xFFCF7C63)
+
+// Test color samples for Home Screen widgets //
+
+//val NewRoundGradientStart   = SurfaceContainerHigh
+//val NewRoundGradientEnd     = SurfaceContainerHigh
+
+//val CoursesGradientStart    = SurfaceBright
+//val CoursesGradientEnd      = SurfaceBright
+
+//val HistoryGradientStart    = OutlineVariant
+//val HistoryGradientEnd      = OutlineVariant

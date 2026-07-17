@@ -93,8 +93,9 @@ fun HomeScreen(
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(28.dp))
                         .background(DefaultCardBackground)
-                        .padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                        //.padding(10.dp),
+                        .padding(horizontal = 12.dp, vertical = 22.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     if (state.isActive) {
                         HomeOptionCard(
@@ -115,7 +116,7 @@ fun HomeScreen(
                     )
                     HomeOptionCard(
                         title = "My Courses",
-                        description = "Manage your courses. Input a new course",
+                        description = "Manage your courses or input a new course",
                         icon = Icons.Default.Park,
                         gradient = Brush.horizontalGradient(listOf(CoursesGradientStart, CoursesGradientEnd)),
                         onClick = onCourses
@@ -155,6 +156,7 @@ private fun HomeOptionCard(
     icon: ImageVector,
     gradient: Brush,
     onClick: () -> Unit,
+    fontWeight: FontWeight = FontWeight.Normal,
     enabled: Boolean = true,
 ) {
     val background = if (enabled) gradient else Brush.horizontalGradient(
@@ -167,14 +169,14 @@ private fun HomeOptionCard(
             .clip(RoundedCornerShape(18.dp))
             .background(background)
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = 10.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = fontWeight,
                 color = contentColor
             )
             Spacer(Modifier.height(2.dp))
