@@ -9,45 +9,44 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Tomorrow Night Blue palette — true dark (OLED black background)
-private val TnbBackground         = Color(0xFF000000)
-private val TnbSurface            = Color(0xFF00346E)
-private val TnbSurfaceVariant     = Color(0xFF003A7A)
-private val TnbPrimary            = Color(0xFFBBDAFF)
-private val TnbOnPrimary          = Color(0xFF002451)
-private val TnbPrimaryContainer   = Color(0xFF003A7A)
-private val TnbOnPrimaryContainer = Color(0xFFBBDAFF)
-private val TnbSecondary            = Color(0xFF99FFFF)
-private val TnbOnSecondary          = Color(0xFF002451)
-private val TnbSecondaryContainer   = Color(0xFF003D3D)
-private val TnbOnSecondaryContainer = Color(0xFF99FFFF)
-private val TnbOnBackground       = Color(0xFFFFFFFF)
-private val TnbOnSurface          = Color(0xFFFFFFFF)
-private val TnbOnSurfaceVariant   = Color(0xFF7285B7)
-private val TnbError              = Color(0xFFEF5350)
-private val TnbOnError            = Color(0xFF680020)
-private val TnbErrorContainer     = Color(0xFF5C0010)
-private val TnbOnErrorContainer   = Color(0xFFFF9DA1)
+// Warm neutral scheme built from the Material Theme Builder tonal palette in
+// AppColors.kt. Neutral slots come straight from the palette tokens; primary and
+// secondary are neutralized to warm monochrome (the palette defines no accent
+// hues — Material assigns those to separate tonal palettes). Error keeps the
+// established red so over-par and OB stay semantic.
+private val ThemeError            = Color(0xFFEF5350)
+private val ThemeOnError          = Color(0xFF680020)
+private val ThemeErrorContainer   = Color(0xFF5C0010)
+private val ThemeOnErrorContainer = Color(0xFFFF9DA1)
 
 private val DarkColors = darkColorScheme(
-    primary = TnbPrimary,
-    onPrimary = TnbOnPrimary,
-    primaryContainer = TnbPrimaryContainer,
-    onPrimaryContainer = TnbOnPrimaryContainer,
-    secondary = TnbSecondary,
-    onSecondary = TnbOnSecondary,
-    secondaryContainer = TnbSecondaryContainer,
-    onSecondaryContainer = TnbOnSecondaryContainer,
-    background = TnbBackground,
-    onBackground = TnbOnBackground,
-    surface = TnbSurface,
-    onSurface = TnbOnSurface,
-    surfaceVariant = TnbSurfaceVariant,
-    onSurfaceVariant = TnbOnSurfaceVariant,
-    error = TnbError,
-    onError = TnbOnError,
-    errorContainer = TnbErrorContainer,
-    onErrorContainer = TnbOnErrorContainer
+    primary = OnSurface,
+    onPrimary = SurfaceDim,
+    primaryContainer = SurfaceContainerHigh,
+    onPrimaryContainer = OnSurface,
+    secondary = OnSurfaceVariant,
+    onSecondary = SurfaceDim,
+    secondaryContainer = SurfaceContainer,
+    onSecondaryContainer = OnSurface,
+    background = SurfaceDim,
+    onBackground = OnSurface,
+    surface = SurfaceDim,
+    onSurface = OnSurface,
+    surfaceVariant = SurfaceContainerHigh,
+    onSurfaceVariant = OnSurfaceVariant,
+    outline = Outline,
+    outlineVariant = OutlineVariant,
+    surfaceDim = SurfaceDim,
+    surfaceBright = SurfaceBright,
+    surfaceContainerLowest = SurfaceDim,
+    surfaceContainerLow = SurfaceContainer,
+    surfaceContainer = SurfaceContainer,
+    surfaceContainerHigh = SurfaceContainerHigh,
+    surfaceContainerHighest = SurfaceContainerHigh,
+    error = ThemeError,
+    onError = ThemeOnError,
+    errorContainer = ThemeErrorContainer,
+    onErrorContainer = ThemeOnErrorContainer
 )
 
 private val AppTypography = Typography(

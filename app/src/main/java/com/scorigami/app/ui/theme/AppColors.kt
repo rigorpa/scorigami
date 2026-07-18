@@ -2,65 +2,80 @@ package com.scorigami.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Scorigami font main color
-val ScorigamiFont = Color.White
+// ---------------------------------------------------------------------------
+// Material neutral tonal palette (Google Material Theme Builder) — the single
+// source of truth for every neutral in the app. Ordered darkest → lightest.
+// "Surface" (plain) shares SurfaceDim's value; it is not declared separately
+// because a top-level `Surface` val would clash with material3's Surface
+// composable at call sites.
+// ---------------------------------------------------------------------------
+val SurfaceDim           = Color(0xFF15130B)   // darkest — screen background
+val SurfaceContainer     = Color(0xFF222017)   // dark medium — cards, section bubbles
+val SurfaceContainerHigh = Color(0xFF2D2A21)   // dark light — elevated cells, dialogs
+val SurfaceBright        = Color(0xFF3C3930)   // dark lightest — highest-emphasis fills
+val OutlineVariant       = Color(0xFF4B4739)   // light dark — dividers, subtle borders
+val Outline              = Color(0xFF969080)   // light medium — muted labels, outlines
+val OnSurfaceVariant     = Color(0xFFCDC6B4)   // light — secondary text/icons
+val OnSurface            = Color(0xFFE8E2D4)   // lightest — primary text/icons
 
-// Player score card and hole navigation card background
-val CardBackground = Color(0xFF37474F)
-val ScaleGrey2 = Color(0xFF5A6164)
+// ---------------------------------------------------------------------------
+// Role aliases — the names the screens actually use. Each resolves to a
+// palette token above, so the whole app re-themes from one place.
+// ---------------------------------------------------------------------------
 
-// Hole info card background
-val ScaleGrey1 = Color(0xFF354045)
+// Scorigami title on the home screen
+val ScorigamiFont = OnSurface
 
-val ScaleGrey0 = Color(0xFFA1A1A1)
+// Hole-jump grid non-selected cell background
+val CardBackground = SurfaceContainerHigh
 
-// Yellow hole number on the scorecard and hole-jump grid
-val HoleNumberColor = Color(0xFFFFD60A)
+// Share-round dialog chrome
+val ScaleGrey1 = SurfaceContainerHigh
 
-// Light Grey — the large hole number on the scorecard hole card
-val ScorecardHoleNumberColor = Color(0xFFE0E0E0)
+// The large hole number on the scorecard hole card — quieter than primary text
+val ScorecardHoleNumberColor = OnSurfaceVariant
 
-// Grey highlight for the currently selected hole in the Jump to Hole grid (phone and watch)
-val HoleJumpSelectedColor = Color(0xFF7A7A7A)
+// Selected hole cell in the Jump to Hole grid — brightest surface = highest emphasis
+val HoleJumpSelectedColor = SurfaceBright
 
-// Amber dot on holes with missing scores
+// Amber dot on holes with missing scores (semantic accent — not part of the neutral palette)
 val IncompleteHoleDotColor = Color(0xFFFFB300)
 
-// Primary content color on dark surfaces — text
-val ContentWhite = Color.White
+// Primary content color on dark surfaces — text/icons
+val ContentWhite = OnSurface
 
-// Secondary lighter color on dark surfaces - text
-val ContentLightGrey = Color(0xFFBDBDBD)
+// Secondary text/icons on dark surfaces
+val ContentLightGrey = OnSurfaceVariant
 
-// App background color — list screens, list items, scorecard Round label
-val ScreenBackground = Color.Black
-//val ScreenBackground = Color(0xFF151A1D)
-val DefaultCardBackground = Color(0xFF1A1A1B)
+// App background — list screens, list items, scorecard
+val ScreenBackground = SurfaceDim
 
-// Score colors vs par
-val ScoreUnderParColor = Color(0xFF81C784)   // green  — under par
+// Card fill for the scorecard player/hole cards and setup-screen section bubbles
+val DefaultCardBackground = SurfaceContainer
 
-// Dark yellow — OB/C1x round-total lines (Review, Full-scorecard sheet, History detail)
-val ObColor = Color(0xFFC9A227)
+// Score colors vs par (semantic accents — kept outside the neutral palette)
+val ScoreUnderParColor = Color(0xFF81C784)   // green — under par
 
-// OB / C1x stat counter buttons on the scorecard player card. The unset shade must differ
-val StatUnsetColor = ScaleGrey0             // quiet dark grey while no count is entered (bare "OB")
+// OB / C1x stat counter buttons: quiet muted label while unset, semantic color once set
+val StatUnsetColor = Outline
+val StatActiveColor = Color(0xFFEF5350)      // OB — matches the theme error red
+val C1xActiveColor = Color(0xFFFF9800)       // C1x — orange, distinct from OB red
+// at par and unscored use ContentWhite; over par uses MaterialTheme.colorScheme.error
 
-val StatActiveColor = Color(0xFFEF5350)     // OB once a count is entered (matches the theme error red)
+// −/+ score buttons on the player card — brightest fill so the controls pop
+val ScoreButtonBackground = SurfaceBright
 
-val C1xActiveColor = Color(0xFFFF9800)      // C1x once a count is entered — orange, distinct from OB red
-// at par and unscored use ContentWhite; over par uses MaterialTheme.colorScheme.error from the theme
-
-// −/+ score buttons on the scorecard player card — matches the wear app's WearButtonBackground
-val ScoreButtonBackground = Color(0xFF2A2A2A)
-
-// Home screen button gradients (start → end, left to right)
+// ---------------------------------------------------------------------------
+// Brand identity gradients (start → end, left to right) — chromatic accents
+// deliberately outside the neutral palette (Material assigns accent roles to
+// separate tonal palettes; this list only defines the neutrals).
+// ---------------------------------------------------------------------------
 
 val NewRoundGradientStart   = Color(0xFF1C2E42)   // deep grey
 val NewRoundGradientEnd     = Color(0xFF474B50)   // sky grey
 
-val CoursesGradientStart    = Color(0xFF24534B)   // dark jungle green
-val CoursesGradientEnd      = Color(0xFF506B67)   // fresh green
+val CoursesGradientStart    = Color(0xFF10443F)   // dark jungle green
+val CoursesGradientEnd      = Color(0xFF5A9791)   // fresh green
 
 val HistoryGradientStart    = Color(0xFF2D0C00)   // espresso brown
 val HistoryGradientEnd      = Color(0xFFCC6B0A)   // warm amber
@@ -68,9 +83,25 @@ val HistoryGradientEnd      = Color(0xFFCC6B0A)   // warm amber
 val ResumeGradientStart     = Color(0xFF4527A0)   // deep violet
 val ResumeGradientEnd       = Color(0xFF7E57C2)   // soft lavender
 
-val DarkGradientStart       = Color(0xFF272727)   // deep black
-val DarkGradientEnd         = Color(0xFF5D5D5D)   // soft black
+// Disabled home-screen button gradient — muted warm neutrals from the palette
+val DisabledButtonGradientStart = SurfaceContainerHigh
+val DisabledButtonGradientEnd   = OutlineVariant
 
-// Disabled home-screen button gradient (start → end)
-val DisabledButtonGradientStart = Color(0xFF3A3A3A)
-val DisabledButtonGradientEnd   = Color(0xFF5A5A5A)
+
+val NewRoundGradientTop     = Color(0xFF101222)
+val NewRoundGradientBottom  = Color(0xFF1F2344)
+val CoursesGradientTop      = Color(0xFF3E4489)
+val CoursesGradientBottom   = Color(0xFF64294)
+val HistoryGradientTop      = Color(0xFF92442B)
+val HistoryGradientBottom   = Color(0xFFCF7C63)
+
+// Test color samples for Home Screen widgets //
+
+//val NewRoundGradientStart   = SurfaceContainerHigh
+//val NewRoundGradientEnd     = SurfaceContainerHigh
+
+//val CoursesGradientStart    = SurfaceBright
+//val CoursesGradientEnd      = SurfaceBright
+
+//val HistoryGradientStart    = OutlineVariant
+//val HistoryGradientEnd      = OutlineVariant

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.Scorigami" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">#002451</item>
-        <item name="android:statusBarColor">#002451</item>
-        <item name="android:navigationBarColor">#002451</item>
+        <item name="android:windowBackground">#15130B</item>
+        <item name="android:statusBarColor">#15130B</item>
+        <item name="android:navigationBarColor">#15130B</item>
     </style>
 </resources>

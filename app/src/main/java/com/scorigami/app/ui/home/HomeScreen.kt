@@ -2,6 +2,7 @@ package com.scorigami.app.ui.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -15,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -26,12 +26,11 @@ import com.scorigami.app.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.BuildConfig
-import com.scorigami.app.ui.theme.ScorigamiFont
-import com.scorigami.app.ui.theme.ContentWhite
-import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.app.ui.theme.ContentLightGrey
+import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.CoursesGradientEnd
 import com.scorigami.app.ui.theme.CoursesGradientStart
+import com.scorigami.app.ui.theme.DefaultCardBackground
 import com.scorigami.app.ui.theme.DisabledButtonGradientEnd
 import com.scorigami.app.ui.theme.DisabledButtonGradientStart
 import com.scorigami.app.ui.theme.HistoryGradientEnd
@@ -40,6 +39,7 @@ import com.scorigami.app.ui.theme.NewRoundGradientEnd
 import com.scorigami.app.ui.theme.NewRoundGradientStart
 import com.scorigami.app.ui.theme.ResumeGradientEnd
 import com.scorigami.app.ui.theme.ResumeGradientStart
+import com.scorigami.app.ui.theme.ScorigamiFont
 import com.scorigami.app.viewmodel.RoundViewModel
 
 @Composable
@@ -61,7 +61,7 @@ fun HomeScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 56.dp),
+                    .padding(horizontal = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -77,8 +77,7 @@ fun HomeScreen(
                 Text(
                     text = "SCORIGAMI",
                     fontSize = 42.sp,
-                    fontWeight = FontWeight.Bold,
-                    //color = MaterialTheme.colorScheme.primary
+                    fontWeight = FontWeight.Normal,
                     color = ScorigamiFont
                 )
                 Text(
@@ -86,39 +85,50 @@ fun HomeScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = ContentLightGrey
                 )
-                Spacer(modifier = Modifier.height(56.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-                if (state.isActive) {
-                    HomeActionButton(
-                        text = "Resume Round",
-                        icon = Icons.Default.PlayArrow,
-                        onClick = onResume,
-                        gradient = Brush.horizontalGradient(listOf(ResumeGradientStart, ResumeGradientEnd))
+                // Widget-style container: one wide rounded card holding the option cards
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(28.dp))
+                        .background(DefaultCardBackground)
+                        //.padding(10.dp),
+                        .padding(horizontal = 12.dp, vertical = 22.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (state.isActive) {
+                        HomeOptionCard(
+                            title = "Resume Round",
+                            description = "Continue your round in progress",
+                            icon = Icons.Default.PlayArrow,
+                            gradient = Brush.horizontalGradient(listOf(ResumeGradientStart, ResumeGradientEnd)),
+                            onClick = onResume
+                        )
+                    }
+                    HomeOptionCard(
+                        title = "New Round",
+                        description = "Start a round — pick your course and players",
+                        icon = Icons.Default.Adjust,
+                        gradient = Brush.horizontalGradient(listOf(NewRoundGradientStart, NewRoundGradientEnd)),
+                        onClick = onStartRound,
+                        enabled = !state.isActive
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+                    HomeOptionCard(
+                        title = "My Courses",
+                        description = "Manage your courses or input a new course",
+                        icon = Icons.Default.Park,
+                        gradient = Brush.horizontalGradient(listOf(CoursesGradientStart, CoursesGradientEnd)),
+                        onClick = onCourses
+                    )
+                    HomeOptionCard(
+                        title = "Round History",
+                        description = "Review past rounds and scorecards",
+                        icon = Icons.Default.History,
+                        gradient = Brush.horizontalGradient(listOf(HistoryGradientStart, HistoryGradientEnd)),
+                        onClick = onHistory
+                    )
                 }
-
-                HomeActionButton(
-                    text = "New Round",
-                    icon = Icons.Default.Adjust,
-                    onClick = onStartRound,
-                    gradient = Brush.horizontalGradient(listOf(NewRoundGradientStart, NewRoundGradientEnd)),
-                    enabled = !state.isActive
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                HomeActionButton(
-                    text = "My Courses",
-                    icon = Icons.Default.Park,
-                    onClick = onCourses,
-                    gradient = Brush.horizontalGradient(listOf(CoursesGradientStart, CoursesGradientEnd))
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                HomeActionButton(
-                    text = "Round History",
-                    icon = Icons.Default.History,
-                    onClick = onHistory,
-                    gradient = Brush.horizontalGradient(listOf(HistoryGradientStart, HistoryGradientEnd))
-                )
             }
 
             Text(
@@ -133,44 +143,55 @@ fun HomeScreen(
     }
 }
 
+/**
+ * One tappable option inside the home widget card: identity-gradient background,
+ * title + smaller description on the left, action icon on the right. Disabled
+ * (New Round while a round is active) falls back to the muted disabled gradient
+ * with half-alpha content.
+ */
 @Composable
-private fun HomeActionButton(
-    text: String,
+private fun HomeOptionCard(
+    title: String,
+    description: String,
     icon: ImageVector,
-    onClick: () -> Unit,
     gradient: Brush,
-    modifier: Modifier = Modifier.fillMaxWidth().height(56.dp),
+    onClick: () -> Unit,
+    fontWeight: FontWeight = FontWeight.Normal,
     enabled: Boolean = true,
 ) {
-    val activeGradient = if (enabled) gradient else Brush.horizontalGradient(
+    val background = if (enabled) gradient else Brush.horizontalGradient(
         listOf(DisabledButtonGradientStart, DisabledButtonGradientEnd)
     )
-    Button(
-        onClick = onClick,
-        modifier = modifier.background(activeGradient, RoundedCornerShape(percent = 50)),
-        enabled = enabled,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            contentColor = ContentWhite,
-            disabledContainerColor = Color.Transparent,
-            disabledContentColor = ContentWhite.copy(alpha = 0.5f)
-        ),
-        elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 0.dp,
-            pressedElevation = 0.dp,
-            disabledElevation = 0.dp
-        )
+    val contentColor = if (enabled) ContentWhite else ContentWhite.copy(alpha = 0.5f)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(background)
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.weight(1f)
-        )
-        Spacer(Modifier.width(8.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = fontWeight,
+                color = contentColor
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = contentColor.copy(alpha = contentColor.alpha * 0.8f)
+            )
+        }
+        Spacer(Modifier.width(12.dp))
         Icon(
             imageVector = icon,
             contentDescription = null,
-            modifier = Modifier.size(22.dp)
+            tint = contentColor,
+            modifier = Modifier.size(24.dp)
         )
     }
 }

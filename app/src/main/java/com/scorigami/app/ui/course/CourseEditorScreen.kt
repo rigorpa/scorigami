@@ -17,12 +17,18 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.scorigami.app.ui.round.SectionCardColor
+import com.scorigami.app.ui.round.SectionTitle
+import com.scorigami.app.ui.round.sectionFieldColors
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.CoursesGradientEnd
 import com.scorigami.app.ui.theme.CoursesGradientStart
+import com.scorigami.app.ui.theme.DisabledButtonGradientEnd
+import com.scorigami.app.ui.theme.DisabledButtonGradientStart
 import com.scorigami.app.viewmodel.CourseViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,18 +91,17 @@ fun CourseEditorScreen(
         ) {
             item {
                 Spacer(Modifier.height(8.dp))
+                SectionTitle("Course Name")
                 OutlinedTextField(
                     value = courseName,
                     onValueChange = { courseName = it },
-                    label = { Text("Course Name") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        unfocusedLabelColor = ContentLightGrey,
-                        focusedLabelColor = ContentLightGrey,
-                        unfocusedTextColor = ContentWhite,
-                        focusedTextColor = ContentWhite
-                    )
+                    placeholder = { Text("Course name", color = ContentLightGrey) },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = sectionFieldColors(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(SectionCardColor, RoundedCornerShape(12.dp)),
+                    singleLine = true
                 )
             }
             item {
@@ -140,6 +145,13 @@ fun CourseEditorScreen(
                 }
             }
             item {
+                // Gradient pill matching Start Round / HomeActionButton, in this screen's green
+                val saveEnabled = courseName.isNotBlank()
+                val saveGradient = if (saveEnabled) {
+                    Brush.horizontalGradient(listOf(CoursesGradientStart, CoursesGradientEnd))
+                } else {
+                    Brush.horizontalGradient(listOf(DisabledButtonGradientStart, DisabledButtonGradientEnd))
+                }
                 Button(
                     onClick = {
                         if (courseName.isNotBlank()) {
@@ -152,8 +164,22 @@ fun CourseEditorScreen(
                             onBack()
                         }
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = courseName.isNotBlank()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .background(saveGradient, RoundedCornerShape(percent = 50)),
+                    enabled = saveEnabled,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = ContentWhite,
+                        disabledContainerColor = Color.Transparent,
+                        disabledContentColor = ContentWhite.copy(alpha = 0.5f)
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 0.dp,
+                        pressedElevation = 0.dp,
+                        disabledElevation = 0.dp
+                    )
                 ) {
                     Text("Save Course")
                 }
@@ -209,30 +235,27 @@ private fun HoleEditorRow(
         OutlinedTextField(
             value = distance,
             onValueChange = { new -> onDistanceChange(new.filter { it.isDigit() }.take(5)) },
-            label = { Text("Distance ft (optional)") },
-            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Distance ft (optional)", color = ContentLightGrey) },
+            shape = RoundedCornerShape(12.dp),
+            colors = sectionFieldColors(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(SectionCardColor, RoundedCornerShape(12.dp)),
             singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedLabelColor = ContentLightGrey,
-                focusedLabelColor = ContentLightGrey,
-                unfocusedTextColor = ContentWhite,
-                focusedTextColor = ContentWhite
-            )
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
         )
+        Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = notes,
             onValueChange = onNotesChange,
-            label = { Text("Hole rules / notes (optional)") },
-            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Hole rules / notes (optional)", color = ContentLightGrey) },
+            shape = RoundedCornerShape(12.dp),
+            colors = sectionFieldColors(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(SectionCardColor, RoundedCornerShape(12.dp)),
             minLines = 2,
-            maxLines = 8,
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedLabelColor = ContentLightGrey,
-                focusedLabelColor = ContentLightGrey,
-                unfocusedTextColor = ContentWhite,
-                focusedTextColor = ContentWhite
-            )
+            maxLines = 8
         )
     }
 }

@@ -2,6 +2,7 @@ package com.scorigami.app.ui.history
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,8 +18,10 @@ import androidx.compose.ui.graphics.Color
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ScreenBackground
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.scorigami.app.ui.round.SectionCardColor
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.ui.theme.HistoryGradientEnd
@@ -68,7 +71,12 @@ fun HistoryScreen(
                 Text("No completed rounds yet.", color = ContentWhite)
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize().background(ScreenBackground).padding(padding)) {
+            // Bubble cards matching the setup/editor/course-list widget language
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().background(ScreenBackground).padding(padding),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 items(rounds) { round ->
                     ListItem(
                         headlineContent = { Text(round.courseName, fontWeight = FontWeight.Bold) },
@@ -81,14 +89,15 @@ fun HistoryScreen(
                                 )
                             }
                         },
-                        modifier = Modifier.clickable { onRoundDetail(round.roundId) },
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { onRoundDetail(round.roundId) },
                         colors = ListItemDefaults.colors(
-                            containerColor = ScreenBackground,
+                            containerColor = SectionCardColor,
                             headlineColor = ContentWhite,
                             supportingColor = ContentLightGrey
                         )
                     )
-                    HorizontalDivider()
                 }
             }
         }
