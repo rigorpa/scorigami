@@ -33,6 +33,7 @@
                 <data android:scheme="file" />
                 <data android:host="*" />
                 <data android:pathPattern=".*\\.sgcourse" />
+                <data android:pathPattern=".*\\.sghistory" />
             </intent-filter>
         </activity>
 

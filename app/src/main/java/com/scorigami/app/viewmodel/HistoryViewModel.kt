@@ -9,10 +9,16 @@ import com.scorigami.shared.db.dao.ObDao
 import com.scorigami.shared.db.dao.PlayerDao
 import com.scorigami.shared.db.dao.RoundDao
 import com.scorigami.shared.db.dao.ScoreDao
-import com.scorigami.shared.db.entity.HoleEntity
-import com.scorigami.shared.db.entity.PlayerEntity
+import com.scorigami.shared.db.entity.*
+import com.scorigami.shared.sync.SgHistory
+import com.scorigami.shared.sync.SgHole
+import com.scorigami.shared.sync.SgRound
+import com.scorigami.shared.sync.SgRoundPlayer
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -124,4 +130,97 @@ class HistoryViewModel @Inject constructor(
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RoundDetailState())
     }
 
+    /** Emits (imported, skipped) after a .sghistory import completes. */
+    private val _importedHistory = MutableSharedFlow<Pair<Int, Int>>(extraBufferCapacity = 1)
+    val importedHistory: SharedFlow<Pair<Int, Int>> = _importedHistory.asSharedFlow()
+
+    /**
+     * Snapshot of every completed round as an [SgHistory] for .sghistory export.
+     * Rounds whose course was deleted are skipped (no course snapshot to carry).
+     */
+    suspend fun buildExport(): SgHistory = withContext(Dispatchers.IO) {
+        val sgRounds = roundDao.getCompletedRoundsSnapshot().mapNotNull { round ->
+            val course = courseDao.getCourseWithHoles(round.courseId) ?: return@mapNotNull null
+            val players = playerDao.getPlayersForRound(round.id)
+            val scores = scoreDao.getScoresForRoundSnapshot(round.id)
+            val obs = obDao.getObForRoundSnapshot(round.id)
+            val c1xs = c1xDao.getC1xForRoundSnapshot(round.id)
+            SgRound(
+                courseName = course.course.name,
+                startedAt = round.startedAt,
+                completedAt = round.completedAt ?: round.startedAt,
+                holes = course.holes.sortedBy { it.number }
+                    .map { SgHole(it.number, it.par, it.distanceFeet, it.notes) },
+                players = players.mapIndexed { i, p ->
+                    SgRoundPlayer(
+                        name = p.name,
+                        order = i,
+                        scores = scores.filter { it.playerId == p.id }
+                            .associate { it.holeNumber to it.throws },
+                        obCounts = obs.filter { it.playerId == p.id }
+                            .associate { it.holeNumber to it.count },
+                        c1xCounts = c1xs.filter { it.playerId == p.id }
+                            .associate { it.holeNumber to it.count }
+                    )
+                }
+            )
+        }
+        SgHistory(rounds = sgRounds)
+    }
+
+    /**
+     * Imports rounds from a .sghistory file. A round already present (same `startedAt`
+     * timestamp) is skipped; courses are matched by name or recreated from the file's
+     * snapshot; players are matched by name or created (same reuse rule as rounds).
+     */
+    fun importHistory(history: SgHistory) {
+        viewModelScope.launch(Dispatchers.IO) {
+            var imported = 0
+            var skipped = 0
+            history.rounds.forEach { r ->
+                if (roundDao.countRoundsStartedAt(r.startedAt) > 0) {
+                    skipped++
+                    return@forEach
+                }
+                val course = courseDao.getCourseByName(r.courseName) ?: run {
+                    val id = courseDao.insertCourse(
+                        CourseEntity(name = r.courseName, holeCount = r.holes.size)
+                    )
+                    courseDao.insertHoles(r.holes.map {
+                        HoleEntity(
+                            courseId = id,
+                            number = it.number,
+                            par = maxOf(2, it.par),
+                            distanceFeet = it.distanceFeet,
+                            notes = it.notes
+                        )
+                    })
+                    CourseEntity(id = id, name = r.courseName, holeCount = r.holes.size)
+                }
+                // completedAt is always non-null in the file; a null here would make the
+                // round look "active" and hijack the scorecard.
+                val roundId = roundDao.insertRound(
+                    RoundEntity(courseId = course.id, startedAt = r.startedAt, completedAt = r.completedAt)
+                )
+                val roundPlayers = r.players.sortedBy { it.order }.mapIndexed { i, sp ->
+                    val name = sp.name.trim()
+                    val player = playerDao.getPlayerByName(name)
+                        ?: PlayerEntity(id = playerDao.insertPlayer(PlayerEntity(name = name)), name = name)
+                    sp.scores.forEach { (hole, throws) ->
+                        if (throws > 0) scoreDao.upsertScore(ScoreEntity(roundId, player.id, hole, throws))
+                    }
+                    sp.obCounts.forEach { (hole, count) ->
+                        if (count > 0) obDao.upsertOb(ObEntity(roundId, player.id, hole, count))
+                    }
+                    sp.c1xCounts.forEach { (hole, count) ->
+                        if (count > 0) c1xDao.upsertC1x(C1xEntity(roundId, player.id, hole, count))
+                    }
+                    RoundPlayerEntity(roundId = roundId, playerId = player.id, order = i)
+                }
+                roundDao.insertRoundPlayers(roundPlayers)
+                imported++
+            }
+            _importedHistory.tryEmit(Pair(imported, skipped))
+        }
+    }
 }

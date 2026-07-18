@@ -19,6 +19,7 @@ import com.scorigami.app.ui.round.RoundReviewScreen
 import com.scorigami.app.ui.round.RoundSetupScreen
 import com.scorigami.app.ui.round.ScorecardScreen
 import com.scorigami.shared.sync.SgCourse
+import com.scorigami.shared.sync.SgHistory
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
@@ -37,7 +38,8 @@ sealed class Screen(val route: String) {
 
 @Composable
 fun AppNavigation(
-    pendingImport: MutableState<SgCourse?> = mutableStateOf(null)
+    pendingImport: MutableState<SgCourse?> = mutableStateOf(null),
+    pendingHistoryImport: MutableState<SgHistory?> = mutableStateOf(null)
 ) {
     val navController = rememberNavController()
 
@@ -45,6 +47,16 @@ fun AppNavigation(
     LaunchedEffect(pendingImport.value) {
         if (pendingImport.value != null) {
             navController.navigate(Screen.CourseList.route) {
+                popUpTo(Screen.Home.route)
+                launchSingleTop = true
+            }
+        }
+    }
+
+    // When a .sghistory file is opened, navigate to history for import
+    LaunchedEffect(pendingHistoryImport.value) {
+        if (pendingHistoryImport.value != null) {
+            navController.navigate(Screen.History.route) {
                 popUpTo(Screen.Home.route)
                 launchSingleTop = true
             }
@@ -122,7 +134,8 @@ fun AppNavigation(
         composable(Screen.History.route) {
             HistoryScreen(
                 onBack = dropUnlessResumed { navController.popBackStack() },
-                onRoundDetail = { id -> navController.navigate(Screen.RoundDetail.createRoute(id)) }
+                onRoundDetail = { id -> navController.navigate(Screen.RoundDetail.createRoute(id)) },
+                pendingHistoryImport = pendingHistoryImport
             )
         }
 

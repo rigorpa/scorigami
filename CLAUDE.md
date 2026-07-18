@@ -148,6 +148,22 @@ Users can share a course to other Scorigami users as a `.sgcourse` file (JSON, `
 
 ---
 
+## History Sharing (.sghistory files)
+
+Exports **every completed round** as one `.sghistory` JSON file (`SgHistory`/`SgRound`/`SgRoundPlayer` in `shared/sync/`, reusing `SgHole`). Each round carries a full course snapshot (name + holes) so import works on a device that has never seen the course.
+
+**Export** (`HistoryScreen`): the top-bar Share icon's sheet has an "Export All Rounds" button (below the single-round hint) → `HistoryViewModel.buildExport()` snapshots all completed rounds (scores + OB + C1x per player; rounds whose course was deleted are skipped — no snapshot to carry) → `shareHistory()` writes `cacheDir/shared_history/scorigami-rounds.sghistory` and fires `ACTION_SEND` (`application/octet-stream`) through the existing FileProvider.
+
+**Import** (ACTION_VIEW intent): shares `MainActivity`'s intent-filters with `.sgcourse` (`content://` + octet-stream; `file://` gained a `.sghistory` pathPattern). Since both formats arrive as octet-stream, `handleIncomingIntent` **discriminates by JSON shape**: try `SgHistory` (requires `rounds`), then `SgCourse` (requires `name`) — kotlinx fails on the wrong type, so the order is safe. Parsed history lands in `MainActivity.pendingHistoryImport` → `AppNavigation` navigates to `history` (`popUpTo(home)` + `launchSingleTop`) → `HistoryScreen` consumes it → `HistoryViewModel.importHistory()`:
+- **Dedupe:** a round with the same `startedAt` timestamp already in the DB is skipped (re-importing the same file is a no-op)
+- **Courses** matched by name, else recreated from the file's hole snapshot (par clamped ≥ 2)
+- **Players** matched by name, else created (same reuse rule as starting a round)
+- `completedAt` is written from the file (never null — a null would make the round look "active" and hijack the scorecard)
+- Emits `(imported, skipped)` on the `importedHistory` `SharedFlow` → "Imported N rounds — M already present" snackbar
+- File size guard raised to 10 MB in `MainActivity.readSgFile` (histories are bigger than courses)
+
+---
+
 ## Phone App Screens
 
 | Screen | Route | ViewModel |

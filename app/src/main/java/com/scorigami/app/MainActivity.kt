@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import com.scorigami.app.navigation.AppNavigation
 import com.scorigami.app.ui.theme.ScorigamiTheme
 import com.scorigami.shared.sync.SgCourse
+import com.scorigami.shared.sync.SgHistory
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,6 +26,9 @@ class MainActivity : ComponentActivity() {
     /** Pending course import from an ACTION_VIEW intent. Consumed once by AppNavigation. */
     val pendingImport = mutableStateOf<SgCourse?>(null)
 
+    /** Pending round-history import from an ACTION_VIEW intent. Consumed once by HistoryScreen. */
+    val pendingHistoryImport = mutableStateOf<SgHistory?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(
@@ -34,7 +38,10 @@ class MainActivity : ComponentActivity() {
         handleIncomingIntent(intent)
         setContent {
             ScorigamiTheme {
-                AppNavigation(pendingImport = pendingImport)
+                AppNavigation(
+                    pendingImport = pendingImport,
+                    pendingHistoryImport = pendingHistoryImport
+                )
             }
         }
     }
@@ -49,31 +56,35 @@ class MainActivity : ComponentActivity() {
         val uri = intent.data ?: return
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val sgCourse = readSgCourse(uri)
-                if (sgCourse != null) {
-                    withContext(Dispatchers.Main) { pendingImport.value = sgCourse }
+                val json = readSgFile(uri) ?: return@launch
+                // Both formats arrive as application/octet-stream; discriminate by shape.
+                // SgHistory has a required `rounds` array, SgCourse a required `name` —
+                // decoding the wrong type fails, so try history first, then course.
+                val history = runCatching { Json.decodeFromString<SgHistory>(json) }.getOrNull()
+                if (history != null) {
+                    withContext(Dispatchers.Main) { pendingHistoryImport.value = history }
+                    return@launch
+                }
+                val course = runCatching { Json.decodeFromString<SgCourse>(json) }.getOrNull()
+                if (course != null) {
+                    withContext(Dispatchers.Main) { pendingImport.value = course }
+                } else {
+                    Log.e("MainActivity", "File is neither valid .sghistory nor .sgcourse JSON")
                 }
             } catch (e: Exception) {
-                Log.e("MainActivity", "Failed to read .sgcourse file", e)
+                Log.e("MainActivity", "Failed to read shared file", e)
             }
         }
     }
 
-    private fun readSgCourse(uri: Uri): SgCourse? {
-        // Reject files larger than 1 MB — a valid .sgcourse is a few KB at most.
+    private fun readSgFile(uri: Uri): String? {
+        // Reject oversized files — a valid .sgcourse is a few KB; even a large .sghistory
+        // stays well under this.
         val size = contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length }
-        if (size != null && size > 1_000_000L) {
+        if (size != null && size > 10_000_000L) {
             Log.w("MainActivity", "Skipping oversized file: $size bytes")
             return null
         }
-        val json = contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
-            ?: return null
-        return try {
-            Json.decodeFromString<SgCourse>(json)
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Invalid .sgcourse JSON", e)
-            null
-        }
+        return contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
     }
 }
-

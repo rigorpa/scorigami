@@ -44,6 +44,12 @@ interface RoundDao {
     @Query("SELECT * FROM rounds WHERE completedAt IS NOT NULL ORDER BY startedAt DESC")
     fun getCompletedRounds(): Flow<List<RoundEntity>>
 
+    @Query("SELECT * FROM rounds WHERE completedAt IS NOT NULL ORDER BY startedAt DESC")
+    suspend fun getCompletedRoundsSnapshot(): List<RoundEntity>
+
+    @Query("SELECT COUNT(*) FROM rounds WHERE startedAt = :startedAt")
+    suspend fun countRoundsStartedAt(startedAt: Long): Int
+
     @Query("SELECT * FROM rounds WHERE id = :id")
     suspend fun getRoundById(id: Long): RoundEntity?
 
