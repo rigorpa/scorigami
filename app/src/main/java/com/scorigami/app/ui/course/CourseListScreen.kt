@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,8 +21,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import com.scorigami.app.ui.round.SectionCardColor
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.ScreenBackground
@@ -120,7 +123,12 @@ fun CourseListScreen(
             )
             }
         } else {
-            LazyColumn(modifier = Modifier.fillMaxSize().background(ScreenBackground).padding(padding)) {
+            // Bubble cards matching the setup/editor widget language (SectionCardColor, 12.dp)
+            LazyColumn(
+                modifier = Modifier.fillMaxSize().background(ScreenBackground).padding(padding),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 items(courses) { courseWithHoles ->
                     val course = courseWithHoles.course
                     val par = courseWithHoles.holes.sumOf { it.par }
@@ -132,14 +140,15 @@ fun CourseListScreen(
                                 Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error)
                             }
                         },
-                        modifier = Modifier.clickable { onEditCourse(course.id) },
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable { onEditCourse(course.id) },
                         colors = ListItemDefaults.colors(
-                            containerColor = ScreenBackground,
+                            containerColor = SectionCardColor,
                             headlineColor = ContentWhite,
                             supportingColor = ContentLightGrey
                         )
                     )
-                    HorizontalDivider()
                 }
             }
         }

@@ -175,12 +175,12 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 
 ### CourseListScreen layout
 - **Top bar:** green gradient (`CoursesGradientStart` → `CoursesGradientEnd`) wrapping a transparent `TopAppBar`; title and nav icon use `ContentWhite`; **Share icon** (`Icons.Default.Share`) in `actions` — opens the course share picker (see Course Sharing section), dimmed to 40 % alpha and disabled when no courses exist
-- **List items:** `ListItem` with `containerColor = ScreenBackground`; `HorizontalDivider` between entries; `LazyColumn` background is `ScreenBackground`
+- **List items:** bubble cards matching the setup/editor widget language — `ListItem` clipped to `RoundedCornerShape(12.dp)` with `containerColor = SectionCardColor`, 12.dp spacing, 16.dp horizontal content padding; no dividers; `LazyColumn` background is `ScreenBackground`
 - **Import handling:** hosts the `pendingImport` consumer `LaunchedEffect` + the `importedCourse` snackbar collector (`Scaffold` has a `SnackbarHost`)
 
 ### HistoryScreen layout
 - **Top bar:** amber/brown gradient (`HistoryGradientStart` → `HistoryGradientEnd`) wrapping a transparent `TopAppBar`; title and nav icon use `ContentWhite`
-- **List items:** `ListItem` with `containerColor = ScreenBackground`; `HorizontalDivider` between entries; `LazyColumn` background is `ScreenBackground`
+- **List items:** bubble cards matching the setup/editor/course-list widget language — `ListItem` clipped to `RoundedCornerShape(12.dp)` with `containerColor = SectionCardColor`, 12.dp spacing, 16.dp horizontal content padding; no dividers; `LazyColumn` background is `ScreenBackground`
 
 ### RoundSetupScreen layout
 - **Top bar:** blue gradient (`NewRoundGradientStart` → `NewRoundGradientEnd`) matching ScorecardScreen; title and nav icon use `ContentWhite`
@@ -191,6 +191,7 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 
 ### CourseEditorScreen layout
 - **Top bar:** green gradient (`CoursesGradientStart` → `CoursesGradientEnd`) matching `CourseListScreen`; title and nav icon use `ContentWhite`
+- **Bubble fields:** same widget language as RoundSetupScreen — label-less `OutlinedTextField`s with grey placeholders, transparent containers (`sectionFieldColors()` from `ui.round`), 12.dp shape, `SectionCardColor` (= `DefaultCardBackground`) painted behind; "Course Name" gets a `SectionTitle` above; **Save Course** is a gradient pill (Courses green, `DisabledButtonGradient` fallback) matching Start Round
 - **Per-hole rows:** par −/+ stepper (2–6) with a remove-hole × (disabled when only 1 hole remains); "Add Hole" `OutlinedButton` appends a Par 3; each hole also has a single-line **"Distance ft (optional)"** field (number keyboard, digits-only filter, max 5 chars, blank = null) and a multiline "Hole rules / notes (optional)" field. On save, all three lists (par / distance / notes) are rebuilt into fresh `HoleEntity` rows — the FK cascade removes the old ones
 
 ### RoundDetailScreen layout
