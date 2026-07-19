@@ -20,9 +20,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.scorigami.app.ui.theme.CardBackground
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.scaledSp
 import com.scorigami.app.ui.theme.DefaultCardBackground
 import com.scorigami.app.ui.theme.HoleJumpSelectedColor
 import com.scorigami.app.ui.theme.IncompleteHoleDotColor
@@ -109,7 +109,7 @@ internal fun HoleInfoCard(
                                         text = "${h.number}",
                                         fontWeight = if (isCurrent) FontWeight.ExtraBold else FontWeight.Normal,
                                         color = ContentWhite,
-                                        fontSize = 20.sp
+                                        fontSize = 20.scaledSp
                                     )
                                     if (incomplete) {
                                         Box(
@@ -155,7 +155,7 @@ internal fun HoleInfoCard(
                         text = "Hole",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Normal,
-                        fontSize = 20.sp,
+                        fontSize = 20.scaledSp,
                         color = ContentWhite
                     )
                     Box(
@@ -168,7 +168,7 @@ internal fun HoleInfoCard(
                         Text(
                             text = "$hole",
                             style = MaterialTheme.typography.displayMedium,
-                            fontSize = 124.sp,
+                            fontSize = 124.scaledSp,
                             fontWeight = FontWeight.ExtraBold,
                             color = ScorecardHoleNumberColor,
                             modifier = Modifier.scale(holeScale)

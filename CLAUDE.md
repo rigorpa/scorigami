@@ -69,6 +69,18 @@ At-par and unscored use `ContentWhite`. Over-par uses `MaterialTheme.colorScheme
 
 ---
 
+## Font Sizing (phone)
+
+All phone text sizes flow from **one knob**: `CurrentFontSize` in `app/ui/theme/FontSizer.kt` (`AppFontSize.Small` 0.85× / `Medium` 1.0× / `Large` 1.15×).
+
+- `Theme.kt` builds the whole `Typography` from the scale (`appTypography(scale)`), so every `MaterialTheme.typography.*` usage follows automatically
+- One-off hard-coded sizes in screens use **`N.scaledSp` instead of `N.sp`** (extension in FontSizer.kt reading `LocalFontScale`, which `ScorigamiTheme` provides). ⚠️ New screen code should never use raw `N.sp` for font sizes
+- The `ScorecardTopBar` auto-shrink title scales both its 32sp start and 18sp floor by `LocalFontScale`
+- **User-selectable:** Home screen top-right ⚙ menu → "Font Size" → a default-container `ModalBottomSheet` with radio rows (Small/Medium/Large), consistent with the app's other sheets. Persisted by `SettingsRepository` (Hilt singleton over SharedPreferences — deliberately not DataStore, one enum doesn't justify the dependency) whose `fontSize: StateFlow<AppFontSize>` MainActivity collects into `ScorigamiTheme(fontSize = …)` via `SettingsViewModel`; selection re-themes instantly. `CurrentFontSize` is the first-launch default
+- The wear module is not scaled (fixed small screen); `HoleJumpGrid.kt` (dead revert fallback) was deliberately left on raw `sp`
+
+---
+
 ## Key Libraries
 
 | Library | Version | Purpose |

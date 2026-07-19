@@ -8,8 +8,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import com.scorigami.app.viewmodel.SettingsViewModel
 import com.scorigami.app.navigation.AppNavigation
 import com.scorigami.app.ui.theme.ScorigamiTheme
 import com.scorigami.shared.sync.SgCourse
@@ -29,6 +33,8 @@ class MainActivity : ComponentActivity() {
     /** Pending round-history import from an ACTION_VIEW intent. Consumed once by HistoryScreen. */
     val pendingHistoryImport = mutableStateOf<SgHistory?>(null)
 
+    private val settingsViewModel: SettingsViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(
@@ -37,7 +43,8 @@ class MainActivity : ComponentActivity() {
         )
         handleIncomingIntent(intent)
         setContent {
-            ScorigamiTheme {
+            val fontSize by settingsViewModel.fontSize.collectAsStateWithLifecycle()
+            ScorigamiTheme(fontSize = fontSize) {
                 AppNavigation(
                     pendingImport = pendingImport,
                     pendingHistoryImport = pendingHistoryImport
