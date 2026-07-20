@@ -28,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.BuildConfig
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.app.ui.theme.scaledSp
 import com.scorigami.app.ui.theme.CoursesGradientEnd
 import com.scorigami.app.ui.theme.CoursesGradientStart
@@ -60,9 +61,12 @@ fun HomeScreen(
     var settingsMenuExpanded by remember { mutableStateOf(false) }
     var showFontSizeDialog by remember { mutableStateOf(false) }
 
-    // Font size picker — default-container ModalBottomSheet, consistent with the app's other sheets
+    // Font size picker — ScreenBackground ModalBottomSheet, consistent with the app's other sheets
     if (showFontSizeDialog) {
-        ModalBottomSheet(onDismissRequest = { showFontSizeDialog = false }) {
+        ModalBottomSheet(
+        onDismissRequest = { showFontSizeDialog = false },
+        containerColor = ScreenBackground
+    ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

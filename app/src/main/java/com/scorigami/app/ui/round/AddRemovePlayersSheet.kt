@@ -12,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.scorigami.app.ui.theme.ContentLightGrey
@@ -19,9 +20,11 @@ import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.shared.db.entity.PlayerEntity
 
 /**
- * Add/remove-players sheet body — styled to match RoundSetupScreen's filled-card
- * language (SectionCard sections, pill chips, bold white field labels). The hosting
- * ModalBottomSheet uses the default container (surfaceContainerLow grey).
+ * Add/remove-players sheet body — identical widget language to RoundSetupScreen
+ * (SectionCard sections, archive-capable pill chips, bold white field labels).
+ * ⚠️ The hosting ModalBottomSheet must use `containerColor = ScreenBackground`:
+ * SectionCardColor equals the default sheet container (both map to SurfaceContainer),
+ * so on a default sheet the bubbles would be invisible.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -29,10 +32,36 @@ internal fun AddRemovePlayersSheet(
     currentPlayers: List<PlayerEntity>,
     allPlayers: List<PlayerEntity>,
     onAddPlayer: (String) -> Unit,
-    onRemovePlayer: (Long) -> Unit
+    onRemovePlayer: (Long) -> Unit,
+    onArchivePlayer: (Long) -> Unit
 ) {
     var nameInput by remember { mutableStateOf("") }
     val suggestions = allPlayers.filter { p -> currentPlayers.none { it.id == p.id } }
+    var playerToDelete by remember { mutableStateOf<PlayerEntity?>(null) }
+
+    if (playerToDelete != null) {
+        val player = playerToDelete!!
+        AlertDialog(
+            onDismissRequest = { playerToDelete = null },
+            title = { Text("Remove Player?") },
+            text = { Text("Are you sure you want to remove \"${player.name}\" from history? This will hide them from suggestions, but their past rounds and scores will remain intact.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onArchivePlayer(player.id)
+                        playerToDelete = null
+                    }
+                ) {
+                    Text("Remove", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { playerToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -81,14 +110,34 @@ internal fun AddRemovePlayersSheet(
                             color = MaterialTheme.colorScheme.surfaceVariant,
                             modifier = Modifier.padding(vertical = 4.dp)
                         ) {
-                            Text(
-                                text = player.name,
-                                color = ContentWhite,
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier
-                                    .clickable { onAddPlayer(player.name) }
-                                    .padding(horizontal = 18.dp, vertical = 12.dp)
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                // Name area — tap to add
+                                Text(
+                                    text = player.name,
+                                    color = ContentWhite,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier
+                                        .clickable { onAddPlayer(player.name) }
+                                        .padding(start = 18.dp, end = 10.dp, top = 12.dp, bottom = 12.dp)
+                                )
+                                // Remove target — archives the player (confirm dialog above)
+                                Box(
+                                    modifier = Modifier
+                                        .size(width = 40.dp, height = 48.dp)
+                                        .clickable(
+                                            onClick = { playerToDelete = player },
+                                            onClickLabel = "Remove ${player.name}"
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = null,
+                                        tint = Color.Red,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }

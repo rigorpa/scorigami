@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.scorigami.app.ui.theme.CardBackground
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.app.ui.theme.scaledSp
 import com.scorigami.app.ui.theme.DefaultCardBackground
 import com.scorigami.app.ui.theme.HoleJumpSelectedColor
@@ -48,7 +49,10 @@ internal fun HoleInfoCard(
     var showHoleJumpDialog by remember { mutableStateOf(false) }
 
     if (showNotesSheet && !holeEntity?.notes.isNullOrBlank()) {
-        ModalBottomSheet(onDismissRequest = { showNotesSheet = false }) {
+        ModalBottomSheet(
+            onDismissRequest = { showNotesSheet = false },
+            containerColor = ScreenBackground
+        ) {
             Column(
                 modifier = Modifier
                     .padding(horizontal = 24.dp)
@@ -69,8 +73,11 @@ internal fun HoleInfoCard(
     }
 
     if (showHoleJumpDialog) {
-        // Default container (surfaceContainerLow grey) — consistent with the app's other sheets
-        ModalBottomSheet(onDismissRequest = { showHoleJumpDialog = false }) {
+        // ScreenBackground container — consistent with all the app's sheets
+        ModalBottomSheet(
+            onDismissRequest = { showHoleJumpDialog = false },
+            containerColor = ScreenBackground
+        ) {
             Column(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)

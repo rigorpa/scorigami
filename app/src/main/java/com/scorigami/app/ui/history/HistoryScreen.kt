@@ -139,7 +139,10 @@ fun HistoryScreen(
 
     // Share sheet: single-round hint + full-history export
     if (showShareHint) {
-        ModalBottomSheet(onDismissRequest = { showShareHint = false }) {
+        ModalBottomSheet(
+            onDismissRequest = { showShareHint = false },
+            containerColor = ScreenBackground
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

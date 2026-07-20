@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.app.ui.theme.DisabledButtonGradientEnd
 import com.scorigami.app.ui.theme.DisabledButtonGradientStart
 import androidx.compose.ui.unit.dp
@@ -348,7 +349,10 @@ fun RoundSetupScreen(
     // Course picker — default container (surfaceContainerLow grey), matching the app's
     // other sheets (share picker, hole notes, add/remove players)
     if (showCoursePicker) {
-        ModalBottomSheet(onDismissRequest = { showCoursePicker = false }) {
+        ModalBottomSheet(
+            onDismissRequest = { showCoursePicker = false },
+            containerColor = ScreenBackground
+        ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
