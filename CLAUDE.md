@@ -14,7 +14,7 @@ Players are added before a round. Scores are entered on the phone **and** the wa
 **Multi-module Kotlin project** (Gradle Kotlin DSL, `libs.versions.toml` version catalog):
 
 ```
-iThrow/
+scorigami/   # repo root (rootProject.name = "Scorigami")
 ├── shared/   # Room DB, entities, DAOs, sync message contracts
 ├── app/      # Phone app — Jetpack Compose, MVVM, Hilt
 └── wear/     # Wear OS app — Compose for Wear OS, stateless (driven by phone)
@@ -51,7 +51,7 @@ Named color constants are centralized in `AppColors.kt` files — no inline `Col
 | `OnSurfaceVariant` | `#CDC6B4` | Secondary text (`ContentLightGrey`, `ScorecardHoleNumberColor`) |
 | `OnSurface` | `#E8E2D4` | Primary text (`ContentWhite`, `ScorigamiFont`) |
 
-Kept **outside** the neutral palette (semantic/brand accents, per Material's separation of neutral vs accent tonal palettes): `ScoreUnderParColor` green `#81C784`, `StatActiveColor` OB red `#EF5350`, `C1xActiveColor` orange `#FF9800`, `IncompleteHoleDotColor` amber `#FFB300`, and the four identity gradients (NewRound `#1C2E42→#474B50`, Courses `#24534B→#506B67`, History `#2D0C00→#CC6B0A`, Resume `#4527A0→#7E57C2`). `Theme.kt`'s `DarkColors` maps all neutral colorScheme slots (surface family, outline, on-colors) to the same tokens; **primary/secondary are neutralized to warm monochrome** (`OnSurface`/`OnSurfaceVariant`) since the palette defines no accent hue — because of this, `vsParColor()` under-par uses `ScoreUnderParColor` green, NOT `colorScheme.primary`. Error stays red `#EF5350`. `themes.xml` (both variants) uses `#15130B` for window/status/nav/splash.
+Kept **outside** the neutral palette (semantic/brand accents, per Material's separation of neutral vs accent tonal palettes): `ScoreUnderParColor` green `#81C784`, `StatActiveColor` OB red `#EF5350`, `C1xActiveColor` orange `#FF9800`, `IncompleteHoleDotColor` amber `#FFB300`, and the four identity gradients (NewRound `#1C2E42→#474B50`, Courses `#10443F→#5A9791`, History `#2D0C00→#CC6B0A`, Resume `#4527A0→#7E57C2`). `Theme.kt`'s `DarkColors` maps all neutral colorScheme slots (surface family, outline, on-colors) to the same tokens; **primary/secondary are neutralized to warm monochrome** (`OnSurface`/`OnSurfaceVariant`) since the palette defines no accent hue — because of this, `vsParColor()` under-par uses `ScoreUnderParColor` green, NOT `colorScheme.primary`. Error stays red `#EF5350`. `themes.xml` (both variants) uses `#15130B` for window/status/nav/splash.
 
 **`wear/ui/theme/AppColors.kt`** (watch):
 | Constant | Value | Usage |
@@ -91,8 +91,7 @@ All phone text sizes flow from **one knob**: `CurrentFontSize` in `app/ui/theme/
 | Hilt | 2.59.2 | Dependency injection |
 | play-services-wearable | 18.2.0 | Phone ↔ Watch Data Layer |
 | kotlinx.serialization | 1.7.3 | JSON for sync messages |
-| Navigation Compose | 2.8.5 | Phone navigation |
-| Wear Compose Navigation | 1.4.0 | Watch navigation |
+| Navigation Compose | 2.8.5 | Phone **and Watch** navigation (wear uses the standard `androidx.navigation.compose` `NavHost`, not `SwipeDismissableNavHost` — see Watch App Screens) |
 
 Min SDK: 30 · Compile SDK: 35 · Kotlin: 2.2.10 · AGP: 9.2.1
 

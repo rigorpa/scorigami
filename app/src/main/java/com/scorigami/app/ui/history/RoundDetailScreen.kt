@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.round.formatVsPar
+import com.scorigami.app.ui.theme.HandicapColor
 import com.scorigami.app.ui.theme.HistoryGradientEnd
 import com.scorigami.app.ui.theme.HistoryGradientStart
 import com.scorigami.app.ui.round.StatTotalsLine
@@ -107,7 +108,8 @@ fun RoundDetailScreen(
                     holes = detail.holes,
                     scores = detail.scores,
                     obCounts = detail.obCounts,
-                    c1xCounts = detail.c1xCounts
+                    c1xCounts = detail.c1xCounts,
+                    handicap = detail.handicaps[player.id] ?: 0
                 )
             }
             item { Spacer(Modifier.height(8.dp)) }
@@ -128,7 +130,8 @@ private fun DetailPlayerCard(
     holes: List<HoleEntity>,
     scores: Map<Pair<Long, Int>, Int>,
     obCounts: Map<Pair<Long, Int>, Int>,
-    c1xCounts: Map<Pair<Long, Int>, Int>
+    c1xCounts: Map<Pair<Long, Int>, Int>,
+    handicap: Int = 0
 ) {
     val totalThrows = scores.entries.filter { it.key.first == player.id }.sumOf { it.value }
     val totalPar = holes.filter { scores[Pair(player.id, it.number)] != null }.sumOf { it.par }
@@ -144,11 +147,37 @@ private fun DetailPlayerCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(player.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text(
-                    text = "$totalThrows  (${formatVsPar(vsPar)})",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                if (handicap != 0) {
+                    // Handicap-adjusted total takes the primary slot ("w/ Hcp"),
+                    // with the raw round score shown smaller beneath it.
+                    Column(horizontalAlignment = Alignment.End) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = formatVsPar(vsPar + handicap),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = ContentWhite
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Text(
+                                text = "w/ Hcp",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = HandicapColor
+                            )
+                        }
+                        Text(
+                            text = formatVsPar(vsPar),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                } else {
+                    Text(
+                        text = formatVsPar(vsPar),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
             Spacer(Modifier.height(8.dp))
             HorizontalDivider()

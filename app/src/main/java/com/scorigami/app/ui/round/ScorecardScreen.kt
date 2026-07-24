@@ -116,7 +116,8 @@ fun ScorecardScreen(
                 holes = state.holes,
                 scores = state.scores,
                 obCounts = state.obCounts,
-                c1xCounts = state.c1xCounts
+                c1xCounts = state.c1xCounts,
+                handicaps = state.handicaps
             )
         }
     }
@@ -224,7 +225,6 @@ fun ScorecardScreen(
                                 obCounts = state.obCounts,
                                 c1xCounts = state.c1xCounts,
                                 holes = state.holes,
-                                handicap = state.handicaps[player.id] ?: 0,
                                 scoresVisible = scoresVisible,
                                 onScoreChange = { throws ->
                                     viewModel.updateScore(player.id, hole, throws)

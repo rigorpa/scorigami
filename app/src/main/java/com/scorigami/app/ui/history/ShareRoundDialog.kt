@@ -35,6 +35,7 @@ import com.scorigami.app.ui.round.StatUnderlines
 import com.scorigami.app.ui.round.formatVsPar
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.HandicapColor
 import com.scorigami.app.ui.theme.HistoryGradientEnd
 import com.scorigami.app.ui.theme.HistoryGradientStart
 import com.scorigami.app.ui.theme.ScoreUnderParColor
@@ -220,7 +221,8 @@ internal fun ShareScorecardCard(
                     holes = detail.holes,
                     scores = detail.scores,
                     obCounts = detail.obCounts,
-                    c1xCounts = detail.c1xCounts
+                    c1xCounts = detail.c1xCounts,
+                    handicap = detail.handicaps[player.id] ?: 0
                 )
                 Spacer(Modifier.height(8.dp))
             }
@@ -242,7 +244,8 @@ private fun SharePlayerBlock(
     holes: List<HoleEntity>,
     scores: Map<Pair<Long, Int>, Int>,
     obCounts: Map<Pair<Long, Int>, Int>,
-    c1xCounts: Map<Pair<Long, Int>, Int>
+    c1xCounts: Map<Pair<Long, Int>, Int>,
+    handicap: Int = 0
 ) {
     val totalThrows = scores.entries.filter { it.key.first == player.id }.sumOf { it.value }
     val totalPar = holes.filter { scores[Pair(player.id, it.number)] != null }.sumOf { it.par }
@@ -269,12 +272,39 @@ private fun SharePlayerBlock(
                 color = ContentWhite,
                 maxLines = 1
             )
-            Text(
-                formatVsPar(vsPar),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = shareVsParColor(vsPar)
-            )
+            if (handicap != 0) {
+                // Handicap-adjusted total takes the primary slot ("w/ Hcp"),
+                // with the raw round score shown smaller beneath it.
+                Column(horizontalAlignment = Alignment.End) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            formatVsPar(vsPar + handicap),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = ContentWhite
+                        )
+                        Spacer(Modifier.width(3.dp))
+                        Text(
+                            "w/ Hcp",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = HandicapColor
+                        )
+                    }
+                    Text(
+                        formatVsPar(vsPar),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = shareVsParColor(vsPar)
+                    )
+                }
+            } else {
+                Text(
+                    formatVsPar(vsPar),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = shareVsParColor(vsPar)
+                )
+            }
         }
         Spacer(Modifier.height(6.dp))
         holes.chunked(9).forEach { group ->

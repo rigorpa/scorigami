@@ -11,6 +11,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.HandicapColor
 import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.shared.db.entity.HoleEntity
 import com.scorigami.shared.db.entity.PlayerEntity
@@ -21,7 +22,8 @@ internal fun FullScorecardSheet(
     holes: List<HoleEntity>,
     scores: Map<Pair<Long, Int>, Int>,
     obCounts: Map<Pair<Long, Int>, Int>,
-    c1xCounts: Map<Pair<Long, Int>, Int>
+    c1xCounts: Map<Pair<Long, Int>, Int>,
+    handicaps: Map<Long, Int>
 ) {
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -35,6 +37,7 @@ internal fun FullScorecardSheet(
             val totalVsPar = totalThrows - parSoFar
             val totalOb = obCounts.entries.filter { it.key.first == player.id }.sumOf { it.value }
             val totalC1x = c1xCounts.entries.filter { it.key.first == player.id }.sumOf { it.value }
+            val handicap = handicaps[player.id] ?: 0
 
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
                 Row(
@@ -43,12 +46,39 @@ internal fun FullScorecardSheet(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(player.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = ContentWhite)
-                    Text(
-                        text = formatVsPar(totalVsPar),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = vsParColor(totalVsPar)
-                    )
+                    if (handicap != 0) {
+                        // Handicap-adjusted total takes the primary slot ("w/ Hcp"),
+                        // with the raw round score shown smaller beneath it.
+                        Column(horizontalAlignment = Alignment.End) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = formatVsPar(totalVsPar + handicap),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = ContentWhite
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text(
+                                    text = "w/ Hcp",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = HandicapColor
+                                )
+                            }
+                            Text(
+                                text = formatVsPar(totalVsPar),
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium,
+                                color = vsParColor(totalVsPar)
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = formatVsPar(totalVsPar),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = vsParColor(totalVsPar)
+                        )
+                    }
                 }
                 Spacer(Modifier.height(8.dp))
                 HorizontalDivider()
@@ -70,7 +100,7 @@ internal fun FullScorecardSheet(
                                 Text(
                                     text = "${hole.number}",
                                     style = MaterialTheme.typography.labelMedium,
-                                    color = ContentWhite.copy(alpha = 0.5f)
+                                    color = ContentWhite.copy(alpha = 0.8f)
                                 )
                                 Text(
                                     text = throws?.toString() ?: "—",

@@ -161,17 +161,32 @@ private fun PlayerReviewCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(player.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = ContentWhite)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // Handicap-adjusted total sits to the left of the normal vs-par score
-                if (handicap != 0) {
+            if (handicap != 0) {
+                // Handicap-adjusted total takes the primary slot ("w/ Hcp"),
+                // with the raw round score shown smaller beneath it.
+                Column(horizontalAlignment = Alignment.End) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = formatVsPar(totalVsPar + handicap),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = ContentWhite
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = "w/ Hcp",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = HandicapColor
+                        )
+                    }
                     Text(
-                        text = "Hcp ${formatVsPar(totalVsPar + handicap)}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = HandicapColor,
-                        modifier = Modifier.padding(end = 8.dp)
+                        text = formatVsPar(totalVsPar),
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = vsParColor(totalVsPar)
                     )
                 }
+            } else {
                 Text(
                     text = formatVsPar(totalVsPar),
                     style = MaterialTheme.typography.titleMedium,

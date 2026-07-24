@@ -38,7 +38,8 @@ data class RoundDetailState(
     val players: List<PlayerEntity> = emptyList(),
     val scores: Map<Pair<Long, Int>, Int> = emptyMap(),
     val obCounts: Map<Pair<Long, Int>, Int> = emptyMap(),
-    val c1xCounts: Map<Pair<Long, Int>, Int> = emptyMap()
+    val c1xCounts: Map<Pair<Long, Int>, Int> = emptyMap(),
+    val handicaps: Map<Long, Int> = emptyMap()
 )
 
 @HiltViewModel
@@ -97,8 +98,9 @@ class HistoryViewModel @Inject constructor(
             scoreDao.getScoresForRound(detailRoundId),
             playerDao.getPlayersForRoundFlow(detailRoundId),
             obDao.getObForRound(detailRoundId),
-            c1xDao.getC1xForRound(detailRoundId)
-        ) { scores, players, obEntries, c1xEntries ->
+            c1xDao.getC1xForRound(detailRoundId),
+            roundDao.getRoundPlayersFlow(detailRoundId)
+        ) { scores, players, obEntries, c1xEntries, roundPlayers ->
             val round = roundDao.getRoundById(detailRoundId)
                 ?: return@combine RoundDetailState()
             val courseWithHoles = courseDao.getCourseWithHoles(round.courseId)
@@ -125,7 +127,8 @@ class HistoryViewModel @Inject constructor(
                 players = sortedPlayers,
                 scores = scoreMap,
                 obCounts = obEntries.associate { Pair(it.playerId, it.holeNumber) to it.count },
-                c1xCounts = c1xEntries.associate { Pair(it.playerId, it.holeNumber) to it.count }
+                c1xCounts = c1xEntries.associate { Pair(it.playerId, it.holeNumber) to it.count },
+                handicaps = roundPlayers.associate { it.playerId to it.handicap }
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RoundDetailState())
     }
