@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Adjust
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Park
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,13 +22,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.scorigami.app.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.BuildConfig
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.ScreenBackground
+import com.scorigami.app.ui.theme.scaledSp
 import com.scorigami.app.ui.theme.CoursesGradientEnd
 import com.scorigami.app.ui.theme.CoursesGradientStart
 import com.scorigami.app.ui.theme.DefaultCardBackground
@@ -37,20 +39,67 @@ import com.scorigami.app.ui.theme.HistoryGradientEnd
 import com.scorigami.app.ui.theme.HistoryGradientStart
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
 import com.scorigami.app.ui.theme.NewRoundGradientStart
+import com.scorigami.app.ui.theme.AppFontSize
 import com.scorigami.app.ui.theme.ResumeGradientEnd
 import com.scorigami.app.ui.theme.ResumeGradientStart
 import com.scorigami.app.ui.theme.ScorigamiFont
 import com.scorigami.app.viewmodel.RoundViewModel
+import com.scorigami.app.viewmodel.SettingsViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onStartRound: () -> Unit,
     onResume: () -> Unit,
     onCourses: () -> Unit,
     onHistory: () -> Unit,
-    viewModel: RoundViewModel = hiltViewModel()
+    viewModel: RoundViewModel = hiltViewModel(),
+    settingsViewModel: SettingsViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val fontSize by settingsViewModel.fontSize.collectAsStateWithLifecycle()
+    var settingsMenuExpanded by remember { mutableStateOf(false) }
+    var showFontSizeDialog by remember { mutableStateOf(false) }
+
+    // Font size picker — ScreenBackground ModalBottomSheet, consistent with the app's other sheets
+    if (showFontSizeDialog) {
+        ModalBottomSheet(
+        onDismissRequest = { showFontSizeDialog = false },
+        containerColor = ScreenBackground
+    ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    "Font Size",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(Modifier.height(4.dp))
+                AppFontSize.entries.forEach { size ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                settingsViewModel.setFontSize(size)
+                                showFontSizeDialog = false
+                            }
+                            .padding(horizontal = 4.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(selected = size == fontSize, onClick = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(size.label, style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+            }
+        }
+    }
 
     Scaffold { padding ->
         Box(
@@ -76,7 +125,7 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(20.dp))
                 Text(
                     text = "SCORIGAMI",
-                    fontSize = 42.sp,
+                    fontSize = 42.scaledSp,
                     fontWeight = FontWeight.Normal,
                     color = ScorigamiFont
                 )
@@ -139,6 +188,33 @@ fun HomeScreen(
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            // Settings menu — top-right gear
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+            ) {
+                IconButton(onClick = { settingsMenuExpanded = true }) {
+                    Icon(
+                        Icons.Default.Settings,
+                        contentDescription = "Settings",
+                        tint = ContentLightGrey
+                    )
+                }
+                DropdownMenu(
+                    expanded = settingsMenuExpanded,
+                    onDismissRequest = { settingsMenuExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Font Size") },
+                        onClick = {
+                            settingsMenuExpanded = false
+                            showFontSizeDialog = true
+                        }
+                    )
+                }
+            }
         }
     }
 }

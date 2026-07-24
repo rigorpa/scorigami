@@ -172,22 +172,27 @@ fun CourseListScreen(
         )
     }
 
-    // Share course picker — default container (surfaceContainerLow grey), matching the
-    // hole-notes and add/remove-players sheets
+    // Share course picker — ScreenBackground container, consistent with all the app's sheets
     if (showSharePicker) {
-        ModalBottomSheet(onDismissRequest = { showSharePicker = false }) {
+        ModalBottomSheet(
+            onDismissRequest = { showSharePicker = false },
+            containerColor = ScreenBackground
+        ) {
+            // Bubble-card rows matching the course list's widget language (SectionCardColor, 12.dp)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(bottom = 32.dp)
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
                     "Share a Course",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = ContentWhite,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    modifier = Modifier.padding(vertical = 8.dp)
                 )
                 courses.forEach { courseWithHoles ->
                     val course = courseWithHoles.course
@@ -198,18 +203,19 @@ fun CourseListScreen(
                         trailingContent = {
                             Icon(Icons.Default.Share, contentDescription = null, tint = ContentWhite)
                         },
-                        modifier = Modifier.clickable {
-                            showSharePicker = false
-                            scope.launch { shareCourse(context, courseWithHoles) }
-                        },
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable {
+                                showSharePicker = false
+                                scope.launch { shareCourse(context, courseWithHoles) }
+                            },
                         colors = ListItemDefaults.colors(
-                            containerColor = Color.Transparent,
+                            containerColor = SectionCardColor,
                             headlineColor = ContentWhite,
                             supportingColor = ContentLightGrey,
                             trailingIconColor = ContentWhite
                         )
                     )
-                    HorizontalDivider()
                 }
             }
         }

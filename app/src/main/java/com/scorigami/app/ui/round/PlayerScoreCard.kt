@@ -12,10 +12,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import com.scorigami.app.ui.theme.C1xActiveColor
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.scaledSp
 import com.scorigami.app.ui.theme.ScoreButtonBackground
 import com.scorigami.app.ui.theme.DefaultCardBackground
 import com.scorigami.app.ui.theme.ScoreUnderParColor
@@ -76,7 +76,7 @@ internal fun PlayerScoreCard(
             ) {
                 Text(
                     text = player.name,
-                    fontSize = 24.sp,
+                    fontSize = 24.scaledSp,
                     fontWeight = FontWeight.Bold,
                     color = ContentWhite,
                     maxLines = 1
@@ -121,11 +121,11 @@ internal fun PlayerScoreCard(
                         contentColor = ContentWhite
                     )
                 ) {
-                    Text("−", fontSize = 24.sp, color = ContentWhite)
+                    Text("−", fontSize = 24.scaledSp, color = ContentWhite)
                 }
                 Text(
                     text = if (throwsThisHole == 0) "—" else "$throwsThisHole",
-                    fontSize = 26.sp,
+                    fontSize = 26.scaledSp,
                     //fontWeight = FontWeight.Bold,
                     color = scoreColor,
                     modifier = Modifier.widthIn(min = 40.dp),
@@ -142,7 +142,7 @@ internal fun PlayerScoreCard(
                         contentColor = ContentWhite
                     )
                 ) {
-                    Text("+", fontSize = 24.sp, color = ContentWhite)
+                    Text("+", fontSize = 24.scaledSp, color = ContentWhite)
                 }
             }
         }
@@ -181,7 +181,7 @@ private fun StatCycleButton(
                 count >= 3 -> "3+ $label"
                 else -> "$count $label"
             },
-            fontSize = 18.sp,
+            fontSize = 18.scaledSp,
             //fontWeight = FontWeight.ExtraBold,
             color = if (count > 0) activeColor else StatUnsetColor,
             maxLines = 1

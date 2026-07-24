@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.LocalFontScale
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
 import com.scorigami.app.ui.theme.NewRoundGradientStart
 
@@ -36,11 +37,13 @@ internal fun ScorecardTopBar(
     ) {
         TopAppBar(
             title = {
-                // Auto-shrink: start at 32sp and step down until the name fits on one line
-                // (18sp floor, then ellipsis as a last resort). Drawing is suppressed until
-                // the size settles so the oversized first pass never flashes on screen.
-                var titleSize by remember(courseName) { mutableStateOf(32.sp) }
-                var sizeSettled by remember(courseName) { mutableStateOf(false) }
+                // Auto-shrink: start at 32sp (× app font scale) and step down until the name
+                // fits on one line (18sp-scaled floor, then ellipsis as a last resort).
+                // Drawing is suppressed until the size settles so the oversized first pass
+                // never flashes on screen.
+                val fontScale = LocalFontScale.current
+                var titleSize by remember(courseName, fontScale) { mutableStateOf((32 * fontScale).sp) }
+                var sizeSettled by remember(courseName, fontScale) { mutableStateOf(false) }
                 Text(
                     text = courseName,
                     fontFamily = FontFamily.Cursive,
@@ -49,8 +52,8 @@ internal fun ScorecardTopBar(
                     softWrap = false,
                     overflow = TextOverflow.Ellipsis,
                     onTextLayout = { result ->
-                        if (result.hasVisualOverflow && titleSize.value > 18f) {
-                            titleSize = (titleSize.value * 0.9f).coerceAtLeast(18f).sp
+                        if (result.hasVisualOverflow && titleSize.value > 18f * fontScale) {
+                            titleSize = (titleSize.value * 0.9f).coerceAtLeast(18f * fontScale).sp
                         } else {
                             sizeSettled = true
                         }

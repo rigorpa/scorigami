@@ -22,6 +22,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.app.viewmodel.RoundViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -115,13 +116,18 @@ fun ScorecardScreen(
     }
 
     if (showPlayersSheet) {
-        // Default container (surfaceContainerLow grey) — matches the hole-notes sheet
-        ModalBottomSheet(onDismissRequest = { showPlayersSheet = false }) {
+        // ScreenBackground container so the SectionCard bubbles inside stay visible
+        // (SectionCardColor equals the default sheet container color)
+        ModalBottomSheet(
+            onDismissRequest = { showPlayersSheet = false },
+            containerColor = ScreenBackground
+        ) {
             AddRemovePlayersSheet(
                 currentPlayers = state.players,
                 allPlayers = allPlayers,
                 onAddPlayer = { viewModel.addPlayerToRound(it) },
-                onRemovePlayer = { viewModel.removePlayerFromRound(it) }
+                onRemovePlayer = { viewModel.removePlayerFromRound(it) },
+                onArchivePlayer = { viewModel.archivePlayer(it) }
             )
         }
     }

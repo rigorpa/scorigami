@@ -35,4 +35,7 @@ interface CourseDao {
 
     @Query("SELECT name FROM courses")
     suspend fun getAllCourseNames(): List<String>
+
+    @Query("SELECT * FROM courses WHERE name = :name LIMIT 1")
+    suspend fun getCourseByName(name: String): CourseEntity?
 }

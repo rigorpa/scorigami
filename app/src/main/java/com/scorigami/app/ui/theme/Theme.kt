@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -49,29 +50,36 @@ private val DarkColors = darkColorScheme(
     onErrorContainer = ThemeOnErrorContainer
 )
 
-private val AppTypography = Typography(
-    displayLarge  = TextStyle(fontSize = 57.sp, fontWeight = FontWeight.Normal, letterSpacing = (-0.25).sp),
-    displayMedium = TextStyle(fontSize = 45.sp, fontWeight = FontWeight.Normal),
-    displaySmall  = TextStyle(fontSize = 36.sp, fontWeight = FontWeight.Normal),
-    headlineLarge  = TextStyle(fontSize = 34.sp, fontWeight = FontWeight.SemiBold),
-    headlineMedium = TextStyle(fontSize = 30.sp, fontWeight = FontWeight.SemiBold),
-    headlineSmall  = TextStyle(fontSize = 28.sp, fontWeight = FontWeight.SemiBold),
-    titleLarge  = TextStyle(fontSize = 26.sp, fontWeight = FontWeight.Bold),
-    titleMedium = TextStyle(fontSize = 22.sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.15.sp),
-    titleSmall  = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Medium,   letterSpacing = 0.1.sp),
-    bodyLarge   = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Normal, letterSpacing = 0.5.sp),
-    bodyMedium  = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Normal, letterSpacing = 0.25.sp),
-    bodySmall   = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Normal, letterSpacing = 0.4.sp),
-    labelLarge  = TextStyle(fontSize = 17.sp, fontWeight = FontWeight.Medium, letterSpacing = 0.1.sp),
-    labelMedium = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.Medium, letterSpacing = 0.5.sp),
-    labelSmall  = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Medium, letterSpacing = 0.5.sp)
+// Base sizes for the type scale; every style is multiplied by the app font scale
+// (see FontSizer.kt) so the whole typography follows the Small/Medium/Large knob.
+private fun appTypography(s: Float) = Typography(
+    displayLarge  = TextStyle(fontSize = (57 * s).sp, fontWeight = FontWeight.Normal, letterSpacing = (-0.25).sp),
+    displayMedium = TextStyle(fontSize = (45 * s).sp, fontWeight = FontWeight.Normal),
+    displaySmall  = TextStyle(fontSize = (36 * s).sp, fontWeight = FontWeight.Normal),
+    headlineLarge  = TextStyle(fontSize = (34 * s).sp, fontWeight = FontWeight.SemiBold),
+    headlineMedium = TextStyle(fontSize = (30 * s).sp, fontWeight = FontWeight.SemiBold),
+    headlineSmall  = TextStyle(fontSize = (28 * s).sp, fontWeight = FontWeight.SemiBold),
+    titleLarge  = TextStyle(fontSize = (26 * s).sp, fontWeight = FontWeight.Bold),
+    titleMedium = TextStyle(fontSize = (22 * s).sp, fontWeight = FontWeight.SemiBold, letterSpacing = 0.15.sp),
+    titleSmall  = TextStyle(fontSize = (20 * s).sp, fontWeight = FontWeight.Medium,   letterSpacing = 0.1.sp),
+    bodyLarge   = TextStyle(fontSize = (20 * s).sp, fontWeight = FontWeight.Normal, letterSpacing = 0.5.sp),
+    bodyMedium  = TextStyle(fontSize = (18 * s).sp, fontWeight = FontWeight.Normal, letterSpacing = 0.25.sp),
+    bodySmall   = TextStyle(fontSize = (15 * s).sp, fontWeight = FontWeight.Normal, letterSpacing = 0.4.sp),
+    labelLarge  = TextStyle(fontSize = (17 * s).sp, fontWeight = FontWeight.Medium, letterSpacing = 0.1.sp),
+    labelMedium = TextStyle(fontSize = (15 * s).sp, fontWeight = FontWeight.Medium, letterSpacing = 0.5.sp),
+    labelSmall  = TextStyle(fontSize = (13 * s).sp, fontWeight = FontWeight.Medium, letterSpacing = 0.5.sp)
 )
 
 @Composable
-fun ScorigamiTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = DarkColors,
-        typography = AppTypography,
-        content = content
-    )
+fun ScorigamiTheme(
+    fontSize: AppFontSize = CurrentFontSize,
+    content: @Composable () -> Unit
+) {
+    CompositionLocalProvider(LocalFontScale provides fontSize.scale) {
+        MaterialTheme(
+            colorScheme = DarkColors,
+            typography = appTypography(fontSize.scale),
+            content = content
+        )
+    }
 }
