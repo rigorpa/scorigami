@@ -62,6 +62,10 @@ val StatActiveColor = Color(0xFFEF5350)      // OB — matches the theme error r
 val C1xActiveColor = Color(0xFFFF9800)       // C1x — orange, distinct from OB red
 // at par and unscored use ContentWhite; over par uses MaterialTheme.colorScheme.error
 
+// "Hcp ±N" label next to a player's vs-par score (PlayerScoreCard, RoundReviewScreen) —
+// yellow, distinct from OB red / C1x orange
+val HandicapColor = Color(0xFFFFD600)
+
 // −/+ score buttons on the player card — brightest fill so the controls pop
 val ScoreButtonBackground = SurfaceBright
 

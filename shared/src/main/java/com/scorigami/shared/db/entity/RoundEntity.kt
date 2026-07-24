@@ -18,5 +18,8 @@ data class RoundEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val courseId: Long,
     val startedAt: Long = System.currentTimeMillis(),
-    val completedAt: Long? = null
+    val completedAt: Long? = null,
+    /** Hole the round begins on (shotgun-style start). Play order wraps: startHole,
+     * startHole+1, ..., holeCount, 1, 2, ..., startHole-1. 1 = normal linear round. */
+    val startHole: Int = 1
 )

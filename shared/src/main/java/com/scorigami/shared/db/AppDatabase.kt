@@ -23,7 +23,7 @@ import com.scorigami.shared.db.entity.*
         ObEntity::class,
         C1xEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -89,6 +89,13 @@ abstract class AppDatabase : RoomDatabase() {
                 database.execSQL(
                     "CREATE INDEX IF NOT EXISTS `index_c1x_counts_roundId` ON `c1x_counts` (`roundId`)"
                 )
+            }
+        }
+        // Adds "Start at Hole" (rounds.startHole) and per-round "Handicap" (round_players.handicap).
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE rounds ADD COLUMN startHole INTEGER NOT NULL DEFAULT 1")
+                database.execSQL("ALTER TABLE round_players ADD COLUMN handicap INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

@@ -104,25 +104,26 @@ Min SDK: 30 · Compile SDK: 35 · Kotlin: 2.2.10 · AGP: 9.2.1
 courses     id, name, holeCount
 holes       id, courseId, number, par, distanceFeet?, notes?   (FK → courses CASCADE)
 players     id, name, createdAt, isArchived
-rounds      id, courseId, startedAt, completedAt?              (completedAt=null = active)
-round_players  roundId, playerId, order                        (composite PK)
+rounds      id, courseId, startedAt, completedAt?, startHole   (completedAt=null = active)
+round_players  roundId, playerId, order, handicap               (composite PK)
 scores      roundId, playerId, holeNumber, throws              (composite PK, upsert on change)
 ob_counts   roundId, playerId, holeNumber, count               (composite PK, FK → rounds CASCADE)
 c1x_counts  roundId, playerId, holeNumber, count               (composite PK, FK → rounds CASCADE)
 ```
 
-**DB version: 7**
+**DB version: 8**
 - Migration 1→2: adds `distanceMeters INTEGER` nullable column to `holes`
 - Migration 2→3: renames `distanceMeters` → `distanceFeet` (values were always stored in feet)
 - Migration 3→4: adds `notes TEXT` nullable column to `holes`
 - Migration 4→5: adds `isArchived INTEGER NOT NULL DEFAULT 0` column to `players` — archived players are hidden from the "Previous Golfers" suggestions (`PlayerDao.getAllPlayers()` filters `isArchived = 0`); archiving happens from Round Setup, and adding an archived name to a round auto-unarchives it (`RoundViewModel`)
 - Migration 5→6: creates `ob_counts` (`ObEntity`/`ObDao`) — per-player per-hole out-of-bounds counts. Purely informational (OB throws are already part of the entered score); rows exist only while `count > 0` (`RoundViewModel.setOb` deletes at 0, mirroring the zero-score rule). The migration DDL must match Room's generated schema exactly (see comment in `AppDatabase`)
 - Migration 6→7: creates `c1x_counts` (`C1xEntity`/`C1xDao`) — missed circle-1 putts, an exact structural mirror of `ob_counts` (`RoundViewModel.setC1x`). Any future per-hole stat should follow this same pattern (or consolidate all three into one generic stats table if a third is added)
+- Migration 7→8: adds `startHole INTEGER NOT NULL DEFAULT 1` to `rounds` and `handicap INTEGER NOT NULL DEFAULT 0` to `round_players` — see "Start at Hole" and "Handicap" below
 
 **Foreign key enforcement:** `DatabaseModule.provideDatabase()` enables FK enforcement via a `RoomDatabase.Callback` whose `onOpen(connection)` runs `connection.execSQL("PRAGMA foreign_keys = ON")`. Room does NOT enable `PRAGMA foreign_keys` by default, and Room 2.8 **removed** the old `Builder.setForeignKeyConstraintsEnabled()` method (the KMP rewrite — the `Callback` now receives an `androidx.sqlite.SQLiteConnection`, and `execSQL` is the `androidx.sqlite.execSQL` extension). The PRAGMA runs on every connection open, outside a transaction, so it takes effect. This is required for the declared `onDelete = CASCADE` constraints to fire: deleting a course cascades to its `holes`; deleting a round cascades to its `scores` and `round_players`; and editing a course (`insertCourse` with `OnConflictStrategy.REPLACE` on an existing id) cascade-deletes the old holes before `insertHoles` re-adds them — without this, course edits silently duplicated every hole row.
 
 **Sync types** (`shared/sync/`):
-- `RoundState` — full snapshot pushed phone→watch (roundId, courseName, currentHole, totalHoles, players[], **holePars: Map<Int,Int>**). `holePars` maps every hole number to its par value so the watch can apply the first-press scoring logic for any hole it navigates to independently.
+- `RoundState` — full snapshot pushed phone→watch (roundId, courseName, currentHole, totalHoles, players[], **holePars: Map<Int,Int>**, **startHole: Int = 1**). `holePars` maps every hole number to its par value so the watch can apply the first-press scoring logic for any hole it navigates to independently. `startHole` lets the watch compute the same shotgun-style play order as the phone (see "Start at Hole") for its own Next Hole navigation and honor-system sort — handicap is **not** in `PlayerState`; it is phone-only (Review screen / scorecard display), the watch never needs it.
 - `PlayerState` — per-player data inside RoundState (playerId, name, **holeScores: Map<Int,Int>**, totalThrows, totalVsPar, **obCounts / c1xCounts: Map<Int,Int>**). `holeScores` maps every hole number the player has scored to their throw count, allowing the watch to display the correct score for whichever hole it is viewing independently of the phone; the stat maps do the same for the OB / C1x counters.
 - `ScoreUpdateMessage` — watch→phone message (roundId, playerId, holeNumber, throws, viewingHole)
 - `StatUpdateMessage` — watch→phone message for stat counters (roundId, playerId, holeNumber, **stat: "ob" | "c1x"**, count, viewingHole), sent to `/stat/update`; `PhoneWearableListenerService` writes it to Room (count ≤ 0 deletes the row, mirroring `RoundViewModel.setOb`/`setC1x`) and re-pushes state
@@ -212,8 +213,9 @@ Navigation is in `app/navigation/AppNavigation.kt`.
 
 ### RoundSetupScreen layout
 - **Top bar:** blue gradient (`NewRoundGradientStart` → `NewRoundGradientEnd`) matching ScorecardScreen; title and nav icon use `ContentWhite`
-- **Gradient-card language (no borders):** sections are rounded cards painted with the top bar's blue gradient (`SectionCard` — `SectionCardGradient` = `NewRoundGradientStart → End`, `RoundedCornerShape(12.dp)`) with their bold white `titleSmall` titles sitting **above** the bubbles (`SectionTitle`). The Course dropdown and Add Player field are label-less `OutlinedTextField`s (Add Player uses a grey "Player name" placeholder) with transparent containers (`sectionFieldColors()`) over the same gradient painted via `Modifier.background(SectionCardGradient, shape)`, so all four bubbles match the top bar
-- **Screen order:** (1) Course dropdown; (2) `SectionCard("Players")` — an end-aligned shuffle `IconButton` at the top-right (when `players.size > 1`) above the player rows with × remove + dividers, or a grey "No players yet…" hint when empty; (3) `SectionCard("Previous Golfers")` — pill chips (`Surface` + `CircleShape`, ~48dp tall; name area taps to add, separate 40×48dp red × zone archives via confirm dialog); (4) Add Player field + add `IconButton` at the bottom of the scrollable content
+- **Card language (no borders):** sections are rounded cards with a flat fill (`SectionCard` — `SectionCardColor` = `DefaultCardBackground`, `RoundedCornerShape(12.dp)`) with their bold white `titleSmall` titles sitting **above** the bubbles (`SectionTitle`). The Course dropdown and Add Player field are label-less `OutlinedTextField`s (Add Player uses a grey "Player name" placeholder) with transparent containers (`sectionFieldColors()`) over the same fill painted via `Modifier.background(SectionCardColor, shape)`, so all bubbles match
+- **Screen order:** (1) Course dropdown; (2) `SectionCard("Players")` — an end-aligned shuffle `IconButton` at the top-right (when `players.size > 1`) above the player rows with × remove + dividers, or a grey "No players yet…" hint when empty; (3) `SectionCard("Previous Golfers")` — pill chips (`Surface` + `CircleShape`, ~48dp tall; name area taps to add, separate 40×48dp red × zone archives via confirm dialog); (4) Add Player field + add `IconButton`; (5) `SectionCard("Round Settings")` — see below
+- **Round Settings bubble:** "Start at Hole" row (tap opens a 3-column hole-number grid `ModalBottomSheet`, same visual language as the in-round Jump to Hole sheet — selected hole `HoleJumpSelectedColor`, others `CardBackground`) resets to 1 if the selected course has fewer holes than the current value. Below a divider, a "Handicap" row per current player — a −/+ stepper (clamped ±20) showing `"Hcp {±N}"` in `HandicapColor` yellow once non-zero (grey "Hcp 0" while unset); only rendered when `players` is non-empty. Handicaps are staged in a local `mutableStateMapOf<String, Int>` keyed by player name, cleared per-name when that player is removed from the list, and passed to `RoundViewModel.startRound(startHole, handicaps)` on Start Round
 - **Start Round button:** gradient pill matching `HomeActionButton` — transparent `Button` over `Brush.horizontalGradient(NewRoundGradientStart → End)` (`RoundedCornerShape(percent = 50)`), disabled state falls back to the `DisabledButtonGradient` pair
 - **Start Round button:** in `Scaffold` `bottomBar` — full-width, 56 dp height, 16 dp horizontal padding, matching `RoundReviewScreen` bottom bar style
 
@@ -310,6 +312,22 @@ When update originates from watch: step 2 happens in `PhoneWearableListenerServi
 
 ---
 
+## Start at Hole & Handicap
+
+Both are set once in the **Round Settings** bubble on `RoundSetupScreen` (see that screen's layout section) and are per-round — neither persists onto the `players` table or carries into future rounds.
+
+**Start at Hole** (`RoundEntity.startHole`, default 1) — a shotgun-style start. The round still visits every hole exactly once; only the *order* changes: `startHole, startHole+1, …, holeCount, 1, 2, …, startHole−1`. This **play order**, not raw hole number, now drives:
+- `HoleInfoCard`'s ◀/▶ buttons and `ScorecardScreen`'s swipe gesture (disabled/no-op at the two play-order ends, not at hole 1 / holeCount)
+- The honor-system sort (see "Honor System Player Ordering" — cascades back through *previously played* holes, not hole − 1)
+- The watch's own Next Hole ▶ button and last-hole detection (`WearNavigation`, `WearScorecardScreen`) — the watch receives `startHole` via `RoundState` and computes the identical play order locally, since it independently decides when to show the end-of-round prompt
+- The **Jump to Hole** grid (phone and watch) is unaffected — it's direct tap-to-jump, order-agnostic — and "missing scores" detection is also unaffected, since it scans all holes regardless of order
+
+`RoundViewModel` seeds `currentHole = round.startHole` only on first load of a round (new or freshly resumed on app relaunch), never on later re-emissions, so the seed doesn't fight the user's in-progress navigation.
+
+**Handicap** (`RoundPlayerEntity.handicap`, default 0, range ±20 in the stepper) — added directly to a player's vs-par total (`Hcp value = totalVsPar + handicap`; e.g. gross `−4` with a `−2` handicap shows `Hcp −6`). Purely a display overlay: it does not affect standings sort order (`RoundReviewScreen`'s `StandingsCard` is unadjusted gross score) or anything pushed to the watch (`PlayerState` has no handicap field — phone-only). Shown as a yellow (`HandicapColor`) `"Hcp ±N"` label only when non-zero, next to the normal score in `PlayerScoreCard` (mid-round) and `PlayerReviewCard` (`RoundReviewScreen`, end-of-round review).
+
+---
+
 ## Round Finalization Flow
 
 1. "End Round" on **phone** → navigates to `RoundReviewScreen`
@@ -328,15 +346,15 @@ The ⋮ overflow menu on `ScorecardScreen` has two options:
 
 ## Honor System Player Ordering
 
-On hole N, players are sorted by a cascading comparator:
-- **Primary key:** score on hole N−1 (ascending — lowest = best = goes first)
-- **Tiebreaker:** score on hole N−2, then N−3, cascading back to hole 1
+On the hole at position P in the round's **play order** (see "Start at Hole" — play order is `[startHole, startHole+1, …, holeCount, 1, 2, …, startHole−1]`, reducing to natural 1..holeCount order when `startHole == 1`), players are sorted by a cascading comparator:
+- **Primary key:** score on the previous hole *in play order* (ascending — lowest = best = goes first), not raw hole-number − 1
+- **Tiebreaker:** score on the hole before that in play order, cascading back to the first hole played
 - **Last resort:** DB registration order (`round_players.order`) via Kotlin's stable sort
 - Players who have not scored a given hole are treated as `Int.MAX_VALUE` for that key (sorted last)
 - Re-sort fires on every hole navigation and on every score/player DB change
-- Hole 1 always uses the original round order
+- The first hole played (`hole == startHole`) always uses the original round order
 
-The sort input is always `basePlayers` (DB order); the cascading keys make the tiebreaker deterministic without needing to sort from the previously displayed list. Phone (`RoundViewModel.sortPlayersForHole`) and watch (`WearScorecardScreen`) use identical logic.
+The sort input is always `basePlayers` (DB order); the cascading keys make the tiebreaker deterministic without needing to sort from the previously displayed list. `holePlayOrder(startHole, holeCount)` is the shared formula — duplicated (not extracted to `shared/`, business logic can't depend on the UI layer) in `RoundViewModel.sortPlayersForHole` (phone view-model), `ScoreFormat.kt`'s `holePlayOrder` (phone UI — `HoleInfoCard` nav buttons, `ScorecardScreen` swipe), and `wear/ui/HoleOrder.kt`'s `holePlayOrder` (`WearScorecardScreen`, `WearNavigation`). Keep all three in sync if the formula ever changes.
 
 ---
 

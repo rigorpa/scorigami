@@ -43,6 +43,12 @@ fun ScorecardScreen(
         return
     }
 
+    // Shotgun-style wraparound play order for swipe navigation — mirrors HoleInfoCard's
+    // prev/next button logic (see ScoreFormat.kt's holePlayOrder).
+    val playOrder = remember(state.startHole, state.holes.size) {
+        holePlayOrder(state.startHole, state.holes.size)
+    }
+
     val incompleteHoles = remember(state.scores, state.players, state.holes) {
         state.holes
             .filter { hole -> state.players.any { player -> (state.scores[Pair(player.id, hole.number)] ?: 0) == 0 } }
@@ -149,18 +155,19 @@ fun ScorecardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .pointerInput(state.currentHole, state.holes.size) {
+                .pointerInput(state.currentHole, state.holes.size, state.startHole) {
                     var totalDrag = 0f
                     detectHorizontalDragGestures(
                         onDragStart = { totalDrag = 0f },
                         onDragCancel = { totalDrag = 0f },
                         onDragEnd = {
                             val threshold = 80.dp.toPx()
+                            val idx = playOrder.indexOf(state.currentHole)
                             when {
-                                totalDrag < -threshold && state.currentHole < state.holes.size ->
-                                    viewModel.navigateToHole(state.currentHole + 1)
-                                totalDrag > threshold && state.currentHole > 1 ->
-                                    viewModel.navigateToHole(state.currentHole - 1)
+                                totalDrag < -threshold ->
+                                    playOrder.getOrNull(idx + 1)?.let { viewModel.navigateToHole(it) }
+                                totalDrag > threshold ->
+                                    playOrder.getOrNull(idx - 1)?.let { viewModel.navigateToHole(it) }
                             }
                         },
                         onHorizontalDrag = { change, dragAmount ->
@@ -193,6 +200,7 @@ fun ScorecardScreen(
                         hole = hole,
                         holeEntity = holeEntity,
                         totalHoles = state.holes.size,
+                        startHole = state.startHole,
                         holeScale = holeScale.value,
                         holes = state.holes,
                         incompleteHoles = incompleteHoles,
@@ -216,6 +224,7 @@ fun ScorecardScreen(
                                 obCounts = state.obCounts,
                                 c1xCounts = state.c1xCounts,
                                 holes = state.holes,
+                                handicap = state.handicaps[player.id] ?: 0,
                                 scoresVisible = scoresVisible,
                                 onScoreChange = { throws ->
                                     viewModel.updateScore(player.id, hole, throws)

@@ -50,7 +50,7 @@ class WearViewModel @Inject constructor(
             RoundStateHolder.state.collect { roundState ->
                 val incomingId = roundState?.roundId
                 if (incomingId != null && incomingId != lastKnownRoundId) {
-                    _currentHole.value = 1
+                    _currentHole.value = roundState.startHole
                 }
                 lastKnownRoundId = incomingId
             }

@@ -20,13 +20,15 @@ object RoundStateBuilder {
         players: List<PlayerEntity>,
         scores: Map<Pair<Long, Int>, Int>,
         obCounts: Map<Pair<Long, Int>, Int> = emptyMap(),
-        c1xCounts: Map<Pair<Long, Int>, Int> = emptyMap()
+        c1xCounts: Map<Pair<Long, Int>, Int> = emptyMap(),
+        startHole: Int = 1
     ): RoundState = RoundState(
         roundId = roundId,
         courseName = courseName,
         currentHole = currentHole,
         totalHoles = holes.size,
         holePars = holes.associate { it.number to it.par },
+        startHole = startHole,
         players = players.map { player ->
             val playerHoleScores = scores.entries
                 .filter { it.key.first == player.id }

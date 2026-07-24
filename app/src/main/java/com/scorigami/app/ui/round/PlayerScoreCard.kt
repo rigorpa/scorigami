@@ -18,6 +18,7 @@ import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.scaledSp
 import com.scorigami.app.ui.theme.ScoreButtonBackground
 import com.scorigami.app.ui.theme.DefaultCardBackground
+import com.scorigami.app.ui.theme.HandicapColor
 import com.scorigami.app.ui.theme.ScoreUnderParColor
 import com.scorigami.app.ui.theme.StatActiveColor
 import com.scorigami.app.ui.theme.StatUnsetColor
@@ -32,6 +33,7 @@ internal fun PlayerScoreCard(
     obCounts: Map<Pair<Long, Int>, Int>,
     c1xCounts: Map<Pair<Long, Int>, Int>,
     holes: List<HoleEntity>,
+    handicap: Int = 0,
     scoresVisible: Boolean,
     onScoreChange: (Int) -> Unit,
     onObChange: (Int) -> Unit,
@@ -81,12 +83,24 @@ internal fun PlayerScoreCard(
                     color = ContentWhite,
                     maxLines = 1
                 )
-                Text(
-                    text = if (scoresVisible) formatVsPar(totalVsPar) else "•••",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = ContentWhite,
-                    fontWeight = FontWeight.Light
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = if (scoresVisible) formatVsPar(totalVsPar) else "•••",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = ContentWhite,
+                        fontWeight = FontWeight.Light
+                    )
+                    // Handicap-adjusted total, only when a handicap is set for this round
+                    if (handicap != 0 && scoresVisible) {
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            text = "Hcp ${formatVsPar(totalVsPar + handicap)}",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = HandicapColor,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {

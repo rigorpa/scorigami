@@ -30,6 +30,18 @@ internal fun formatVsPar(vsPar: Int): String = when {
     else -> "+$vsPar"
 }
 
+/**
+ * Holes in the order played for a round that starts at [startHole]: startHole,
+ * startHole+1, ..., holeCount, 1, 2, ..., startHole-1 (shotgun-style wraparound).
+ * Reduces to natural 1..holeCount order when startHole == 1.
+ * Mirrored in RoundViewModel.kt (business logic can't import ui.round) and on the
+ * watch (wear/ui/HoleOrder.kt) — keep all three in sync.
+ */
+internal fun holePlayOrder(startHole: Int, holeCount: Int): List<Int> {
+    if (holeCount <= 0) return emptyList()
+    return (0 until holeCount).map { offset -> (startHole - 1 + offset) % holeCount + 1 }
+}
+
 @Composable
 internal fun vsParColor(vsPar: Int): Color = when {
     // Green rather than colorScheme.primary: primary is a warm neutral in this

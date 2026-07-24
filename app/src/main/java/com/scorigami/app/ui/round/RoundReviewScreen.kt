@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.HandicapColor
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
 import com.scorigami.app.ui.theme.NewRoundGradientStart
 import com.scorigami.app.ui.theme.ScoreUnderParColor
@@ -99,7 +100,8 @@ fun RoundReviewScreen(
                     holes = state.holes,
                     scores = state.scores,
                     obCounts = state.obCounts,
-                    c1xCounts = state.c1xCounts
+                    c1xCounts = state.c1xCounts,
+                    handicap = state.handicaps[player.id] ?: 0
                 )
             }
 
@@ -143,7 +145,8 @@ private fun PlayerReviewCard(
     holes: List<HoleEntity>,
     scores: Map<Pair<Long, Int>, Int>,
     obCounts: Map<Pair<Long, Int>, Int>,
-    c1xCounts: Map<Pair<Long, Int>, Int>
+    c1xCounts: Map<Pair<Long, Int>, Int>,
+    handicap: Int = 0
 ) {
     val totalThrows = scores.entries.filter { it.key.first == player.id }.sumOf { it.value }
     val parSoFar = holes.filter { scores[Pair(player.id, it.number)] != null }.sumOf { it.par }
@@ -158,12 +161,24 @@ private fun PlayerReviewCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(player.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold, color = ContentWhite)
-            Text(
-                text = formatVsPar(totalVsPar),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = vsParColor(totalVsPar)
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Handicap-adjusted total sits to the left of the normal vs-par score
+                if (handicap != 0) {
+                    Text(
+                        text = "Hcp ${formatVsPar(totalVsPar + handicap)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = HandicapColor,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                }
+                Text(
+                    text = formatVsPar(totalVsPar),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = vsParColor(totalVsPar)
+                )
+            }
         }
         Spacer(Modifier.height(8.dp))
         HorizontalDivider()

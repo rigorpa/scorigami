@@ -9,7 +9,10 @@ data class RoundState(
     val currentHole: Int,
     val totalHoles: Int,
     val players: List<PlayerState>,
-    val holePars: Map<Int, Int> = emptyMap()
+    val holePars: Map<Int, Int> = emptyMap(),
+    /** Hole the round begins on — the watch needs this to navigate hole order (wraparound)
+     * and detect the round's actual last hole the same way the phone does. */
+    val startHole: Int = 1
 )
 
 @Serializable

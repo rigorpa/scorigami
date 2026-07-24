@@ -36,6 +36,7 @@ internal fun HoleInfoCard(
     hole: Int,
     holeEntity: HoleEntity?,
     totalHoles: Int,
+    startHole: Int,
     holeScale: Float,
     holes: List<HoleEntity>,
     incompleteHoles: Set<Int>,
@@ -47,6 +48,13 @@ internal fun HoleInfoCard(
 ) {
     var showNotesSheet by remember(hole) { mutableStateOf(false) }
     var showHoleJumpDialog by remember { mutableStateOf(false) }
+    // Prev/next targets follow the round's shotgun-style play order, not raw ±1 — null
+    // (button disabled) at the two ends of the round: startHole has no previous,
+    // the hole right before startHole (wrapped) has no next.
+    val playOrder = remember(startHole, totalHoles) { holePlayOrder(startHole, totalHoles) }
+    val playOrderIdx = playOrder.indexOf(hole)
+    val prevHole = playOrder.getOrNull(playOrderIdx - 1)
+    val nextHole = playOrder.getOrNull(playOrderIdx + 1)
 
     if (showNotesSheet && !holeEntity?.notes.isNullOrBlank()) {
         ModalBottomSheet(
@@ -152,8 +160,8 @@ internal fun HoleInfoCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 IconButton(
-                    onClick = { onNavigateToHole(hole - 1) },
-                    enabled = hole > 1
+                    onClick = { prevHole?.let(onNavigateToHole) },
+                    enabled = prevHole != null
                 ) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, "Previous hole", modifier = Modifier.size(48.dp))
                 }
@@ -204,8 +212,8 @@ internal fun HoleInfoCard(
                     }
                 }
                 IconButton(
-                    onClick = { onNavigateToHole(hole + 1) },
-                    enabled = hole < totalHoles
+                    onClick = { nextHole?.let(onNavigateToHole) },
+                    enabled = nextHole != null
                 ) {
                     Icon(Icons.AutoMirrored.Filled.ArrowForward, "Next hole", modifier = Modifier.size(48.dp))
                 }

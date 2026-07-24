@@ -104,7 +104,8 @@ class PhoneWearableListenerService : WearableListenerService() {
             players = players,
             scores = scoreMap,
             obCounts = obMap,
-            c1xCounts = c1xMap
+            c1xCounts = c1xMap,
+            startHole = round.startHole
         )
         ep.wearSyncManager().pushRoundState(roundState)
     }

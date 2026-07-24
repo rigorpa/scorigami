@@ -14,6 +14,7 @@ import androidx.wear.compose.material.MaterialTheme
 import com.scorigami.wear.ui.EndRoundPromptScreen
 import com.scorigami.wear.ui.NoRoundScreen
 import com.scorigami.wear.ui.WearScorecardScreen
+import com.scorigami.wear.ui.holePlayOrder
 import com.scorigami.wear.viewmodel.WearViewModel
 
 sealed class WearScreen(val route: String) {
@@ -60,7 +61,13 @@ fun WearNavigation(viewModel: WearViewModel = hiltViewModel()) {
             WearScorecardScreen(
                 roundState = roundState,
                 currentHole = uiState.currentHole,
-                onNextHole = { viewModel.navigateToHole((uiState.currentHole + 1).coerceAtMost(roundState.totalHoles)) },
+                onNextHole = {
+                    // Wraparound-aware: follows the round's shotgun-style play order,
+                    // not raw +1 — mirrors the phone's HoleInfoCard next-hole logic.
+                    val order = holePlayOrder(roundState.startHole, roundState.totalHoles)
+                    order.getOrNull(order.indexOf(uiState.currentHole) + 1)
+                        ?.let { viewModel.navigateToHole(it) }
+                },
                 onScoreChange = { playerId, throws ->
                     viewModel.sendScoreUpdate(
                         roundId = roundState.roundId,

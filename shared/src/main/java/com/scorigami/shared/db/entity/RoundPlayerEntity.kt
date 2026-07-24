@@ -25,5 +25,8 @@ import androidx.room.Index
 data class RoundPlayerEntity(
     val roundId: Long,
     val playerId: Long,
-    val order: Int
+    val order: Int,
+    /** Per-round handicap, set at round setup; added directly to a player's vs-par total
+     * to produce their "Hcp" adjusted score. 0 = no handicap (not displayed). */
+    val handicap: Int = 0
 )

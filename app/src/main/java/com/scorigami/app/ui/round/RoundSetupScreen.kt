@@ -24,8 +24,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import com.scorigami.app.ui.theme.CardBackground
 import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ContentWhite
+import com.scorigami.app.ui.theme.HandicapColor
+import com.scorigami.app.ui.theme.HoleJumpSelectedColor
 import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.app.ui.theme.DisabledButtonGradientEnd
 import com.scorigami.app.ui.theme.DisabledButtonGradientStart
@@ -58,6 +62,10 @@ fun RoundSetupScreen(
     var isShuffling by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
+    var startHole by remember { mutableStateOf(1) }
+    var showStartHoleSheet by remember { mutableStateOf(false) }
+    val handicaps = remember { mutableStateMapOf<String, Int>() }
+
     // Last played course first, remainder alphabetical
     val sortedCourses = remember(courses, lastPlayedCourseId) {
         val last = courses.find { it.course.id == lastPlayedCourseId }
@@ -71,6 +79,12 @@ fun RoundSetupScreen(
         if (selectedCourseId == null && sortedCourses.isNotEmpty()) {
             selectedCourseId = sortedCourses.first().course.id
         }
+    }
+
+    // Reset an out-of-range start hole if the selected course changes to one with fewer holes
+    LaunchedEffect(selectedCourse) {
+        val holeCount = selectedCourse?.holes?.size ?: 1
+        if (startHole > holeCount) startHole = 1
     }
 
     var playerToDelete by remember { mutableStateOf<PlayerEntity?>(null) }
@@ -139,7 +153,12 @@ fun RoundSetupScreen(
                     onClick = {
                         selectedCourseId?.let { courseId ->
                             if (players.isNotEmpty()) {
-                                roundViewModel.startRound(courseId, players.toList())
+                                roundViewModel.startRound(
+                                    courseId = courseId,
+                                    playerNames = players.toList(),
+                                    startHole = startHole,
+                                    handicaps = players.associateWith { handicaps[it] ?: 0 }
+                                )
                                 onRoundStarted()
                             }
                         }
@@ -251,7 +270,7 @@ fun RoundSetupScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(name, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
-                                    IconButton(onClick = { players.remove(name) }) {
+                                    IconButton(onClick = { players.remove(name); handicaps.remove(name) }) {
                                         Icon(Icons.Default.Close, "Remove $name", tint = MaterialTheme.colorScheme.error)
                                     }
                                 }
@@ -342,7 +361,129 @@ fun RoundSetupScreen(
                 }
             }
 
+            // Round Settings — start hole (shotgun-style, wraps around after the last hole)
+            // and per-player handicap, entered fresh for this round
+            item {
+                SectionCard(label = "Round Settings") {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClickLabel = "Start at Hole") { showStartHoleSheet = true },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Start at Hole", style = MaterialTheme.typography.bodyLarge, color = ContentWhite)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Hole $startHole", style = MaterialTheme.typography.bodyLarge, color = ContentLightGrey)
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = ContentWhite)
+                        }
+                    }
+
+                    if (players.isNotEmpty()) {
+                        Spacer(Modifier.height(12.dp))
+                        HorizontalDivider()
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            "Handicap",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = ContentWhite
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        players.forEachIndexed { index, name ->
+                            val value = handicaps[name] ?: 0
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    name,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = ContentWhite,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    IconButton(onClick = { handicaps[name] = (value - 1).coerceAtLeast(-20) }) {
+                                        Text("−", style = MaterialTheme.typography.titleLarge, color = ContentWhite)
+                                    }
+                                    Text(
+                                        text = if (value > 0) "Hcp +$value" else "Hcp $value",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = if (value != 0) HandicapColor else ContentLightGrey,
+                                        modifier = Modifier.widthIn(min = 72.dp),
+                                        textAlign = TextAlign.Center
+                                    )
+                                    IconButton(onClick = { handicaps[name] = (value + 1).coerceAtMost(20) }) {
+                                        Text("+", style = MaterialTheme.typography.titleLarge, color = ContentWhite)
+                                    }
+                                }
+                            }
+                            if (index < players.lastIndex) HorizontalDivider()
+                        }
+                    }
+                }
+            }
+
             item { Spacer(Modifier.height(16.dp)) }
+        }
+    }
+
+    // Start hole picker — same 3-column grid language as the in-round Jump to Hole sheet
+    if (showStartHoleSheet) {
+        val holeCount = selectedCourse?.holes?.size ?: 18
+        ModalBottomSheet(
+            onDismissRequest = { showStartHoleSheet = false },
+            containerColor = ScreenBackground
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 32.dp)
+            ) {
+                Text(
+                    "Start at Hole",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Normal,
+                    color = ContentWhite,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    (1..holeCount).chunked(3).forEach { rowHoles ->
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            rowHoles.forEach { h ->
+                                val isSelected = h == startHole
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(56.dp)
+                                        .background(
+                                            if (isSelected) HoleJumpSelectedColor else CardBackground,
+                                            RoundedCornerShape(8.dp)
+                                        )
+                                        .clickable {
+                                            startHole = h
+                                            showStartHoleSheet = false
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "$h",
+                                        color = ContentWhite,
+                                        fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Normal
+                                    )
+                                }
+                            }
+                            repeat(3 - rowHoles.size) { Spacer(Modifier.weight(1f)) }
+                        }
+                    }
+                }
+            }
         }
     }
 

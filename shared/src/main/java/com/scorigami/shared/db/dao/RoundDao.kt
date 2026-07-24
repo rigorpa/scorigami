@@ -24,6 +24,10 @@ interface RoundDao {
     @Query("SELECT * FROM rounds WHERE completedAt IS NULL LIMIT 1")
     fun getActiveRound(): Flow<RoundEntity?>
 
+    /** round_players rows for a round, including per-player handicap. */
+    @Query("SELECT * FROM round_players WHERE roundId = :roundId")
+    fun getRoundPlayersFlow(roundId: Long): Flow<List<RoundPlayerEntity>>
+
     @Query("""
         SELECT r.id AS roundId,
                r.startedAt AS startedAt,

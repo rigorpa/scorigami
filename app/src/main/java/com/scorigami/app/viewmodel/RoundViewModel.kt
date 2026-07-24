@@ -29,6 +29,10 @@ data class RoundUiState(
     val obCounts: Map<Pair<Long, Int>, Int> = emptyMap(),
     val c1xCounts: Map<Pair<Long, Int>, Int> = emptyMap(),
     val currentHole: Int = 1,
+    /** Hole the round begins on (shotgun-style wraparound); see RoundEntity.startHole. */
+    val startHole: Int = 1,
+    /** Per-player handicap (playerId → value); see RoundPlayerEntity.handicap. */
+    val handicaps: Map<Long, Int> = emptyMap(),
     val isActive: Boolean = false
 )
 
@@ -61,7 +65,8 @@ class RoundViewModel @Inject constructor(
         val players: List<PlayerEntity>,
         val scores: List<ScoreEntity>,
         val obCounts: List<ObEntity>,
-        val c1xCounts: List<C1xEntity>
+        val c1xCounts: List<C1xEntity>,
+        val roundPlayers: List<RoundPlayerEntity>
     )
 
     init {
@@ -75,8 +80,9 @@ class RoundViewModel @Inject constructor(
                             scoreDao.getScoresForRound(round.id),
                             playerDao.getPlayersForRoundFlow(round.id),
                             obDao.getObForRound(round.id),
-                            c1xDao.getC1xForRound(round.id)
-                        ) { scores, players, obCounts, c1xCounts ->
+                            c1xDao.getC1xForRound(round.id),
+                            roundDao.getRoundPlayersFlow(round.id)
+                        ) { scores, players, obCounts, c1xCounts, roundPlayers ->
                             val course = courseDao.getCourseWithHoles(round.courseId)
                                 ?: return@combine null
                             RoundData(
@@ -85,7 +91,8 @@ class RoundViewModel @Inject constructor(
                                 players = players,
                                 scores = scores,
                                 obCounts = obCounts,
-                                c1xCounts = c1xCounts
+                                c1xCounts = c1xCounts,
+                                roundPlayers = roundPlayers
                             )
                         }
                     }
@@ -96,16 +103,25 @@ class RoundViewModel @Inject constructor(
                         return@collect
                     }
                     val scoreMap = data.scores.associate { Pair(it.playerId, it.holeNumber) to it.throws }
+                    val holeCount = data.courseWithHoles.holes.size
                     _uiState.update { current ->
+                        // Seed currentHole from the round's start hole only on first load of a
+                        // (newly started or freshly resumed) round — never on later re-emissions,
+                        // which would reset the user's in-progress navigation back to the start.
+                        val isNewRound = current.roundId != data.round.id
+                        val hole = if (isNewRound) data.round.startHole else current.currentHole
                         current.copy(
                             roundId = data.round.id,
                             courseName = data.courseWithHoles.course.name,
                             holes = data.courseWithHoles.holes.sortedBy { it.number },
                             basePlayers = data.players,
-                            players = sortPlayersForHole(data.players, scoreMap, current.currentHole),
+                            players = sortPlayersForHole(data.players, scoreMap, hole, data.round.startHole, holeCount),
                             scores = scoreMap,
                             obCounts = data.obCounts.associate { Pair(it.playerId, it.holeNumber) to it.count },
                             c1xCounts = data.c1xCounts.associate { Pair(it.playerId, it.holeNumber) to it.count },
+                            currentHole = hole,
+                            startHole = data.round.startHole,
+                            handicaps = data.roundPlayers.associate { it.playerId to it.handicap },
                             isActive = true
                         )
                     }
@@ -114,9 +130,14 @@ class RoundViewModel @Inject constructor(
         }
     }
 
-    fun startRound(courseId: Long, playerNames: List<String>) {
+    fun startRound(
+        courseId: Long,
+        playerNames: List<String>,
+        startHole: Int = 1,
+        handicaps: Map<String, Int> = emptyMap()
+    ) {
         viewModelScope.launch(Dispatchers.IO) {
-            val players = playerNames.map { name ->
+            val resolvedPlayers = playerNames.map { name ->
                 val existing = playerDao.getPlayerByName(name.trim())
                 if (existing != null) {
                     if (existing.isArchived) {
@@ -128,9 +149,18 @@ class RoundViewModel @Inject constructor(
                     PlayerEntity(id = id, name = name.trim())
                 }
             }
-            val roundId = roundDao.insertRound(RoundEntity(courseId = courseId))
+            val roundId = roundDao.insertRound(RoundEntity(courseId = courseId, startHole = startHole))
+            // Zip against the original (untrimmed) names so handicap lookups match exactly
+            // what the setup screen used as map keys, regardless of incidental whitespace.
             roundDao.insertRoundPlayers(
-                players.mapIndexed { i, p -> RoundPlayerEntity(roundId = roundId, playerId = p.id, order = i) }
+                playerNames.zip(resolvedPlayers).mapIndexed { i, (rawName, player) ->
+                    RoundPlayerEntity(
+                        roundId = roundId,
+                        playerId = player.id,
+                        order = i,
+                        handicap = handicaps[rawName] ?: 0
+                    )
+                }
             )
         }
     }
@@ -177,7 +207,7 @@ class RoundViewModel @Inject constructor(
         _uiState.update { state ->
             state.copy(
                 currentHole = hole,
-                players = sortPlayersForHole(state.basePlayers, state.scores, hole)
+                players = sortPlayersForHole(state.basePlayers, state.scores, hole, state.startHole, state.holes.size)
             )
         }
         pushStateToWatch()
@@ -240,15 +270,37 @@ class RoundViewModel @Inject constructor(
     }
 
 
+    /**
+     * Holes in the order played for a round that starts at [startHole] — mirrors
+     * app/ui/round/ScoreFormat.kt's holePlayOrder (this layer can't import ui.round)
+     * and wear/ui/HoleOrder.kt; keep all three in sync.
+     */
+    private fun holePlayOrder(startHole: Int, holeCount: Int): List<Int> {
+        if (holeCount <= 0) return emptyList()
+        return (0 until holeCount).map { offset -> (startHole - 1 + offset) % holeCount + 1 }
+    }
+
+    /**
+     * Honor-system sort for [hole]: primary key is the score on the previous hole IN PLAY
+     * ORDER (follows [startHole] with shotgun-style wraparound, not raw hole number − 1),
+     * ties broken cascading back through earlier played holes, then DB registration order.
+     * The first hole of the round (hole == startHole) always uses base order.
+     * Mirrored on the watch (WearScorecardScreen / WearNavigation) — keep both in sync.
+     */
     private fun sortPlayersForHole(
         players: List<PlayerEntity>,
         scores: Map<Pair<Long, Int>, Int>,
-        hole: Int
+        hole: Int,
+        startHole: Int,
+        holeCount: Int
     ): List<PlayerEntity> {
-        if (hole <= 1) return players
+        val order = holePlayOrder(startHole, holeCount)
+        val idx = order.indexOf(hole)
+        if (idx <= 0) return players
         return players.sortedWith(
             Comparator { a, b ->
-                for (h in hole - 1 downTo 1) {
+                for (i in idx - 1 downTo 0) {
+                    val h = order[i]
                     val sa = scores[Pair(a.id, h)] ?: Int.MAX_VALUE
                     val sb = scores[Pair(b.id, h)] ?: Int.MAX_VALUE
                     if (sa != sb) return@Comparator sa - sb
@@ -277,7 +329,8 @@ class RoundViewModel @Inject constructor(
             players = state.basePlayers,
             scores = state.scores,
             obCounts = state.obCounts,
-            c1xCounts = state.c1xCounts
+            c1xCounts = state.c1xCounts,
+            startHole = state.startHole
         )
         wearSyncManager.pushRoundState(roundState)
     }

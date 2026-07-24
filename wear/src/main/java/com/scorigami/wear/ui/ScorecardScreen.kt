@@ -19,13 +19,20 @@ fun WearScorecardScreen(
     var showTeeOrder by remember { mutableStateOf(false) }
     var showEndRoundPrompt by remember { mutableStateOf(false) }
 
-    // Mirror the phone's honor-system sort: primary key is score on the previous hole,
-    // ties broken by the hole before that, cascading back to hole 1, then DB order.
-    val players = remember(roundState.players, currentHole) {
-        if (currentHole <= 1) roundState.players
+    // Shotgun-style wraparound play order — mirrors the phone's holePlayOrder.
+    val playOrder = remember(roundState.startHole, roundState.totalHoles) {
+        holePlayOrder(roundState.startHole, roundState.totalHoles)
+    }
+
+    // Mirror the phone's honor-system sort: primary key is score on the previous hole IN
+    // PLAY ORDER, ties broken cascading back through earlier played holes, then DB order.
+    val players = remember(roundState.players, currentHole, playOrder) {
+        val idx = playOrder.indexOf(currentHole)
+        if (idx <= 0) roundState.players
         else roundState.players.sortedWith(
             Comparator { a, b ->
-                for (h in currentHole - 1 downTo 1) {
+                for (i in idx - 1 downTo 0) {
+                    val h = playOrder[i]
                     val sa = a.holeScores[h] ?: Int.MAX_VALUE
                     val sb = b.holeScores[h] ?: Int.MAX_VALUE
                     if (sa != sb) return@Comparator sa - sb
@@ -69,7 +76,10 @@ fun WearScorecardScreen(
         if (pendingOb != knownOb) onStatChange(currentPlayer.playerId, "ob", pendingOb)
         if (pendingC1x != knownC1x) onStatChange(currentPlayer.playerId, "c1x", pendingC1x)
         if (isLastPlayer) {
-            if (currentHole >= roundState.totalHoles) {
+            // Last hole of the round = no next hole in play order (wraparound-aware),
+            // not raw "currentHole >= totalHoles".
+            val hasNextHole = playOrder.getOrNull(playOrder.indexOf(currentHole) + 1) != null
+            if (!hasNextHole) {
                 showEndRoundPrompt = true
             } else {
                 onNextHole()
