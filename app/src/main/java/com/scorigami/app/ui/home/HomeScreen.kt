@@ -32,7 +32,6 @@ import com.scorigami.app.ui.theme.ScreenBackground
 import com.scorigami.app.ui.theme.scaledSp
 import com.scorigami.app.ui.theme.CoursesGradientEnd
 import com.scorigami.app.ui.theme.CoursesGradientStart
-import com.scorigami.app.ui.theme.DefaultCardBackground
 import com.scorigami.app.ui.theme.DisabledButtonGradientEnd
 import com.scorigami.app.ui.theme.DisabledButtonGradientStart
 import com.scorigami.app.ui.theme.HistoryGradientEnd
@@ -136,14 +135,9 @@ fun HomeScreen(
                 )
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Widget-style container: one wide rounded card holding the option cards
+                // Option cards stacked directly on the screen background (no outer container)
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(28.dp))
-                        .background(DefaultCardBackground)
-                        //.padding(10.dp),
-                        .padding(horizontal = 12.dp, vertical = 22.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     if (state.isActive) {
@@ -165,14 +159,14 @@ fun HomeScreen(
                     )
                     HomeOptionCard(
                         title = "My Courses",
-                        description = "Manage your courses or input a new course",
+                        description = "Manage your courses or create a new course",
                         icon = Icons.Default.Park,
                         gradient = Brush.horizontalGradient(listOf(CoursesGradientStart, CoursesGradientEnd)),
                         onClick = onCourses
                     )
                     HomeOptionCard(
                         title = "Round History",
-                        description = "Review past rounds and scorecards",
+                        description = "Review past rounds and scorecards. Share them.",
                         icon = Icons.Default.History,
                         gradient = Brush.horizontalGradient(listOf(HistoryGradientStart, HistoryGradientEnd)),
                         onClick = onHistory
@@ -220,7 +214,7 @@ fun HomeScreen(
 }
 
 /**
- * One tappable option inside the home widget card: identity-gradient background,
+ * One tappable option card on the home screen: identity-gradient background,
  * title + smaller description on the left, action icon on the right. Disabled
  * (New Round while a round is active) falls back to the muted disabled gradient
  * with half-alpha content.
