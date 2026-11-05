@@ -28,3 +28,6 @@ val StatUnsetColor = Color(0xFF9E9E9E)
 
 // C1x stat counter once a count is entered — orange, distinct from the OB red (matches phone)
 val C1xActiveColor = Color(0xFFFF9800)
+
+// C2 (made circle-2 putt) marker once set — green (matches phone)
+val C2ActiveColor = ScoreUnderParColor

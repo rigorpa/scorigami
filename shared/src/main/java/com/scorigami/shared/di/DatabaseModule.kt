@@ -8,6 +8,7 @@ import androidx.sqlite.execSQL
 import com.scorigami.shared.db.AppDatabase
 import com.scorigami.shared.db.DatabaseSeeder
 import com.scorigami.shared.db.dao.C1xDao
+import com.scorigami.shared.db.dao.C2Dao
 import com.scorigami.shared.db.dao.CourseDao
 import com.scorigami.shared.db.dao.ObDao
 import com.scorigami.shared.db.dao.PlayerDao
@@ -43,7 +44,8 @@ object DatabaseModule {
                 AppDatabase.MIGRATION_3_4,
                 AppDatabase.MIGRATION_4_5,
                 AppDatabase.MIGRATION_5_6,
-                AppDatabase.MIGRATION_6_7
+                AppDatabase.MIGRATION_6_7,
+                AppDatabase.MIGRATION_7_8
             )
             .addCallback(object : RoomDatabase.Callback() {
                 // Seed the pre-loaded courses exactly once, when the DB file is first created.
@@ -78,4 +80,5 @@ object DatabaseModule {
     @Provides fun provideScoreDao(db: AppDatabase): ScoreDao = db.scoreDao()
     @Provides fun provideObDao(db: AppDatabase): ObDao = db.obDao()
     @Provides fun provideC1xDao(db: AppDatabase): C1xDao = db.c1xDao()
+    @Provides fun provideC2Dao(db: AppDatabase): C2Dao = db.c2Dao()
 }

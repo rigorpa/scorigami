@@ -60,6 +60,7 @@ val ScoreUnderParColor = Color(0xFF81C784)   // green — under par
 val StatUnsetColor = Outline
 val StatActiveColor = Color(0xFFEF5350)      // OB — matches the theme error red
 val C1xActiveColor = Color(0xFFFF9800)       // C1x — orange, distinct from OB red
+val C2ActiveColor = ScoreUnderParColor      // C2 (made circle-2 putt) — green
 // at par and unscored use ContentWhite; over par uses MaterialTheme.colorScheme.error
 
 // −/+ score buttons on the player card — brightest fill so the controls pop

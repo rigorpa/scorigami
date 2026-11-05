@@ -62,12 +62,19 @@ fun WearScorecardScreen(
         mutableIntStateOf(knownC1x)
     }
 
+    // C2 (made circle-2 putt) is an on/off toggle: pending is 0 or 1, same keying rules.
+    val knownC2 = currentPlayer.c2Counts[currentHole] ?: 0
+    var pendingC2 by remember(currentPlayer.playerId, currentHole, knownC2) {
+        mutableIntStateOf(knownC2)
+    }
+
     fun commitAndAdvance() {
         if (pendingScore > 0) onScoreChange(currentPlayer.playerId, pendingScore)
         // Only send stats that changed vs. what the phone already knows (0 is a valid
         // send — it clears a previously synced count).
         if (pendingOb != knownOb) onStatChange(currentPlayer.playerId, "ob", pendingOb)
         if (pendingC1x != knownC1x) onStatChange(currentPlayer.playerId, "c1x", pendingC1x)
+        if (pendingC2 != knownC2) onStatChange(currentPlayer.playerId, "c2", pendingC2)
         if (isLastPlayer) {
             if (currentHole >= roundState.totalHoles) {
                 showEndRoundPrompt = true
@@ -111,9 +118,11 @@ fun WearScorecardScreen(
                 pendingScore = pendingScore,
                 obCount = pendingOb,
                 c1xCount = pendingC1x,
+                c2Made = pendingC2 > 0,
                 onPendingScoreChange = { pendingScore = it },
                 onObTap = { pendingOb = if (pendingOb >= 3) 0 else pendingOb + 1 },
                 onC1xTap = { pendingC1x = if (pendingC1x >= 3) 0 else pendingC1x + 1 },
+                onC2Tap = { pendingC2 = if (pendingC2 > 0) 0 else 1 },
                 onCommit = ::commitAndAdvance,
                 onShowHoleJump = { showHoleJump = true },
                 onShowTeeOrder = { showTeeOrder = true },

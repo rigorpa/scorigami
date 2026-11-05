@@ -109,15 +109,17 @@ round_players  roundId, playerId, order                        (composite PK)
 scores      roundId, playerId, holeNumber, throws              (composite PK, upsert on change)
 ob_counts   roundId, playerId, holeNumber, count               (composite PK, FK → rounds CASCADE)
 c1x_counts  roundId, playerId, holeNumber, count               (composite PK, FK → rounds CASCADE)
+c2_counts   roundId, playerId, holeNumber, count               (composite PK, FK → rounds CASCADE; count is always 1 — on/off toggle)
 ```
 
-**DB version: 7**
+**DB version: 8**
 - Migration 1→2: adds `distanceMeters INTEGER` nullable column to `holes`
 - Migration 2→3: renames `distanceMeters` → `distanceFeet` (values were always stored in feet)
 - Migration 3→4: adds `notes TEXT` nullable column to `holes`
 - Migration 4→5: adds `isArchived INTEGER NOT NULL DEFAULT 0` column to `players` — archived players are hidden from the "Previous Golfers" suggestions (`PlayerDao.getAllPlayers()` filters `isArchived = 0`); archiving happens from Round Setup, and adding an archived name to a round auto-unarchives it (`RoundViewModel`)
 - Migration 5→6: creates `ob_counts` (`ObEntity`/`ObDao`) — per-player per-hole out-of-bounds counts. Purely informational (OB throws are already part of the entered score); rows exist only while `count > 0` (`RoundViewModel.setOb` deletes at 0, mirroring the zero-score rule). The migration DDL must match Room's generated schema exactly (see comment in `AppDatabase`)
 - Migration 6→7: creates `c1x_counts` (`C1xEntity`/`C1xDao`) — missed circle-1 putts, an exact structural mirror of `ob_counts` (`RoundViewModel.setC1x`). Any future per-hole stat should follow this same pattern (or consolidate all three into one generic stats table if a third is added)
+- Migration 7→8: creates `c2_counts` (`C2Entity`/`C2Dao`) — **made circle-2 putts**, a structural mirror of `c1x_counts` but used as an **on/off toggle** (`RoundViewModel.setC2`, row exists only when made, count is 1). Shown as grey `C2` unset → green `C2` set (`C2ActiveColor` = `ScoreUnderParColor`) on the phone `PlayerScoreCard` (`StatToggleButton`) and on the watch beside the hole number (watch name row is too tight for a third counter). Synced via `StatUpdateMessage(stat = "c2")` on the existing `/stat/update` path (no manifest change), `PlayerState.c2Counts`, and `SgRoundPlayer.c2Counts` (history export/import). Round Review/Detail also show a right-aligned `C1 NN%` make rate (`c1MakePercent` in `ScoreFormat.kt`: scored holes without C1x ÷ scored holes that were not a C2-only hole). Shown in Review/Full-scorecard/Detail/Share as a green underline and `N C2` in `StatTotalsLine`. With three stats now, consolidating into one generic stats table is overdue
 
 **Foreign key enforcement:** `DatabaseModule.provideDatabase()` enables FK enforcement via a `RoomDatabase.Callback` whose `onOpen(connection)` runs `connection.execSQL("PRAGMA foreign_keys = ON")`. Room does NOT enable `PRAGMA foreign_keys` by default, and Room 2.8 **removed** the old `Builder.setForeignKeyConstraintsEnabled()` method (the KMP rewrite — the `Callback` now receives an `androidx.sqlite.SQLiteConnection`, and `execSQL` is the `androidx.sqlite.execSQL` extension). The PRAGMA runs on every connection open, outside a transaction, so it takes effect. This is required for the declared `onDelete = CASCADE` constraints to fire: deleting a course cascades to its `holes`; deleting a round cascades to its `scores` and `round_players`; and editing a course (`insertCourse` with `OnConflictStrategy.REPLACE` on an existing id) cascade-deletes the old holes before `insertHoles` re-adds them — without this, course edits silently duplicated every hole row.
 

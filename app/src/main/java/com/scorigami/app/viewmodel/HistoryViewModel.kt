@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.scorigami.shared.db.dao.C1xDao
+import com.scorigami.shared.db.dao.C2Dao
 import com.scorigami.shared.db.dao.CourseDao
 import com.scorigami.shared.db.dao.ObDao
 import com.scorigami.shared.db.dao.PlayerDao
@@ -38,7 +39,8 @@ data class RoundDetailState(
     val players: List<PlayerEntity> = emptyList(),
     val scores: Map<Pair<Long, Int>, Int> = emptyMap(),
     val obCounts: Map<Pair<Long, Int>, Int> = emptyMap(),
-    val c1xCounts: Map<Pair<Long, Int>, Int> = emptyMap()
+    val c1xCounts: Map<Pair<Long, Int>, Int> = emptyMap(),
+    val c2Counts: Map<Pair<Long, Int>, Int> = emptyMap()
 )
 
 @HiltViewModel
@@ -49,6 +51,7 @@ class HistoryViewModel @Inject constructor(
     private val scoreDao: ScoreDao,
     private val obDao: ObDao,
     private val c1xDao: C1xDao,
+    private val c2Dao: C2Dao,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -97,8 +100,9 @@ class HistoryViewModel @Inject constructor(
             scoreDao.getScoresForRound(detailRoundId),
             playerDao.getPlayersForRoundFlow(detailRoundId),
             obDao.getObForRound(detailRoundId),
-            c1xDao.getC1xForRound(detailRoundId)
-        ) { scores, players, obEntries, c1xEntries ->
+            c1xDao.getC1xForRound(detailRoundId),
+            c2Dao.getC2ForRound(detailRoundId)
+        ) { scores, players, obEntries, c1xEntries, c2Entries ->
             val round = roundDao.getRoundById(detailRoundId)
                 ?: return@combine RoundDetailState()
             val courseWithHoles = courseDao.getCourseWithHoles(round.courseId)
@@ -125,7 +129,8 @@ class HistoryViewModel @Inject constructor(
                 players = sortedPlayers,
                 scores = scoreMap,
                 obCounts = obEntries.associate { Pair(it.playerId, it.holeNumber) to it.count },
-                c1xCounts = c1xEntries.associate { Pair(it.playerId, it.holeNumber) to it.count }
+                c1xCounts = c1xEntries.associate { Pair(it.playerId, it.holeNumber) to it.count },
+                c2Counts = c2Entries.associate { Pair(it.playerId, it.holeNumber) to it.count }
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), RoundDetailState())
     }
@@ -145,6 +150,7 @@ class HistoryViewModel @Inject constructor(
             val scores = scoreDao.getScoresForRoundSnapshot(round.id)
             val obs = obDao.getObForRoundSnapshot(round.id)
             val c1xs = c1xDao.getC1xForRoundSnapshot(round.id)
+            val c2s = c2Dao.getC2ForRoundSnapshot(round.id)
             SgRound(
                 courseName = course.course.name,
                 startedAt = round.startedAt,
@@ -160,6 +166,8 @@ class HistoryViewModel @Inject constructor(
                         obCounts = obs.filter { it.playerId == p.id }
                             .associate { it.holeNumber to it.count },
                         c1xCounts = c1xs.filter { it.playerId == p.id }
+                            .associate { it.holeNumber to it.count },
+                        c2Counts = c2s.filter { it.playerId == p.id }
                             .associate { it.holeNumber to it.count }
                     )
                 }
@@ -214,6 +222,9 @@ class HistoryViewModel @Inject constructor(
                     }
                     sp.c1xCounts.forEach { (hole, count) ->
                         if (count > 0) c1xDao.upsertC1x(C1xEntity(roundId, player.id, hole, count))
+                    }
+                    sp.c2Counts.forEach { (hole, count) ->
+                        if (count > 0) c2Dao.upsertC2(C2Entity(roundId, player.id, hole, count))
                     }
                     RoundPlayerEntity(roundId = roundId, playerId = player.id, order = i)
                 }

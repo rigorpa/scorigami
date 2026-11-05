@@ -29,5 +29,6 @@ data class SgRoundPlayer(
     /** hole number → throws (JSON object keys are strings; kotlinx handles Int keys) */
     val scores: Map<Int, Int> = emptyMap(),
     val obCounts: Map<Int, Int> = emptyMap(),
-    val c1xCounts: Map<Int, Int> = emptyMap()
+    val c1xCounts: Map<Int, Int> = emptyMap(),
+    val c2Counts: Map<Int, Int> = emptyMap()
 )

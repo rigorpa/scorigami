@@ -1,6 +1,7 @@
 package com.scorigami.app.ui.round
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
 import com.scorigami.app.ui.theme.C1xActiveColor
+import com.scorigami.app.ui.theme.C2ActiveColor
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.scaledSp
 import com.scorigami.app.ui.theme.ScoreButtonBackground
@@ -31,15 +33,18 @@ internal fun PlayerScoreCard(
     scores: Map<Pair<Long, Int>, Int>,
     obCounts: Map<Pair<Long, Int>, Int>,
     c1xCounts: Map<Pair<Long, Int>, Int>,
+    c2Counts: Map<Pair<Long, Int>, Int>,
     holes: List<HoleEntity>,
     scoresVisible: Boolean,
     onScoreChange: (Int) -> Unit,
     onObChange: (Int) -> Unit,
-    onC1xChange: (Int) -> Unit
+    onC1xChange: (Int) -> Unit,
+    onC2Change: (Int) -> Unit
 ) {
     val throwsThisHole = scores[Pair(player.id, currentHole)] ?: 0
     val obThisHole = obCounts[Pair(player.id, currentHole)] ?: 0
     val c1xThisHole = c1xCounts[Pair(player.id, currentHole)] ?: 0
+    val c2ThisHole = c2Counts[Pair(player.id, currentHole)] ?: 0
     val playerScores = scores.entries.filter { it.key.first == player.id }
     val totalThrows = playerScores.sumOf { it.value }
     val parSoFar = holes
@@ -104,6 +109,14 @@ internal fun PlayerScoreCard(
                     playerName = player.name,
                     activeColor = C1xActiveColor,
                     onCountChange = onC1xChange
+                )
+                // C2 — made circle-2 putt: simple on/off toggle, green once marked
+                StatToggleButton(
+                    label = "C2",
+                    checked = c2ThisHole > 0,
+                    playerName = player.name,
+                    activeColor = C2ActiveColor,
+                    onToggle = { onC2Change(if (c2ThisHole > 0) 0 else 1) }
                 )
 
                 // Gap pulls the stat counters toward the card's center, away from the − control
@@ -184,6 +197,37 @@ private fun StatCycleButton(
             fontSize = 18.scaledSp,
             //fontWeight = FontWeight.ExtraBold,
             color = if (count > 0) activeColor else StatUnsetColor,
+            maxLines = 1
+        )
+    }
+}
+
+/**
+ * Per-hole on/off stat marker (made C2 putt): tap toggles. Grey while unset, [activeColor] once set.
+ */
+@Composable
+private fun StatToggleButton(
+    label: String,
+    checked: Boolean,
+    playerName: String,
+    activeColor: Color,
+    onToggle: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable(
+                onClickLabel = if (checked) "Clear $label for $playerName" else "Mark $label for $playerName",
+                onClick = onToggle
+            )
+            .padding(horizontal = 8.dp, vertical = 10.dp)
+            .widthIn(min = 44.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            fontSize = 18.scaledSp,
+            color = if (checked) activeColor else StatUnsetColor,
             maxLines = 1
         )
     }

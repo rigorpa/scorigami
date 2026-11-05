@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.scorigami.shared.db.dao.C1xDao
+import com.scorigami.shared.db.dao.C2Dao
 import com.scorigami.shared.db.dao.CourseDao
 import com.scorigami.shared.db.dao.ObDao
 import com.scorigami.shared.db.dao.PlayerDao
@@ -21,9 +22,10 @@ import com.scorigami.shared.db.entity.*
         RoundPlayerEntity::class,
         ScoreEntity::class,
         ObEntity::class,
-        C1xEntity::class
+        C1xEntity::class,
+        C2Entity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -33,6 +35,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun scoreDao(): ScoreDao
     abstract fun obDao(): ObDao
     abstract fun c1xDao(): C1xDao
+    abstract fun c2Dao(): C2Dao
 
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -88,6 +91,23 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                 database.execSQL(
                     "CREATE INDEX IF NOT EXISTS `index_c1x_counts_roundId` ON `c1x_counts` (`roundId`)"
+                )
+            }
+        }
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `c2_counts` (" +
+                        "`roundId` INTEGER NOT NULL, " +
+                        "`playerId` INTEGER NOT NULL, " +
+                        "`holeNumber` INTEGER NOT NULL, " +
+                        "`count` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`roundId`, `playerId`, `holeNumber`), " +
+                        "FOREIGN KEY(`roundId`) REFERENCES `rounds`(`id`) " +
+                        "ON UPDATE NO ACTION ON DELETE CASCADE)"
+                )
+                database.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_c2_counts_roundId` ON `c2_counts` (`roundId`)"
                 )
             }
         }

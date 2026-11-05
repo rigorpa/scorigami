@@ -110,7 +110,8 @@ fun ScorecardScreen(
                 holes = state.holes,
                 scores = state.scores,
                 obCounts = state.obCounts,
-                c1xCounts = state.c1xCounts
+                c1xCounts = state.c1xCounts,
+                c2Counts = state.c2Counts
             )
         }
     }
@@ -215,6 +216,7 @@ fun ScorecardScreen(
                                 scores = state.scores,
                                 obCounts = state.obCounts,
                                 c1xCounts = state.c1xCounts,
+                                c2Counts = state.c2Counts,
                                 holes = state.holes,
                                 scoresVisible = scoresVisible,
                                 onScoreChange = { throws ->
@@ -225,6 +227,9 @@ fun ScorecardScreen(
                                 },
                                 onC1xChange = { count ->
                                     viewModel.setC1x(player.id, hole, count)
+                                },
+                                onC2Change = { count ->
+                                    viewModel.setC2(player.id, hole, count)
                                 }
                             )
                         }

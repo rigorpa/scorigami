@@ -131,7 +131,7 @@ class WearViewModel @Inject constructor(
         }
     }
 
-    /** Sends an OB / C1x count change to the phone. [stat] is "ob" or "c1x". */
+    /** Sends an OB / C1x / C2 change to the phone. [stat] is "ob", "c1x" or "c2". */
     fun sendStatUpdate(roundId: Long, playerId: Long, holeNumber: Int, stat: String, count: Int) {
         viewModelScope.launch {
             try {

@@ -21,7 +21,8 @@ internal fun FullScorecardSheet(
     holes: List<HoleEntity>,
     scores: Map<Pair<Long, Int>, Int>,
     obCounts: Map<Pair<Long, Int>, Int>,
-    c1xCounts: Map<Pair<Long, Int>, Int>
+    c1xCounts: Map<Pair<Long, Int>, Int>,
+    c2Counts: Map<Pair<Long, Int>, Int>
 ) {
     LazyColumn(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -35,6 +36,7 @@ internal fun FullScorecardSheet(
             val totalVsPar = totalThrows - parSoFar
             val totalOb = obCounts.entries.filter { it.key.first == player.id }.sumOf { it.value }
             val totalC1x = c1xCounts.entries.filter { it.key.first == player.id }.sumOf { it.value }
+            val totalC2 = c2Counts.entries.filter { it.key.first == player.id }.sumOf { it.value }
 
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
                 Row(
@@ -81,14 +83,15 @@ internal fun FullScorecardSheet(
                                 )
                                 StatUnderlines(
                                     hasOb = (obCounts[Pair(player.id, hole.number)] ?: 0) > 0,
-                                    hasC1x = (c1xCounts[Pair(player.id, hole.number)] ?: 0) > 0
+                                    hasC1x = (c1xCounts[Pair(player.id, hole.number)] ?: 0) > 0,
+                                    hasC2 = (c2Counts[Pair(player.id, hole.number)] ?: 0) > 0
                                 )
                             }
                         }
                     }
                     Spacer(Modifier.height(4.dp))
                 }
-                StatTotalsLine(totalOb, totalC1x)
+                StatTotalsLine(totalOb, totalC1x, totalC2)
                 Spacer(Modifier.height(8.dp))
             }
         }

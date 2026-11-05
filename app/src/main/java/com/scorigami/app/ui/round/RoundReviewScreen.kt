@@ -15,6 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.scorigami.app.ui.theme.ContentLightGrey
 import com.scorigami.app.ui.theme.ContentWhite
 import com.scorigami.app.ui.theme.NewRoundGradientEnd
 import com.scorigami.app.ui.theme.NewRoundGradientStart
@@ -99,7 +100,8 @@ fun RoundReviewScreen(
                     holes = state.holes,
                     scores = state.scores,
                     obCounts = state.obCounts,
-                    c1xCounts = state.c1xCounts
+                    c1xCounts = state.c1xCounts,
+                    c2Counts = state.c2Counts
                 )
             }
 
@@ -143,13 +145,17 @@ private fun PlayerReviewCard(
     holes: List<HoleEntity>,
     scores: Map<Pair<Long, Int>, Int>,
     obCounts: Map<Pair<Long, Int>, Int>,
-    c1xCounts: Map<Pair<Long, Int>, Int>
+    c1xCounts: Map<Pair<Long, Int>, Int>,
+    c2Counts: Map<Pair<Long, Int>, Int>
 ) {
     val totalThrows = scores.entries.filter { it.key.first == player.id }.sumOf { it.value }
     val parSoFar = holes.filter { scores[Pair(player.id, it.number)] != null }.sumOf { it.par }
     val totalVsPar = totalThrows - parSoFar
     val totalOb = obCounts.entries.filter { it.key.first == player.id }.sumOf { it.value }
     val totalC1x = c1xCounts.entries.filter { it.key.first == player.id }.sumOf { it.value }
+    val totalC2 = c2Counts.entries.filter { it.key.first == player.id }.sumOf { it.value }
+
+    val c1Pct = c1MakePercent(player.id, holes, scores, c1xCounts, c2Counts)
 
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
         Row(
@@ -196,14 +202,15 @@ private fun PlayerReviewCard(
                         )
                         StatUnderlines(
                             hasOb = (obCounts[Pair(player.id, hole.number)] ?: 0) > 0,
-                            hasC1x = (c1xCounts[Pair(player.id, hole.number)] ?: 0) > 0
+                            hasC1x = (c1xCounts[Pair(player.id, hole.number)] ?: 0) > 0,
+                            hasC2 = (c2Counts[Pair(player.id, hole.number)] ?: 0) > 0
                         )
                     }
                 }
             }
             Spacer(Modifier.height(4.dp))
         }
-        StatTotalsLine(totalOb, totalC1x)
+        StatSummaryRow(totalOb, totalC1x, totalC2, c1Pct)
         Spacer(Modifier.height(8.dp))
     }
 }

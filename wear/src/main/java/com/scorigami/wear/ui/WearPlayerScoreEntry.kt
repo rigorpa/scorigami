@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.Color
 import androidx.wear.compose.material.*
 import com.scorigami.wear.ui.theme.C1xActiveColor
+import com.scorigami.wear.ui.theme.C2ActiveColor
 import com.scorigami.wear.ui.theme.ContentWhite
 import com.scorigami.wear.ui.theme.HoleNumberColor
 import com.scorigami.wear.ui.theme.ScoreOverParColor
@@ -34,9 +35,11 @@ internal fun WearPlayerScoreEntry(
     pendingScore: Int,
     obCount: Int,
     c1xCount: Int,
+    c2Made: Boolean,
     onPendingScoreChange: (Int) -> Unit,
     onObTap: () -> Unit,
     onC1xTap: () -> Unit,
+    onC2Tap: () -> Unit,
     onCommit: () -> Unit,
     onShowHoleJump: () -> Unit,
     onShowTeeOrder: () -> Unit,
@@ -54,17 +57,33 @@ internal fun WearPlayerScoreEntry(
             verticalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {
-            // Hole indicator — tappable to open hole-jump picker
-            Text(
-                text = buildAnnotatedString {
-                    withStyle(SpanStyle(fontSize = 42.sp, fontWeight = FontWeight.ExtraBold)) {
-                        append("$currentHole")
-                    }
-                },
-                color = HoleNumberColor,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.clickable { onShowHoleJump() }
-            )
+            // Hole indicator — tappable to open hole-jump picker. The C2 (made circle-2
+            // putt) toggle sits to its right; an equal-weight spacer on the left keeps the
+            // number centered.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text = buildAnnotatedString {
+                        withStyle(SpanStyle(fontSize = 42.sp, fontWeight = FontWeight.ExtraBold)) {
+                            append("$currentHole")
+                        }
+                    },
+                    color = HoleNumberColor,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.clickable { onShowHoleJump() }
+                )
+                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
+                    WearStatButton(
+                        text = "C2",
+                        active = c2Made,
+                        activeColor = C2ActiveColor,
+                        onClick = onC2Tap
+                    )
+                }
+            }
 
             // OB (left) and C1x (right) stat counters flanking the player name;
             // name itself still taps to show tee order

@@ -4,12 +4,14 @@ import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import com.scorigami.app.sync.WearSyncManager
 import com.scorigami.shared.db.dao.C1xDao
+import com.scorigami.shared.db.dao.C2Dao
 import com.scorigami.shared.db.dao.CourseDao
 import com.scorigami.shared.db.dao.ObDao
 import com.scorigami.shared.db.dao.PlayerDao
 import com.scorigami.shared.db.dao.RoundDao
 import com.scorigami.shared.db.dao.ScoreDao
 import com.scorigami.shared.db.entity.C1xEntity
+import com.scorigami.shared.db.entity.C2Entity
 import com.scorigami.shared.db.entity.ObEntity
 import com.scorigami.shared.db.entity.ScoreEntity
 import com.scorigami.shared.sync.RoundStateBuilder
@@ -38,6 +40,7 @@ class PhoneWearableListenerService : WearableListenerService() {
         fun playerDao(): PlayerDao
         fun obDao(): ObDao
         fun c1xDao(): C1xDao
+        fun c2Dao(): C2Dao
         fun wearSyncManager(): WearSyncManager
     }
 
@@ -78,6 +81,11 @@ class PhoneWearableListenerService : WearableListenerService() {
                         } else {
                             ep.c1xDao().upsertC1x(C1xEntity(msg.roundId, msg.playerId, msg.holeNumber, msg.count))
                         }
+                        "c2" -> if (msg.count <= 0) {
+                            ep.c2Dao().deleteC2(msg.roundId, msg.playerId, msg.holeNumber)
+                        } else {
+                            ep.c2Dao().upsertC2(C2Entity(msg.roundId, msg.playerId, msg.holeNumber, msg.count))
+                        }
                     }
                     pushUpdatedState(msg.roundId, msg.viewingHole)
                 }
@@ -96,6 +104,9 @@ class PhoneWearableListenerService : WearableListenerService() {
         val c1xMap = ep.c1xDao().getC1xForRoundSnapshot(roundId)
             .associate { Pair(it.playerId, it.holeNumber) to it.count }
 
+        val c2Map = ep.c2Dao().getC2ForRoundSnapshot(roundId)
+            .associate { Pair(it.playerId, it.holeNumber) to it.count }
+
         val roundState = RoundStateBuilder.build(
             roundId = roundId,
             courseName = courseWithHoles.course.name,
@@ -104,7 +115,8 @@ class PhoneWearableListenerService : WearableListenerService() {
             players = players,
             scores = scoreMap,
             obCounts = obMap,
-            c1xCounts = c1xMap
+            c1xCounts = c1xMap,
+            c2Counts = c2Map
         )
         ep.wearSyncManager().pushRoundState(roundState)
     }
