@@ -8,6 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -38,8 +39,7 @@ internal fun WearPlayerScoreEntry(
     c2Made: Boolean,
     onPendingScoreChange: (Int) -> Unit,
     onObTap: () -> Unit,
-    onC1xTap: () -> Unit,
-    onC2Tap: () -> Unit,
+    onShowPuttStats: () -> Unit,
     onCommit: () -> Unit,
     onShowHoleJump: () -> Unit,
     onShowTeeOrder: () -> Unit,
@@ -57,36 +57,20 @@ internal fun WearPlayerScoreEntry(
             verticalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {
-            // Hole indicator — tappable to open hole-jump picker. The C2 (made circle-2
-            // putt) toggle sits to its right; an equal-weight spacer on the left keeps the
-            // number centered.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Spacer(Modifier.weight(1f))
-                Text(
-                    text = buildAnnotatedString {
-                        withStyle(SpanStyle(fontSize = 42.sp, fontWeight = FontWeight.ExtraBold)) {
-                            append("$currentHole")
-                        }
-                    },
-                    color = HoleNumberColor,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.clickable { onShowHoleJump() }
-                )
-                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
-                    WearStatButton(
-                        text = "C2",
-                        active = c2Made,
-                        activeColor = C2ActiveColor,
-                        onClick = onC2Tap
-                    )
-                }
-            }
+            // Hole indicator — tappable to open hole-jump picker
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(SpanStyle(fontSize = 42.sp, fontWeight = FontWeight.ExtraBold)) {
+                        append("$currentHole")
+                    }
+                },
+                color = HoleNumberColor,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.clickable { onShowHoleJump() }
+            )
 
-            // OB (left) and C1x (right) stat counters flanking the player name;
-            // name itself still taps to show tee order
+            // OB counter (left) and CX putting-stat button (right) flanking the player
+            // name; CX opens the C1x / C2 picker. Name itself still taps to show tee order
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -109,10 +93,10 @@ internal fun WearPlayerScoreEntry(
                         .clickable { onShowTeeOrder() }
                 )
                 WearStatButton(
-                    text = if (c1xCount == 0) "C1x" else if (c1xCount >= 3) "3+ C1x" else "$c1xCount C1x",
-                    active = c1xCount > 0,
-                    activeColor = C1xActiveColor,
-                    onClick = onC1xTap
+                    text = cxLabel(c1xCount, c2Made),
+                    active = c1xCount > 0 || c2Made,
+                    activeColor = StatUnsetColor, // colors come from the AnnotatedString spans
+                    onClick = onShowPuttStats
                 )
             }
 
@@ -209,12 +193,38 @@ internal fun WearPlayerScoreEntry(
 }
 
 /**
+ * Label for the CX putting-stat button: grey "CX" while nothing is logged, otherwise the
+ * logged stats in their own colors — "2 C1x" orange, "C2" green, or "C1x C2" when both.
+ */
+private fun cxLabel(c1xCount: Int, c2Made: Boolean): AnnotatedString = buildAnnotatedString {
+    when {
+        c1xCount == 0 && !c2Made -> withStyle(SpanStyle(color = StatUnsetColor)) { append("CX") }
+        c2Made && c1xCount == 0 -> withStyle(SpanStyle(color = C2ActiveColor)) { append("C2") }
+        !c2Made -> withStyle(SpanStyle(color = C1xActiveColor)) {
+            append(if (c1xCount >= 3) "3+ C1x" else "$c1xCount C1x")
+        }
+        else -> {
+            withStyle(SpanStyle(color = C1xActiveColor)) { append("C1x ") }
+            withStyle(SpanStyle(color = C2ActiveColor)) { append("C2") }
+        }
+    }
+}
+
+/**
  * Per-hole stat counter; tap cycles - → 1 → 2 → 3+ → back to - (caller owns the cycle).
  * Grey while unset so it doesn't shout; [activeColor] (OB red / C1x orange) once a count is entered.
  */
 @Composable
 private fun WearStatButton(
     text: String,
+    active: Boolean,
+    activeColor: Color,
+    onClick: () -> Unit
+) = WearStatButton(AnnotatedString(text), active, activeColor, onClick)
+
+@Composable
+private fun WearStatButton(
+    text: AnnotatedString,
     active: Boolean,
     activeColor: Color,
     onClick: () -> Unit

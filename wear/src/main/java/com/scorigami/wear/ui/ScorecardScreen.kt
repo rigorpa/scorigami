@@ -17,6 +17,7 @@ fun WearScorecardScreen(
     val focusRequester = remember { FocusRequester() }
     var showHoleJump by remember { mutableStateOf(false) }
     var showTeeOrder by remember { mutableStateOf(false) }
+    var showPuttStats by remember { mutableStateOf(false) }
     var showEndRoundPrompt by remember { mutableStateOf(false) }
 
     // Mirror the phone's honor-system sort: primary key is score on the previous hole,
@@ -109,6 +110,15 @@ fun WearScorecardScreen(
                 players = players,
                 onDismiss = { showTeeOrder = false }
             )
+        } else if (showPuttStats) {
+            // CX button → pick C1x (step count) or C2 (toggle); either returns here.
+            PuttStatPickerScreen(
+                c1xCount = pendingC1x,
+                c2Made = pendingC2 > 0,
+                onC1xTap = { pendingC1x = if (pendingC1x >= 3) 0 else pendingC1x + 1 },
+                onC2Tap = { pendingC2 = if (pendingC2 > 0) 0 else 1 },
+                onDismiss = { showPuttStats = false }
+            )
         } else {
             WearPlayerScoreEntry(
                 currentHole = currentHole,
@@ -121,8 +131,7 @@ fun WearScorecardScreen(
                 c2Made = pendingC2 > 0,
                 onPendingScoreChange = { pendingScore = it },
                 onObTap = { pendingOb = if (pendingOb >= 3) 0 else pendingOb + 1 },
-                onC1xTap = { pendingC1x = if (pendingC1x >= 3) 0 else pendingC1x + 1 },
-                onC2Tap = { pendingC2 = if (pendingC2 > 0) 0 else 1 },
+                onShowPuttStats = { showPuttStats = true },
                 onCommit = ::commitAndAdvance,
                 onShowHoleJump = { showHoleJump = true },
                 onShowTeeOrder = { showTeeOrder = true },
